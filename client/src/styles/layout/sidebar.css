@@ -1,0 +1,81 @@
+/**
+ * SIDEBAR - StockMedi
+ */
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 260px;
+  height: 100vh;
+  background: linear-gradient(180deg, var(--gray-900) 0%, var(--gray-800) 100%);
+  color: var(--gray-300);
+  transition: transform var(--transition-normal);
+  z-index: var(--z-dropdown);
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: var(--spacing-6);
+  border-bottom: 1px solid var(--gray-700);
+  margin-bottom: var(--spacing-4);
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.sidebar-logo h2 {
+  color: white;
+  margin-bottom: 0;
+  font-size: 1.25rem;
+}
+
+.sidebar-nav {
+  padding: 0 var(--spacing-3);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  margin-bottom: var(--spacing-1);
+  border-radius: var(--radius-md);
+  color: var(--gray-400);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  background-color: var(--gray-700);
+  color: white;
+}
+
+.nav-item.active {
+  background-color: var(--primary-500);
+  color: white;
+}
+
+.nav-item .nav-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.nav-item .nav-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Sidebar responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
