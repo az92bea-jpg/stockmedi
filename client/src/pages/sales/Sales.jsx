@@ -3,24 +3,25 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { saleService } from '../../services/saleService';
 import { productService } from '../../services/productService';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Sales = () => {
+    const { t } = useLanguage();
     const [products, setProducts] = useState([]);
     const [cart, setCart] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     
-    // États pour la recherche
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     
-    // États pour la vente
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [prescriptionNumber, setPrescriptionNumber] = useState('');
@@ -28,15 +29,11 @@ const Sales = () => {
     const [discount, setDiscount] = useState(0);
     const [discountType, setDiscountType] = useState('fixed');
     
-    // États pour l'historique
     const [showHistory, setShowHistory] = useState(false);
     const [salesHistory, setSalesHistory] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(false);
-    
-    // États pour le modal de confirmation
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
-    // Charger les produits pour la recherche
     useEffect(() => {
         loadProducts();
     }, []);
@@ -50,7 +47,6 @@ const Sales = () => {
         }
     };
 
-    // Recherche de produits (instantanée)
     useEffect(() => {
         if (searchTerm.length >= 2) {
             const term = searchTerm.toLowerCase();
@@ -67,20 +63,17 @@ const Sales = () => {
         }
     }, [searchTerm, products]);
 
-    // Ajouter au panier
     const addToCart = (product) => {
-        // Vérifier si produit sous ordonnance
         if (product.prescriptionRequired && !prescriptionNumber) {
-            setError('Ce produit nécessite une ordonnance. Veuillez saisir le numéro d\'ordonnance.');
+            setError(t('prescription_required_error') || 'Ce produit nécessite une ordonnance.');
             return;
         }
 
         const existingItem = cart.find(item => item.productId === product._id);
         
         if (existingItem) {
-            // Augmenter la quantité
             if (existingItem.quantity + 1 > product.quantity) {
-                setError(`Stock insuffisant. Maximum disponible: ${product.quantity}`);
+                setError(`${t('stock_insufficient') || 'Stock insuffisant'}. ${t('max_available') || 'Maximum'}: ${product.quantity}`);
                 return;
             }
             setCart(cart.map(item =>
@@ -89,7 +82,6 @@ const Sales = () => {
                     : item
             ));
         } else {
-            // Ajouter nouveau produit
             setCart([...cart, {
                 productId: product._id,
                 name: product.name,
@@ -103,7 +95,6 @@ const Sales = () => {
         setError('');
     };
 
-    // Modifier la quantité
     const updateQuantity = (productId, newQuantity) => {
         const item = cart.find(i => i.productId === productId);
         if (newQuantity < 1) {
@@ -111,7 +102,7 @@ const Sales = () => {
             return;
         }
         if (newQuantity > item.maxStock) {
-            setError(`Stock insuffisant. Maximum disponible: ${item.maxStock}`);
+            setError(`${t('stock_insufficient') || 'Stock insuffisant'}. ${t('max_available') || 'Maximum'}: ${item.maxStock}`);
             return;
         }
         setCart(cart.map(item =>
@@ -121,33 +112,28 @@ const Sales = () => {
         ));
     };
 
-    // Supprimer du panier
     const removeFromCart = (productId) => {
         setCart(cart.filter(item => item.productId !== productId));
     };
 
-    // Calcul des totaux
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
     const discountAmount = discountType === 'percentage' ? (subtotal * discount / 100) : discount;
-    const taxAmount = (subtotal - discountAmount) * 0.18; // TVA 18%
+    const taxAmount = (subtotal - discountAmount) * 0.18;
     const total = subtotal - discountAmount + taxAmount;
 
-    // Vider le panier
     const clearCart = () => {
         setCart([]);
         setDiscount(0);
     };
 
-    // Valider la vente
     const validateSale = () => {
         if (cart.length === 0) {
-            setError('Le panier est vide');
+            setError(t('empty_cart') || 'Le panier est vide');
             return false;
         }
         return true;
     };
 
-    // Enregistrer la vente
     const handleConfirmSale = async () => {
         if (!validateSale()) return;
 
@@ -172,23 +158,22 @@ const Sales = () => {
             const response = await saleService.createSale(saleData);
             
             if (response.success) {
-                setSuccess('Vente enregistrée avec succès !');
+                setSuccess(t('sale_success') || 'Vente enregistrée avec succès !');
                 clearCart();
                 setCustomerName('');
                 setCustomerPhone('');
                 setPrescriptionNumber('');
                 setConfirmModalOpen(false);
-                loadProducts(); // Recharger les produits pour mettre à jour les stocks
+                loadProducts();
                 setTimeout(() => setSuccess(''), 3000);
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de l\'enregistrement');
+            setError(err.response?.data?.message || t('error'));
         } finally {
             setLoading(false);
         }
     };
 
-    // Charger l'historique
     const loadHistory = async () => {
         setHistoryLoading(true);
         try {
@@ -211,7 +196,22 @@ const Sales = () => {
 
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
-            {/* En-tête */}
+            {/* Navigation rapide */}
+            <div style={{
+                display: 'flex',
+                gap: 'var(--spacing-2)',
+                marginBottom: 'var(--spacing-6)',
+                paddingBottom: 'var(--spacing-4)',
+                borderBottom: '1px solid var(--gray-200)',
+                flexWrap: 'wrap'
+            }}>
+                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 {t('nav_dashboard')}</Link>
+                <Link to="/products" className="btn btn-sm btn-outline">📦 {t('nav_products')}</Link>
+                <Link to="/sales" className="btn btn-sm btn-primary">💰 {t('nav_sales')}</Link>
+                <Link to="/reports" className="btn btn-sm btn-outline">📄 {t('nav_reports')}</Link>
+                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ {t('nav_settings')}</Link>
+            </div>
+
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -221,49 +221,42 @@ const Sales = () => {
                 gap: 'var(--spacing-4)'
             }}>
                 <div>
-                    <h2>Point de vente</h2>
-                    <p style={{ color: 'var(--gray-500)' }}>Enregistrez vos ventes rapidement</p>
+                    <h2>{t('sales_title')}</h2>
+                    <p style={{ color: 'var(--gray-500)' }}>{t('sales_subtitle')}</p>
                 </div>
-                <button 
-                    className="btn btn-secondary" 
-                    onClick={() => setShowHistory(!showHistory)}
-                >
-                    {showHistory ? '← Retour au point de vente' : '📋 Historique des ventes'}
+                <button className="btn btn-secondary" onClick={() => setShowHistory(!showHistory)}>
+                    {showHistory ? `← ${t('back_to_pos')}` : `📋 ${t('history')}`}
                 </button>
             </div>
 
-            {/* Messages */}
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
             {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
             {!showHistory ? (
-                // MODE POINT DE VENTE
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 'var(--spacing-6)' }}>
-                    {/* Panneau gauche - Recherche et produits */}
+                    {/* Panneau gauche - Recherche */}
                     <div>
-                        {/* Recherche */}
                         <div className="card" style={{ marginBottom: 'var(--spacing-4)' }}>
                             <div className="card-body">
                                 <div className="form-group" style={{ marginBottom: 0 }}>
-                                    <label className="form-label">Rechercher un produit</label>
+                                    <label className="form-label">{t('search_product')}</label>
                                     <input
                                         type="text"
                                         className="form-input"
-                                        placeholder="Nom, générique ou code-barres..."
+                                        placeholder={t('search_placeholder')}
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         autoFocus
                                     />
-                                    <div className="form-hint">Saisissez au moins 2 caractères</div>
+                                    <div className="form-hint">{t('search_hint') || 'Saisissez au moins 2 caractères'}</div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Résultats de recherche */}
                         {searchResults.length > 0 && (
                             <div className="card">
                                 <div className="card-header">
-                                    <h3>Produits disponibles</h3>
+                                    <h3>{t('available_products')}</h3>
                                 </div>
                                 <div className="card-body" style={{ padding: 0 }}>
                                     {searchResults.map(product => (
@@ -290,7 +283,7 @@ const Sales = () => {
                                                     </div>
                                                 )}
                                                 <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>
-                                                    Stock: {product.quantity} {product.unit}
+                                                    {t('stock')}: {product.quantity} {product.unit}
                                                 </div>
                                             </div>
                                             <div style={{ textAlign: 'right' }}>
@@ -298,7 +291,7 @@ const Sales = () => {
                                                     {formatPrice(product.sellingPrice)} GNF
                                                 </div>
                                                 {product.prescriptionRequired && (
-                                                    <div style={{ fontSize: '0.7rem', color: 'var(--warning)' }}>📋 Ordonnance</div>
+                                                    <div style={{ fontSize: '0.7rem', color: 'var(--warning)' }}>📋 {t('prescription_required')}</div>
                                                 )}
                                             </div>
                                         </div>
@@ -310,7 +303,7 @@ const Sales = () => {
                         {searchTerm.length >= 2 && searchResults.length === 0 && (
                             <div className="card">
                                 <div className="card-body" style={{ textAlign: 'center', color: 'var(--gray-500)' }}>
-                                    Aucun produit trouvé
+                                    {t('no_products')}
                                 </div>
                             </div>
                         )}
@@ -320,12 +313,12 @@ const Sales = () => {
                     <div>
                         <div className="card">
                             <div className="card-header">
-                                <h3>Panier</h3>
+                                <h3>{t('cart')}</h3>
                             </div>
                             <div className="card-body" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                                 {cart.length === 0 ? (
                                     <div style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 'var(--spacing-4)' }}>
-                                        Aucun produit dans le panier
+                                        {t('empty_cart')}
                                     </div>
                                 ) : (
                                     cart.map(item => (
@@ -371,48 +364,46 @@ const Sales = () => {
                                 )}
                             </div>
 
-                            {/* Informations client et paiement */}
                             <div className="card-body" style={{ borderTop: '1px solid var(--gray-200)', borderBottom: '1px solid var(--gray-200)' }}>
                                 <div className="form-group">
-                                    <label className="form-label">Client</label>
+                                    <label className="form-label">{t('customer_name')}</label>
                                     <input
                                         type="text"
                                         className="form-input"
-                                        placeholder="Nom du client (optionnel)"
+                                        placeholder={t('customer_name_placeholder') || 'Nom du client (optionnel)'}
                                         value={customerName}
                                         onChange={(e) => setCustomerName(e.target.value)}
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Téléphone</label>
+                                    <label className="form-label">{t('customer_phone')}</label>
                                     <input
                                         type="tel"
                                         className="form-input"
-                                        placeholder="Téléphone (optionnel)"
+                                        placeholder={t('customer_phone_placeholder') || 'Téléphone (optionnel)'}
                                         value={customerPhone}
                                         onChange={(e) => setCustomerPhone(e.target.value)}
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Numéro d'ordonnance</label>
+                                    <label className="form-label">{t('prescription_number')}</label>
                                     <input
                                         type="text"
                                         className="form-input"
-                                        placeholder="Si applicable"
+                                        placeholder={t('prescription_placeholder') || 'Si applicable'}
                                         value={prescriptionNumber}
                                         onChange={(e) => setPrescriptionNumber(e.target.value)}
                                     />
                                 </div>
                             </div>
 
-                            {/* Totaux */}
                             <div className="card-body">
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-2)' }}>
-                                    <span>Sous-total</span>
+                                    <span>{t('subtotal')}</span>
                                     <span>{formatPrice(subtotal)} GNF</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
-                                    <span>Remise</span>
+                                    <span>{t('discount')}</span>
                                     <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
                                         <input
                                             type="number"
@@ -434,25 +425,25 @@ const Sales = () => {
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-2)' }}>
-                                    <span>TVA (18%)</span>
+                                    <span>{t('tax')}</span>
                                     <span>{formatPrice(taxAmount)} GNF</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.1rem', marginTop: 'var(--spacing-3)', paddingTop: 'var(--spacing-3)', borderTop: '2px solid var(--gray-200)' }}>
-                                    <span>Total</span>
+                                    <span>{t('total')}</span>
                                     <span style={{ color: 'var(--primary-500)' }}>{formatPrice(total)} GNF</span>
                                 </div>
 
                                 <div className="form-group" style={{ marginTop: 'var(--spacing-4)' }}>
-                                    <label className="form-label">Mode de paiement</label>
+                                    <label className="form-label">{t('payment_method')}</label>
                                     <select
                                         className="form-select"
                                         value={paymentMethod}
                                         onChange={(e) => setPaymentMethod(e.target.value)}
                                     >
-                                        <option value="cash">💰 Espèces</option>
-                                        <option value="card">💳 Carte bancaire</option>
-                                        <option value="mobile_money">📱 Mobile Money</option>
-                                        <option value="mixed">🔀 Mixte</option>
+                                        <option value="cash">💰 {t('cash')}</option>
+                                        <option value="card">💳 {t('card')}</option>
+                                        <option value="mobile_money">📱 {t('mobile_money')}</option>
+                                        <option value="mixed">🔀 {t('mixed')}</option>
                                     </select>
                                 </div>
 
@@ -463,14 +454,14 @@ const Sales = () => {
                                         onClick={() => setConfirmModalOpen(true)}
                                         disabled={cart.length === 0 || loading}
                                     >
-                                        {loading ? <Loader size="sm" /> : 'Valider la vente'}
+                                        {loading ? <Loader size="sm" /> : t('validate')}
                                     </button>
                                     <button
                                         className="btn btn-secondary"
                                         onClick={clearCart}
                                         disabled={cart.length === 0}
                                     >
-                                        Vider
+                                        {t('clear')}
                                     </button>
                                 </div>
                             </div>
@@ -478,53 +469,84 @@ const Sales = () => {
                     </div>
                 </div>
             ) : (
-                // MODE HISTORIQUE
+                // MODE HISTORIQUE - Version sans tableau
                 <div className="card">
                     <div className="card-header">
-                        <h3>Historique des ventes</h3>
+                        <h3>{t('history')}</h3>
                     </div>
-                    <div className="table-container">
+                    <div className="card-body" style={{ padding: 0 }}>
                         {historyLoading ? (
                             <Loader />
                         ) : salesHistory.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--gray-500)' }}>
-                                Aucune vente enregistrée
+                                {t('no_sales') || 'Aucune vente enregistrée'}
                             </div>
                         ) : (
-                            <table className="table">
-                                <thead>
-                                    <tr>
-                                        <th>N° vente</th>
-                                        <th>Date</th>
-                                        <th>Client</th>
-                                        <th>Articles</th>
-                                        <th>Total</th>
-                                        <th>Paiement</th>
-                                        <th>Statut</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {salesHistory.map(sale => (
-                                        <tr key={sale._id}>
-                                            <td style={{ fontFamily: 'monospace' }}>{sale.saleNumber}</td>
-                                            <td>{new Date(sale.createdAt).toLocaleString('fr-FR')}</td>
-                                            <td>{sale.customerName || '-'}</td>
-                                            <td>{sale.items.reduce((sum, i) => sum + i.quantity, 0)} articles</td>
-                                            <td><strong>{formatPrice(sale.total)} GNF</strong></td>
-                                            <td>
-                                                {sale.paymentMethod === 'cash' ? '💰 Espèces' :
-                                                 sale.paymentMethod === 'card' ? '💳 Carte' :
-                                                 sale.paymentMethod === 'mobile_money' ? '📱 Mobile Money' : sale.paymentMethod}
-                                            </td>
-                                            <td>
-                                                <span className={sale.isCancelled ? 'badge-danger' : 'badge-success'}>
-                                                    {sale.isCancelled ? 'Annulée' : 'Validée'}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            <div>
+                                {/* En-tête */}
+                                <div style={{
+                                    display: 'flex',
+                                    gap: 'var(--spacing-4)',
+                                    padding: 'var(--spacing-3) var(--spacing-4)',
+                                    backgroundColor: 'var(--gray-50)',
+                                    borderBottom: '1px solid var(--gray-200)',
+                                    fontWeight: 600,
+                                    fontSize: '0.875rem',
+                                    color: 'var(--gray-600)',
+                                    flexWrap: 'wrap'
+                                }}>
+                                    <div style={{ width: '120px' }}>{t('sale_number') || 'N° vente'}</div>
+                                    <div style={{ width: '150px' }}>{t('date') || 'Date'}</div>
+                                    <div style={{ width: '150px' }}>{t('customer')}</div>
+                                    <div style={{ width: '80px' }}>{t('items')}</div>
+                                    <div style={{ width: '120px' }}>{t('total')}</div>
+                                    <div style={{ width: '120px' }}>{t('payment')}</div>
+                                    <div style={{ width: '80px' }}>{t('status')}</div>
+                                </div>
+
+                                {salesHistory.map(sale => (
+                                    <div
+                                        key={sale._id}
+                                        style={{
+                                            display: 'flex',
+                                            gap: 'var(--spacing-4)',
+                                            padding: 'var(--spacing-3) var(--spacing-4)',
+                                            borderBottom: '1px solid var(--gray-100)',
+                                            alignItems: 'center',
+                                            flexWrap: 'wrap',
+                                            transition: 'background-color 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    >
+                                        <div style={{ width: '120px', fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                                            {sale.saleNumber}
+                                        </div>
+                                        <div style={{ width: '150px', fontSize: '0.875rem' }}>
+                                            {new Date(sale.createdAt).toLocaleString('fr-FR')}
+                                        </div>
+                                        <div style={{ width: '150px', fontSize: '0.875rem' }}>
+                                            {sale.customerName || '-'}
+                                        </div>
+                                        <div style={{ width: '80px', fontSize: '0.875rem' }}>
+                                            {sale.items.reduce((sum, i) => sum + i.quantity, 0)}
+                                        </div>
+                                        <div style={{ width: '120px', fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary-500)' }}>
+                                            {formatPrice(sale.total)} GNF
+                                        </div>
+                                        <div style={{ width: '120px', fontSize: '0.875rem' }}>
+                                            {sale.paymentMethod === 'cash' ? `💰 ${t('cash')}` :
+                                             sale.paymentMethod === 'card' ? `💳 ${t('card')}` :
+                                             sale.paymentMethod === 'mobile_money' ? `📱 ${t('mobile_money')}` : sale.paymentMethod}
+                                        </div>
+                                        <div style={{ width: '80px' }}>
+                                            <span className={sale.isCancelled ? 'badge-danger' : 'badge-success'}>
+                                                {sale.isCancelled ? t('cancelled') : t('validated')}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 </div>
@@ -534,27 +556,27 @@ const Sales = () => {
             <Modal
                 isOpen={confirmModalOpen}
                 onClose={() => setConfirmModalOpen(false)}
-                title="Confirmer la vente"
+                title={t('confirm_sale')}
             >
                 <div style={{ marginBottom: 'var(--spacing-4)' }}>
-                    <p>Confirmez-vous cette vente ?</p>
+                    <p>{t('confirm_message')}</p>
                     <div style={{ 
                         backgroundColor: 'var(--gray-50)', 
                         padding: 'var(--spacing-3)', 
                         borderRadius: 'var(--radius-md)',
                         marginTop: 'var(--spacing-3)'
                     }}>
-                        <div><strong>Total :</strong> {formatPrice(total)} GNF</div>
-                        <div><strong>Articles :</strong> {cart.reduce((sum, i) => sum + i.quantity, 0)}</div>
-                        <div><strong>Paiement :</strong> {paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : 'Mobile Money'}</div>
+                        <div><strong>{t('total')} :</strong> {formatPrice(total)} GNF</div>
+                        <div><strong>{t('items')} :</strong> {cart.reduce((sum, i) => sum + i.quantity, 0)}</div>
+                        <div><strong>{t('payment_method')} :</strong> {paymentMethod === 'cash' ? t('cash') : paymentMethod === 'card' ? t('card') : t('mobile_money')}</div>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--spacing-3)' }}>
                     <button className="btn btn-primary" onClick={handleConfirmSale} disabled={loading}>
-                        {loading ? <Loader size="sm" /> : 'Confirmer'}
+                        {loading ? <Loader size="sm" /> : t('confirm')}
                     </button>
                     <button className="btn btn-secondary" onClick={() => setConfirmModalOpen(false)}>
-                        Annuler
+                        {t('cancel_btn')}
                     </button>
                 </div>
             </Modal>

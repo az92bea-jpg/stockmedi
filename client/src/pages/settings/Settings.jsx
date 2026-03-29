@@ -2,13 +2,15 @@
  * PAGE PARAMÈTRES - Configuration de l'entreprise et profil
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Settings = () => {
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -16,7 +18,6 @@ const Settings = () => {
     
     const [activeTab, setActiveTab] = useState('company');
     
-    // États pour les paramètres entreprise
     const [companySettings, setCompanySettings] = useState({
         company: {
             name: '',
@@ -36,7 +37,6 @@ const Settings = () => {
         subscription: null
     });
     
-    // États pour le profil utilisateur
     const [profile, setProfile] = useState({
         firstName: '',
         lastName: '',
@@ -51,38 +51,36 @@ const Settings = () => {
         confirmPassword: ''
     });
     
-    // États pour afficher/masquer les mots de passe
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    // Charger les données
-    useEffect(() => {
-        fetchSettings();
-        fetchProfile();
-    }, []);
-
-    const fetchSettings = async () => {
+    const fetchSettings = useCallback(async () => {
         try {
             const response = await api.get('/settings');
             setCompanySettings(response.settings);
         } catch (err) {
-            setError('Erreur lors du chargement des paramètres');
+            setError(t('error'));
             console.error(err);
         }
-    };
+    }, [t]);
 
-    const fetchProfile = async () => {
+    const fetchProfile = useCallback(async () => {
         try {
             const response = await api.get('/settings/profile');
             setProfile(response.profile);
         } catch (err) {
-            setError('Erreur lors du chargement du profil');
+            setError(t('error'));
             console.error(err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [t]);
+
+    useEffect(() => {
+        fetchSettings();
+        fetchProfile();
+    }, [fetchSettings, fetchProfile]);
 
     const handleCompanyChange = (e) => {
         const { name, value } = e.target;
@@ -157,11 +155,11 @@ const Settings = () => {
             });
             
             if (response.success) {
-                setSuccess('Paramètres enregistrés avec succès');
+                setSuccess(t('save_success') || 'Paramètres enregistrés avec succès');
                 setTimeout(() => setSuccess(''), 3000);
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de l\'enregistrement');
+            setError(err.response?.data?.message || t('error'));
         } finally {
             setSaving(false);
         }
@@ -180,11 +178,11 @@ const Settings = () => {
             });
             
             if (response.success) {
-                setSuccess('Profil mis à jour avec succès');
+                setSuccess(t('profile_updated') || 'Profil mis à jour avec succès');
                 setTimeout(() => setSuccess(''), 3000);
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de la mise à jour');
+            setError(err.response?.data?.message || t('error'));
         } finally {
             setSaving(false);
         }
@@ -194,22 +192,22 @@ const Settings = () => {
         e.preventDefault();
         
         if (!passwordData.currentPassword) {
-            setError('Veuillez saisir votre mot de passe actuel');
+            setError(t('current_password_required') || 'Veuillez saisir votre mot de passe actuel');
             return;
         }
         
         if (!passwordData.newPassword) {
-            setError('Veuillez saisir un nouveau mot de passe');
+            setError(t('new_password_required') || 'Veuillez saisir un nouveau mot de passe');
             return;
         }
         
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            setError('Les nouveaux mots de passe ne correspondent pas');
+            setError(t('password_mismatch'));
             return;
         }
         
         if (passwordData.newPassword.length < 6) {
-            setError('Le mot de passe doit contenir au moins 6 caractères');
+            setError(t('password_too_short'));
             return;
         }
         
@@ -226,7 +224,7 @@ const Settings = () => {
             });
             
             if (response.success) {
-                setSuccess('Mot de passe modifié avec succès');
+                setSuccess(t('password_changed') || 'Mot de passe modifié avec succès');
                 setPasswordData({
                     currentPassword: '',
                     newPassword: '',
@@ -235,8 +233,7 @@ const Settings = () => {
                 setTimeout(() => setSuccess(''), 3000);
             }
         } catch (err) {
-            console.error('Erreur changement mot de passe:', err);
-            setError(err.response?.data?.message || 'Erreur lors du changement de mot de passe');
+            setError(err.response?.data?.message || t('error'));
         } finally {
             setSaving(false);
         }
@@ -255,16 +252,16 @@ const Settings = () => {
                 borderBottom: '1px solid var(--gray-200)',
                 flexWrap: 'wrap'
             }}>
-                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 Tableau de bord</Link>
-                <Link to="/products" className="btn btn-sm btn-outline">📦 Produits</Link>
-                <Link to="/sales" className="btn btn-sm btn-outline">💰 Ventes</Link>
-                <Link to="/reports" className="btn btn-sm btn-outline">📄 Rapports</Link>
-                <Link to="/settings" className="btn btn-sm btn-primary">⚙️ Paramètres</Link>
+                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 {t('nav_dashboard')}</Link>
+                <Link to="/products" className="btn btn-sm btn-outline">📦 {t('nav_products')}</Link>
+                <Link to="/sales" className="btn btn-sm btn-outline">💰 {t('nav_sales')}</Link>
+                <Link to="/reports" className="btn btn-sm btn-outline">📄 {t('nav_reports')}</Link>
+                <Link to="/settings" className="btn btn-sm btn-primary">⚙️ {t('nav_settings')}</Link>
             </div>
 
-            <h2>Paramètres</h2>
+            <h2>{t('settings_title')}</h2>
             <p style={{ color: 'var(--gray-500)', marginBottom: 'var(--spacing-6)' }}>
-                Configurez votre entreprise et votre compte utilisateur
+                {t('settings_subtitle')}
             </p>
 
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -291,7 +288,7 @@ const Settings = () => {
                         transition: 'all var(--transition-fast)'
                     }}
                 >
-                    🏢 Entreprise
+                    🏢 {t('company')}
                 </button>
                 <button
                     onClick={() => setActiveTab('profile')}
@@ -307,7 +304,7 @@ const Settings = () => {
                         transition: 'all var(--transition-fast)'
                     }}
                 >
-                    👤 Mon profil
+                    👤 {t('profile')}
                 </button>
             </div>
 
@@ -315,13 +312,13 @@ const Settings = () => {
             {activeTab === 'company' && (
                 <div className="card">
                     <div className="card-header">
-                        <h3>Informations de l'entreprise</h3>
+                        <h3>{t('company_info')}</h3>
                     </div>
                     <div className="card-body">
                         <form onSubmit={saveCompanySettings}>
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">Nom de l'entreprise</label>
+                                    <label className="form-label">{t('company_name')}</label>
                                     <input
                                         type="text"
                                         name="name"
@@ -331,7 +328,7 @@ const Settings = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Téléphone</label>
+                                    <label className="form-label">{t('company_phone')}</label>
                                     <input
                                         type="tel"
                                         name="phone"
@@ -343,7 +340,7 @@ const Settings = () => {
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Email</label>
+                                <label className="form-label">{t('company_email')}</label>
                                 <input
                                     type="email"
                                     name="email"
@@ -355,7 +352,7 @@ const Settings = () => {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">Adresse</label>
+                                    <label className="form-label">{t('address')}</label>
                                     <input
                                         type="text"
                                         name="street"
@@ -366,7 +363,7 @@ const Settings = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Ville</label>
+                                    <label className="form-label">{t('city')}</label>
                                     <input
                                         type="text"
                                         name="city"
@@ -379,7 +376,7 @@ const Settings = () => {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">Code postal</label>
+                                    <label className="form-label">{t('postal_code')}</label>
                                     <input
                                         type="text"
                                         name="postalCode"
@@ -389,7 +386,7 @@ const Settings = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Pays</label>
+                                    <label className="form-label">{t('country')}</label>
                                     <select
                                         name="country"
                                         className="form-select"
@@ -406,12 +403,12 @@ const Settings = () => {
                             </div>
 
                             <h3 style={{ marginTop: 'var(--spacing-6)', marginBottom: 'var(--spacing-4)' }}>
-                                Préférences
+                                {t('preferences')}
                             </h3>
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">Devise</label>
+                                    <label className="form-label">{t('currency')}</label>
                                     <select
                                         name="currency"
                                         className="form-select"
@@ -425,7 +422,7 @@ const Settings = () => {
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Langue</label>
+                                    <label className="form-label">{t('language')}</label>
                                     <select
                                         name="language"
                                         className="form-select"
@@ -440,7 +437,7 @@ const Settings = () => {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">Taux de TVA (%)</label>
+                                    <label className="form-label">{t('tax_rate')}</label>
                                     <input
                                         type="number"
                                         name="taxRate"
@@ -453,7 +450,7 @@ const Settings = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Préfixe facture</label>
+                                    <label className="form-label">{t('invoice_prefix')}</label>
                                     <input
                                         type="text"
                                         name="invoicePrefix"
@@ -467,7 +464,7 @@ const Settings = () => {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">Alertes expiration (jours)</label>
+                                    <label className="form-label">{t('expiration_alerts')}</label>
                                     <input
                                         type="number"
                                         name="expirationAlertDays"
@@ -477,7 +474,7 @@ const Settings = () => {
                                         min="0"
                                         max="365"
                                     />
-                                    <div className="form-hint">Alerte X jours avant expiration</div>
+                                    <div className="form-hint">{t('expiration_hint') || 'Alerte X jours avant expiration'}</div>
                                 </div>
                                 <div className="form-group">
                                     <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', marginTop: 'var(--spacing-4)' }}>
@@ -487,7 +484,7 @@ const Settings = () => {
                                             checked={companySettings.preferences.batchTracking}
                                             onChange={handlePreferenceChange}
                                         />
-                                        Suivi des lots
+                                        {t('batch_tracking')}
                                     </label>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', marginTop: 'var(--spacing-2)' }}>
                                         <input
@@ -496,14 +493,14 @@ const Settings = () => {
                                             checked={companySettings.preferences.prescriptionRequired}
                                             onChange={handlePreferenceChange}
                                         />
-                                        Ordonnance obligatoire par défaut
+                                        {t('prescription_default')}
                                     </label>
                                 </div>
                             </div>
 
                             <div style={{ marginTop: 'var(--spacing-6)' }}>
                                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                                    {saving ? <Loader size="sm" /> : 'Enregistrer les modifications'}
+                                    {saving ? <Loader size="sm" /> : t('save')}
                                 </button>
                             </div>
                         </form>
@@ -516,13 +513,13 @@ const Settings = () => {
                 <>
                     <div className="card" style={{ marginBottom: 'var(--spacing-6)' }}>
                         <div className="card-header">
-                            <h3>Informations personnelles</h3>
+                            <h3>{t('personal_info')}</h3>
                         </div>
                         <div className="card-body">
                             <form onSubmit={saveProfile}>
                                 <div className="form-row">
                                     <div className="form-group">
-                                        <label className="form-label">Prénom</label>
+                                        <label className="form-label">{t('first_name')}</label>
                                         <input
                                             type="text"
                                             name="firstName"
@@ -533,7 +530,7 @@ const Settings = () => {
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label className="form-label">Nom</label>
+                                        <label className="form-label">{t('last_name')}</label>
                                         <input
                                             type="text"
                                             name="lastName"
@@ -546,18 +543,18 @@ const Settings = () => {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Email</label>
+                                    <label className="form-label">{t('email')}</label>
                                     <input
                                         type="email"
                                         className="form-input"
                                         value={profile.email}
                                         disabled
                                     />
-                                    <div className="form-hint">L'email ne peut pas être modifié</div>
+                                    <div className="form-hint">{t('email_cannot_change')}</div>
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Téléphone</label>
+                                    <label className="form-label">{t('phone')}</label>
                                     <input
                                         type="tel"
                                         name="phone"
@@ -568,17 +565,17 @@ const Settings = () => {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Rôle</label>
+                                    <label className="form-label">{t('role')}</label>
                                     <input
                                         type="text"
                                         className="form-input"
-                                        value={profile.role === 'owner' ? 'Propriétaire' : 'Employé'}
+                                        value={profile.role === 'owner' ? t('owner') : profile.role === 'super-admin' ? t('super_admin') : t('employee')}
                                         disabled
                                     />
                                 </div>
 
                                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                                    {saving ? <Loader size="sm" /> : 'Mettre à jour le profil'}
+                                    {saving ? <Loader size="sm" /> : t('update_profile')}
                                 </button>
                             </form>
                         </div>
@@ -586,12 +583,12 @@ const Settings = () => {
 
                     <div className="card">
                         <div className="card-header">
-                            <h3>Changer le mot de passe</h3>
+                            <h3>{t('change_password')}</h3>
                         </div>
                         <div className="card-body">
                             <form onSubmit={changePassword}>
                                 <div className="form-group">
-                                    <label className="form-label">Mot de passe actuel</label>
+                                    <label className="form-label">{t('current_password')}</label>
                                     <div style={{ position: 'relative' }}>
                                         <input
                                             type={showCurrentPassword ? 'text' : 'password'}
@@ -624,7 +621,7 @@ const Settings = () => {
 
                                 <div className="form-row">
                                     <div className="form-group">
-                                        <label className="form-label">Nouveau mot de passe</label>
+                                        <label className="form-label">{t('new_password')}</label>
                                         <div style={{ position: 'relative' }}>
                                             <input
                                                 type={showNewPassword ? 'text' : 'password'}
@@ -656,7 +653,7 @@ const Settings = () => {
                                         </div>
                                     </div>
                                     <div className="form-group">
-                                        <label className="form-label">Confirmer</label>
+                                        <label className="form-label">{t('confirm_password')}</label>
                                         <div style={{ position: 'relative' }}>
                                             <input
                                                 type={showConfirmPassword ? 'text' : 'password'}
@@ -689,7 +686,7 @@ const Settings = () => {
                                 </div>
 
                                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                                    {saving ? <Loader size="sm" /> : 'Changer le mot de passe'}
+                                    {saving ? <Loader size="sm" /> : t('change_password')}
                                 </button>
                             </form>
                         </div>

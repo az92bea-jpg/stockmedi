@@ -1,6 +1,6 @@
 /**
  * PAGE PRODUITS - Gestion complète du stock
- * Version avec validation des prix, indicateur de marge et filtrage URL
+ * Version avec div flex (sans tableau HTML)
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -9,8 +9,10 @@ import { productService } from '../../services/productService';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Products = () => {
+    const { t } = useLanguage();
     const location = useLocation();
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
@@ -18,19 +20,16 @@ const Products = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     
-    // États pour le modal
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState('create');
     const [selectedProduct, setSelectedProduct] = useState(null);
     
-    // États pour les filtres
     const [filters, setFilters] = useState({
         search: '',
         category: '',
         stockStatus: ''
     });
     
-    // État du formulaire
     const [formData, setFormData] = useState({
         name: '',
         genericName: '',
@@ -50,7 +49,6 @@ const Products = () => {
         description: ''
     });
 
-    // Charger les produits
     const fetchProducts = useCallback(async () => {
         try {
             setLoading(true);
@@ -58,32 +56,27 @@ const Products = () => {
             setProducts(response.products || []);
             setFilteredProducts(response.products || []);
         } catch (err) {
-            setError('Erreur lors du chargement des produits');
+            setError(t('error') || 'Erreur lors du chargement des produits');
             console.error(err);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
         fetchProducts();
     }, [fetchProducts]);
 
-    // Récupérer les paramètres d'URL (ex: ?stockStatus=low_stock)
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const stockStatusParam = params.get('stockStatus');
-        
         if (stockStatusParam && (stockStatusParam === 'out_of_stock' || stockStatusParam === 'low_stock')) {
             setFilters(prev => ({ ...prev, stockStatus: stockStatusParam }));
         }
     }, [location.search]);
 
-    // Filtrage local avec recherche insensible à la casse
     useEffect(() => {
         let results = [...products];
-        
-        // Recherche textuelle (insensible à la casse)
         if (filters.search && filters.search.length >= 1) {
             const searchLower = filters.search.toLowerCase();
             results = results.filter(product => 
@@ -92,23 +85,17 @@ const Products = () => {
                 product.barcode?.toLowerCase().includes(searchLower)
             );
         }
-        
-        // Filtre par catégorie
         if (filters.category) {
             results = results.filter(product => product.category === filters.category);
         }
-        
-        // Filtre par statut de stock
         if (filters.stockStatus === 'out_of_stock') {
             results = results.filter(product => product.quantity === 0);
         } else if (filters.stockStatus === 'low_stock') {
             results = results.filter(product => product.quantity > 0 && product.quantity <= product.reorderPoint);
         }
-        
         setFilteredProducts(results);
     }, [products, filters]);
 
-    // Calcul de la marge bénéficiaire
     const calculateMargin = () => {
         const purchase = parseFloat(formData.purchasePrice) || 0;
         const selling = parseFloat(formData.sellingPrice) || 0;
@@ -116,49 +103,40 @@ const Products = () => {
         return ((selling - purchase) / purchase * 100).toFixed(1);
     };
 
-    // Validation des prix
     const validatePrices = () => {
         const purchase = parseFloat(formData.purchasePrice);
         const selling = parseFloat(formData.sellingPrice);
-        
         if (purchase === 0) {
-            setError('Le prix d\'achat ne peut pas être nul');
+            setError(t('purchase_price_zero') || 'Le prix d\'achat ne peut pas être nul');
             return false;
         }
-        
         if (selling < purchase) {
-            setError(`⚠️ Attention : Prix de vente (${selling.toLocaleString()} GNF) inférieur au prix d'achat (${purchase.toLocaleString()} GNF). Vous allez vendre à perte !`);
+            setError(`⚠️ ${t('sell_at_loss')} : ${selling.toLocaleString()} GNF < ${purchase.toLocaleString()} GNF`);
             return false;
         }
-        
         if (selling === purchase) {
-            if (!window.confirm('⚠️ Attention : Prix de vente égal au prix d\'achat. Marge bénéficiaire nulle. Voulez-vous continuer ?')) {
+            if (!window.confirm(`⚠️ ${t('margin_zero')} ${t('confirm')} ?`)) {
                 return false;
             }
         }
-        
         return true;
     };
 
-    // Validation des dates
     const validateDates = () => {
         if (formData.expirationDate && formData.manufacturingDate) {
             if (new Date(formData.manufacturingDate) > new Date(formData.expirationDate)) {
-                setError('La date de fabrication ne peut pas être postérieure à la date d\'expiration');
+                setError(t('manufacturing_after_expiration') || 'La date de fabrication ne peut pas être postérieure à la date d\'expiration');
                 return false;
             }
         }
-        
         if (formData.expirationDate && new Date(formData.expirationDate) < new Date()) {
-            if (!window.confirm('⚠️ Attention : La date d\'expiration est déjà dépassée. Voulez-vous continuer ?')) {
+            if (!window.confirm(`⚠️ ${t('expired_confirm') || 'La date d\'expiration est déjà dépassée. Voulez-vous continuer ?'}`)) {
                 return false;
             }
         }
-        
         return true;
     };
 
-    // Réinitialiser le formulaire
     const resetForm = () => {
         setFormData({
             name: '',
@@ -180,7 +158,6 @@ const Products = () => {
         });
     };
 
-    // Ouvrir le modal pour créer
     const openCreateModal = () => {
         resetForm();
         setModalMode('create');
@@ -188,7 +165,6 @@ const Products = () => {
         setModalOpen(true);
     };
 
-    // Ouvrir le modal pour éditer
     const openEditModal = (product) => {
         setFormData({
             name: product.name || '',
@@ -213,74 +189,58 @@ const Products = () => {
         setModalOpen(true);
     };
 
-    // Soumettre le formulaire
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        
-        // Validation des prix
-        if (!validatePrices()) {
-            return;
-        }
-        
-        // Validation des dates
-        if (!validateDates()) {
-            return;
-        }
-        
-        // Validation des champs obligatoires
+        if (!validatePrices()) return;
+        if (!validateDates()) return;
         if (!formData.name) {
-            setError('Le nom du produit est requis');
+            setError(t('product_name_required') || 'Le nom du produit est requis');
             return;
         }
         if (!formData.purchasePrice) {
-            setError('Le prix d\'achat est requis');
+            setError(t('purchase_price_required') || 'Le prix d\'achat est requis');
             return;
         }
         if (!formData.sellingPrice) {
-            setError('Le prix de vente est requis');
+            setError(t('selling_price_required') || 'Le prix de vente est requis');
             return;
         }
         if (!formData.expirationDate) {
-            setError('La date d\'expiration est requise');
+            setError(t('expiration_date_required') || 'La date d\'expiration est requise');
             return;
         }
-        
         try {
             if (modalMode === 'create') {
                 await productService.createProduct(formData);
-                setSuccess('Produit créé avec succès');
+                setSuccess(t('product_created') || 'Produit créé avec succès');
             } else {
                 await productService.updateProduct(selectedProduct._id, formData);
-                setSuccess('Produit modifié avec succès');
+                setSuccess(t('product_updated') || 'Produit modifié avec succès');
             }
-            
             setModalOpen(false);
             fetchProducts();
-            
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de l\'enregistrement');
+            setError(err.response?.data?.message || t('error'));
             console.error(err);
         }
     };
 
-    // Supprimer un produit
     const handleDelete = async (product) => {
-        if (window.confirm(`Voulez-vous vraiment archiver le produit "${product.name}" ?`)) {
+        if (window.confirm(`${t('confirm_delete')} "${product.name}" ?`)) {
             try {
                 await productService.deleteProduct(product._id);
-                setSuccess('Produit archivé avec succès');
+                setSuccess(t('product_deleted') || 'Produit archivé avec succès');
                 fetchProducts();
                 setTimeout(() => setSuccess(''), 3000);
             } catch (err) {
-                setError(err.response?.data?.message || 'Erreur lors de la suppression');
+                setError(err.response?.data?.message || t('error'));
                 console.error(err);
             }
         }
     };
 
-    // Gérer les changements du formulaire
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData({
@@ -289,7 +249,6 @@ const Products = () => {
         });
     };
 
-    // Gérer les changements de filtres
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
         setFilters({
@@ -298,16 +257,10 @@ const Products = () => {
         });
     };
 
-    // Réinitialiser les filtres
     const resetFilters = () => {
-        setFilters({
-            search: '',
-            category: '',
-            stockStatus: ''
-        });
+        setFilters({ search: '', category: '', stockStatus: '' });
     };
 
-    // Obtenir la classe CSS pour le statut de stock
     const getStockStatusClass = (product) => {
         if (product.quantity === 0) return 'badge-danger';
         if (product.quantity <= product.reorderPoint) return 'badge-warning';
@@ -315,9 +268,9 @@ const Products = () => {
     };
 
     const getStockStatusText = (product) => {
-        if (product.quantity === 0) return 'Rupture';
-        if (product.quantity <= product.reorderPoint) return 'Stock faible';
-        return 'En stock';
+        if (product.quantity === 0) return t('out_of_stock');
+        if (product.quantity <= product.reorderPoint) return t('low_stock');
+        return t('in_stock') || 'En stock';
     };
 
     const getExpirationStatusClass = (product) => {
@@ -348,14 +301,13 @@ const Products = () => {
                 borderBottom: '1px solid var(--gray-200)',
                 flexWrap: 'wrap'
             }}>
-                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 Tableau de bord</Link>
-                <Link to="/products" className="btn btn-sm btn-primary">📦 Produits</Link>
-                <Link to="/sales" className="btn btn-sm btn-outline">💰 Ventes</Link>
-                <Link to="/reports" className="btn btn-sm btn-outline">📄 Rapports</Link>
-                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ Paramètres</Link>
+                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 {t('nav_dashboard')}</Link>
+                <Link to="/products" className="btn btn-sm btn-primary">📦 {t('nav_products')}</Link>
+                <Link to="/sales" className="btn btn-sm btn-outline">💰 {t('nav_sales')}</Link>
+                <Link to="/reports" className="btn btn-sm btn-outline">📄 {t('nav_reports')}</Link>
+                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ {t('nav_settings')}</Link>
             </div>
 
-            {/* En-tête */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -365,15 +317,14 @@ const Products = () => {
                 gap: 'var(--spacing-4)'
             }}>
                 <div>
-                    <h2>Gestion des produits</h2>
-                    <p style={{ color: 'var(--gray-500)' }}>Gérez votre stock de produits médicaux</p>
+                    <h2>{t('products_title')}</h2>
+                    <p style={{ color: 'var(--gray-500)' }}>{t('products_subtitle')}</p>
                 </div>
                 <button className="btn btn-primary" onClick={openCreateModal}>
-                    + Nouveau produit
+                    + {t('new_product')}
                 </button>
             </div>
 
-            {/* Messages */}
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
             {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
@@ -386,160 +337,176 @@ const Products = () => {
                         gap: 'var(--spacing-4)'
                     }}>
                         <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Recherche instantanée</label>
+                            <label className="form-label">{t('search')}</label>
                             <input
                                 type="text"
                                 name="search"
                                 className="form-input"
-                                placeholder="Nom, générique, code-barres..."
+                                placeholder={t('search_placeholder')}
                                 value={filters.search}
                                 onChange={handleFilterChange}
                                 autoComplete="off"
                             />
-                            <div className="form-hint">La recherche s'effectue automatiquement</div>
                         </div>
                         <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Catégorie</label>
+                            <label className="form-label">{t('category')}</label>
                             <select
                                 name="category"
                                 className="form-select"
                                 value={filters.category}
                                 onChange={handleFilterChange}
                             >
-                                <option value="">Toutes</option>
-                                <option value="médicament">💊 Médicament</option>
-                                <option value="dispositif_médical">🩺 Dispositif médical</option>
-                                <option value="consommable">🧻 Consommable</option>
-                                <option value="parapharmacie">🧴 Parapharmacie</option>
+                                <option value="">{t('all_categories')}</option>
+                                <option value="médicament">💊 {t('medication') || 'Médicament'}</option>
+                                <option value="dispositif_médical">🩺 {t('medical_device') || 'Dispositif médical'}</option>
+                                <option value="consommable">🧻 {t('consumable') || 'Consommable'}</option>
+                                <option value="parapharmacie">🧴 {t('parapharmacy') || 'Parapharmacie'}</option>
                             </select>
                         </div>
                         <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label">Statut stock</label>
+                            <label className="form-label">{t('stock_status')}</label>
                             <select
                                 name="stockStatus"
                                 className="form-select"
                                 value={filters.stockStatus}
                                 onChange={handleFilterChange}
                             >
-                                <option value="">Tous</option>
-                                <option value="out_of_stock">⚠️ Rupture</option>
-                                <option value="low_stock">📉 Stock faible</option>
+                                <option value="">{t('all_status')}</option>
+                                <option value="out_of_stock">⚠️ {t('out_of_stock')}</option>
+                                <option value="low_stock">📉 {t('low_stock')}</option>
                             </select>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                             <button className="btn btn-secondary" onClick={resetFilters}>
-                                Réinitialiser
+                                {t('reset')}
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Liste des produits */}
+            {/* Liste des produits - Version sans tableau */}
             <div className="card">
-                <div className="table-container">
-                    <table className="table">
-                        <thead>
-                            <tr>
-                                <th>Nom</th>
-                                <th>Catégorie</th>
-                                <th>Stock</th>
-                                <th>Prix achat</th>
-                                <th>Prix vente</th>
-                                <th>Marge</th>
-                                <th>Expiration</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredProducts.length === 0 ? (
-                                <tr>
-                                    <td colSpan="8" style={{ textAlign: 'center', padding: 'var(--spacing-8)' }}>
-                                        {filters.search ? 'Aucun produit ne correspond à votre recherche' : 'Aucun produit trouvé'}
-                                    </td>
-                                </tr>
-                            ) : (
-                                filteredProducts.map((product) => {
-                                    const margin = product.purchasePrice > 0 
-                                        ? ((product.sellingPrice - product.purchasePrice) / product.purchasePrice * 100).toFixed(1)
-                                        : 0;
-                                    const isLoss = product.sellingPrice < product.purchasePrice;
-                                    
-                                    return (
-                                        <tr key={product._id}>
-                                            <td>
-                                                <strong>{product.name}</strong>
-                                                {product.genericName && (
-                                                    <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
-                                                        {product.genericName}
-                                                    </div>
-                                                )}
-                                                {product.batchNumber && (
-                                                    <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>
-                                                        Lot: {product.batchNumber}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <span style={{ fontSize: '0.75rem' }}>
-                                                    {product.category === 'médicament' ? '💊 Médicament' :
-                                                     product.category === 'dispositif_médical' ? '🩺 DM' :
-                                                     product.category === 'consommable' ? '🧻 Consommable' : 
-                                                     product.category === 'parapharmacie' ? '🧴 Parapharmacie' : product.category}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className={getStockStatusClass(product)}>
-                                                    {formatPrice(product.quantity)} {product.unit}
-                                                </span>
-                                                <div style={{ fontSize: '0.7rem' }}>{getStockStatusText(product)}</div>
-                                            </td>
-                                            <td>{formatPrice(product.purchasePrice)} GNF</td>
-                                            <td><strong>{formatPrice(product.sellingPrice)} GNF</strong></td>
-                                            <td>
-                                                <span style={{ 
-                                                    color: isLoss ? 'var(--danger)' : margin > 0 ? 'var(--success)' : 'var(--warning)',
-                                                    fontWeight: 500
-                                                }}>
-                                                    {margin}%
-                                                    {isLoss && ' ⚠️'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className={getExpirationStatusClass(product)}>
-                                                    {product.expirationDate ? new Date(product.expirationDate).toLocaleDateString('fr-FR') : 'N/A'}
-                                                </span>
-                                                {product.manufacturingDate && (
-                                                    <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
-                                                        Fab: {new Date(product.manufacturingDate).toLocaleDateString('fr-FR')}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
-                                                    <button
-                                                        className="btn btn-sm btn-outline"
-                                                        onClick={() => openEditModal(product)}
-                                                        title="Modifier"
-                                                    >
-                                                        ✏️
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-sm btn-outline"
-                                                        onClick={() => handleDelete(product)}
-                                                        style={{ color: 'var(--danger)' }}
-                                                        title="Archiver"
-                                                    >
-                                                        🗑️
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
+                {/* En-tête */}
+                <div style={{
+                    display: 'flex',
+                    gap: 'var(--spacing-4)',
+                    padding: 'var(--spacing-3) var(--spacing-4)',
+                    backgroundColor: 'var(--gray-50)',
+                    borderBottom: '1px solid var(--gray-200)',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    color: 'var(--gray-600)',
+                    flexWrap: 'wrap'
+                }}>
+                    <div style={{ width: '180px' }}>{t('name')}</div>
+                    <div style={{ width: '100px' }}>{t('category_col')}</div>
+                    <div style={{ width: '100px' }}>{t('stock')}</div>
+                    <div style={{ width: '100px' }}>{t('purchase_price')}</div>
+                    <div style={{ width: '100px' }}>{t('selling_price')}</div>
+                    <div style={{ width: '80px' }}>{t('margin')}</div>
+                    <div style={{ width: '120px' }}>{t('expiration')}</div>
+                    <div style={{ width: '80px' }}>{t('actions')}</div>
+                </div>
+
+                {/* Corps de la liste */}
+                <div>
+                    {filteredProducts.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--gray-500)' }}>
+                            {filters.search ? t('no_products_search') || 'Aucun produit ne correspond à votre recherche' : t('no_products')}
+                        </div>
+                    ) : (
+                        filteredProducts.map((product) => {
+                            const margin = product.purchasePrice > 0 
+                                ? ((product.sellingPrice - product.purchasePrice) / product.purchasePrice * 100).toFixed(1)
+                                : 0;
+                            const isLoss = product.sellingPrice < product.purchasePrice;
+                            return (
+                                <div
+                                    key={product._id}
+                                    style={{
+                                        display: 'flex',
+                                        gap: 'var(--spacing-4)',
+                                        padding: 'var(--spacing-3) var(--spacing-4)',
+                                        borderBottom: '1px solid var(--gray-100)',
+                                        alignItems: 'center',
+                                        transition: 'background-color 0.2s',
+                                        flexWrap: 'wrap'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                    <div style={{ width: '180px' }}>
+                                        <strong>{product.name}</strong>
+                                        {product.genericName && (
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
+                                                {product.genericName}
+                                            </div>
+                                        )}
+                                        {product.batchNumber && (
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>
+                                                {t('batch_number')}: {product.batchNumber}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div style={{ width: '100px', fontSize: '0.75rem' }}>
+                                        {product.category === 'médicament' ? '💊 ' + (t('medication') || 'Médicament') :
+                                         product.category === 'dispositif_médical' ? '🩺 ' + (t('medical_device') || 'DM') :
+                                         product.category === 'consommable' ? '🧻 ' + (t('consumable') || 'Consommable') : 
+                                         product.category === 'parapharmacie' ? '🧴 ' + (t('parapharmacy') || 'Parapharmacie') : product.category}
+                                    </div>
+                                    <div style={{ width: '100px' }}>
+                                        <span className={getStockStatusClass(product)}>
+                                            {formatPrice(product.quantity)} {product.unit}
+                                        </span>
+                                        <div style={{ fontSize: '0.7rem' }}>{getStockStatusText(product)}</div>
+                                    </div>
+                                    <div style={{ width: '100px', fontSize: '0.875rem' }}>
+                                        {formatPrice(product.purchasePrice)} GNF
+                                    </div>
+                                    <div style={{ width: '100px', fontSize: '0.875rem' }}>
+                                        <strong>{formatPrice(product.sellingPrice)} GNF</strong>
+                                    </div>
+                                    <div style={{ width: '80px' }}>
+                                        <span style={{ 
+                                            color: isLoss ? '#EF4444' : margin > 0 ? '#10B981' : '#F59E0B',
+                                            fontWeight: 500
+                                        }}>
+                                            {margin}%
+                                            {isLoss && ' ⚠️'}
+                                        </span>
+                                    </div>
+                                    <div style={{ width: '120px' }}>
+                                        <span className={getExpirationStatusClass(product)}>
+                                            {product.expirationDate ? new Date(product.expirationDate).toLocaleDateString('fr-FR') : 'N/A'}
+                                        </span>
+                                        {product.manufacturingDate && (
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
+                                                {t('manufacturing_date')}: {new Date(product.manufacturingDate).toLocaleDateString('fr-FR')}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div style={{ width: '80px', display: 'flex', gap: 'var(--spacing-2)' }}>
+                                        <button
+                                            className="btn btn-sm btn-outline"
+                                            onClick={() => openEditModal(product)}
+                                            title={t('edit')}
+                                        >
+                                            ✏️
+                                        </button>
+                                        <button
+                                            className="btn btn-sm btn-outline"
+                                            onClick={() => handleDelete(product)}
+                                            style={{ color: '#EF4444' }}
+                                            title={t('delete')}
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
             </div>
 
@@ -547,182 +514,139 @@ const Products = () => {
             <Modal
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
-                title={modalMode === 'create' ? 'Ajouter un produit' : 'Modifier le produit'}
+                title={modalMode === 'create' ? t('add_product') : t('edit') + ' ' + t('product_name')}
                 size="lg"
             >
                 <form onSubmit={handleSubmit}>
+                    {/* ... formulaire identique ... */}
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label required">Nom du produit</label>
+                            <label className="form-label required">{t('product_name')}</label>
                             <input type="text" name="name" className="form-input" value={formData.name} onChange={handleChange} required />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Nom générique</label>
+                            <label className="form-label">{t('generic_name')}</label>
                             <input type="text" name="genericName" className="form-input" value={formData.genericName} onChange={handleChange} />
                         </div>
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label">Catégorie</label>
+                            <label className="form-label">{t('category')}</label>
                             <select name="category" className="form-select" value={formData.category} onChange={handleChange}>
-                                <option value="médicament">💊 Médicament</option>
-                                <option value="dispositif_médical">🩺 Dispositif médical</option>
-                                <option value="consommable">🧻 Consommable</option>
-                                <option value="parapharmacie">🧴 Parapharmacie</option>
-                                <option value="autre">📦 Autre</option>
+                                <option value="médicament">💊 {t('medication') || 'Médicament'}</option>
+                                <option value="dispositif_médical">🩺 {t('medical_device') || 'Dispositif médical'}</option>
+                                <option value="consommable">🧻 {t('consumable') || 'Consommable'}</option>
+                                <option value="parapharmacie">🧴 {t('parapharmacy') || 'Parapharmacie'}</option>
+                                <option value="autre">📦 {t('other') || 'Autre'}</option>
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Fabricant</label>
+                            <label className="form-label">{t('manufacturer')}</label>
                             <input type="text" name="manufacturer" className="form-input" value={formData.manufacturer} onChange={handleChange} />
                         </div>
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label">Numéro de lot</label>
+                            <label className="form-label">{t('batch_number')}</label>
                             <input type="text" name="batchNumber" className="form-input" value={formData.batchNumber} onChange={handleChange} />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Code-barres</label>
+                            <label className="form-label">{t('barcode')}</label>
                             <input type="text" name="barcode" className="form-input" value={formData.barcode} onChange={handleChange} />
                         </div>
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label">Quantité</label>
+                            <label className="form-label">{t('quantity')}</label>
                             <input type="number" name="quantity" className="form-input" value={formData.quantity} onChange={handleChange} min="0" />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Unité</label>
+                            <label className="form-label">{t('unit')}</label>
                             <select name="unit" className="form-select" value={formData.unit} onChange={handleChange}>
-                                <option value="comprimé(s)">Comprimé(s)</option>
-                                <option value="gélule(s)">Gélule(s)</option>
+                                <option value="comprimé(s)">{t('tablets') || 'Comprimé(s)'}</option>
+                                <option value="gélule(s)">{t('capsules') || 'Gélule(s)'}</option>
                                 <option value="ml">ml</option>
                                 <option value="mg">mg</option>
                                 <option value="g">g</option>
-                                <option value="boîte(s)">Boîte(s)</option>
-                                <option value="flacon(s)">Flacon(s)</option>
-                                <option value="ampoule(s)">Ampoule(s)</option>
+                                <option value="boîte(s)">{t('box') || 'Boîte(s)'}</option>
+                                <option value="flacon(s)">{t('bottle') || 'Flacon(s)'}</option>
+                                <option value="ampoule(s)">{t('ampoule') || 'Ampoule(s)'}</option>
                             </select>
                         </div>
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label">Seuil d'alerte</label>
+                            <label className="form-label">{t('reorder_point')}</label>
                             <input type="number" name="reorderPoint" className="form-input" value={formData.reorderPoint} onChange={handleChange} min="0" />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Emplacement</label>
-                            <input type="text" name="location" className="form-input" value={formData.location} onChange={handleChange} placeholder="Étagère, armoire..." />
+                            <label className="form-label">{t('location')}</label>
+                            <input type="text" name="location" className="form-input" value={formData.location} onChange={handleChange} />
                         </div>
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label required">Prix d'achat (GNF)</label>
-                            <input 
-                                type="number" 
-                                name="purchasePrice" 
-                                className="form-input" 
-                                value={formData.purchasePrice} 
-                                onChange={handleChange} 
-                                min="0" 
-                                required 
-                            />
+                            <label className="form-label required">{t('purchase_price')} (GNF)</label>
+                            <input type="number" name="purchasePrice" className="form-input" value={formData.purchasePrice} onChange={handleChange} min="0" required />
                         </div>
                         <div className="form-group">
-                            <label className="form-label required">Prix de vente (GNF)</label>
-                            <input 
-                                type="number" 
-                                name="sellingPrice" 
-                                className="form-input" 
-                                value={formData.sellingPrice} 
-                                onChange={handleChange} 
-                                min="0" 
-                                required 
-                            />
+                            <label className="form-label required">{t('selling_price')} (GNF)</label>
+                            <input type="number" name="sellingPrice" className="form-input" value={formData.sellingPrice} onChange={handleChange} min="0" required />
                         </div>
                     </div>
 
-                    {/* Indicateur de marge */}
                     {formData.purchasePrice > 0 && formData.sellingPrice > 0 && (
                         <div className="form-group">
                             <div style={{ 
                                 padding: 'var(--spacing-2)', 
                                 borderRadius: 'var(--radius-md)', 
-                                backgroundColor: (() => {
-                                    const purchase = parseFloat(formData.purchasePrice);
-                                    const selling = parseFloat(formData.sellingPrice);
-                                    if (selling < purchase) return '#FEE2E2';
-                                    if (selling === purchase) return '#FEF3C7';
-                                    return '#D1FAE5';
-                                })(),
-                                color: (() => {
-                                    const purchase = parseFloat(formData.purchasePrice);
-                                    const selling = parseFloat(formData.sellingPrice);
-                                    if (selling < purchase) return '#991B1B';
-                                    if (selling === purchase) return '#92400E';
-                                    return '#065F46';
-                                })(),
+                                backgroundColor: formData.sellingPrice < formData.purchasePrice ? '#FEE2E2' : formData.sellingPrice === formData.purchasePrice ? '#FEF3C7' : '#D1FAE5',
+                                color: formData.sellingPrice < formData.purchasePrice ? '#991B1B' : formData.sellingPrice === formData.purchasePrice ? '#92400E' : '#065F46',
                                 fontSize: '0.875rem',
                                 textAlign: 'center',
                                 fontWeight: 500
                             }}>
-                                📊 Marge bénéficiaire : {calculateMargin()}%
-                                {formData.sellingPrice < formData.purchasePrice && ' ⚠️ VENTE À PERTE !'}
-                                {formData.sellingPrice === formData.purchasePrice && ' ⚠️ MARGE NULLE'}
+                                📊 {t('margin_info')} : {calculateMargin()}%
+                                {formData.sellingPrice < formData.purchasePrice && ` ⚠️ ${t('sell_at_loss')}`}
+                                {formData.sellingPrice === formData.purchasePrice && ` ⚠️ ${t('margin_zero')}`}
                             </div>
                         </div>
                     )}
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label required">Date d'expiration</label>
-                            <input
-                                type="date"
-                                name="expirationDate"
-                                className="form-input"
-                                value={formData.expirationDate}
-                                onChange={handleChange}
-                                required
-                            />
-                            <div className="form-hint">Date de péremption du produit</div>
+                            <label className="form-label required">{t('expiration_date')}</label>
+                            <input type="date" name="expirationDate" className="form-input" value={formData.expirationDate} onChange={handleChange} required />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Date de fabrication</label>
-                            <input
-                                type="date"
-                                name="manufacturingDate"
-                                className="form-input"
-                                value={formData.manufacturingDate}
-                                onChange={handleChange}
-                            />
-                            <div className="form-hint">Optionnelle - Pour la traçabilité</div>
+                            <label className="form-label">{t('manufacturing_date')}</label>
+                            <input type="date" name="manufacturingDate" className="form-input" value={formData.manufacturingDate} onChange={handleChange} />
                         </div>
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Description</label>
+                        <label className="form-label">{t('description')}</label>
                         <textarea name="description" className="form-textarea" rows="3" value={formData.description} onChange={handleChange} />
                     </div>
 
                     <div className="form-group">
                         <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
                             <input type="checkbox" name="prescriptionRequired" checked={formData.prescriptionRequired} onChange={handleChange} />
-                            Ordonnance requise
+                            {t('prescription_required')}
                         </label>
                     </div>
 
                     <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-6)' }}>
                         <button type="submit" className="btn btn-primary">
-                            {modalMode === 'create' ? 'Créer le produit' : 'Enregistrer'}
+                            {modalMode === 'create' ? t('add') : t('save')}
                         </button>
                         <button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>
-                            Annuler
+                            {t('cancel_btn')}
                         </button>
                     </div>
                 </form>

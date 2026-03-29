@@ -1,5 +1,5 @@
 /**
- * PAGE RAPPORTS - Export PDF/Excel avec navigation
+ * PAGE RAPPORTS - Export PDF/Excel
  */
 
 import React, { useState } from 'react';
@@ -7,8 +7,10 @@ import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Reports = () => {
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -43,10 +45,10 @@ const Reports = () => {
             link.click();
             URL.revokeObjectURL(link.href);
             
-            setSuccess('Fichier téléchargé avec succès');
+            setSuccess(t('download_success') || 'Fichier téléchargé avec succès');
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError('Erreur lors du téléchargement');
+            setError(t('download_error') || 'Erreur lors du téléchargement');
             console.error(err);
         } finally {
             setLoading(false);
@@ -71,7 +73,7 @@ const Reports = () => {
 
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
-            {/* Navigation interne */}
+            {/* Navigation rapide */}
             <div style={{
                 display: 'flex',
                 gap: 'var(--spacing-2)',
@@ -80,11 +82,11 @@ const Reports = () => {
                 borderBottom: '1px solid var(--gray-200)',
                 flexWrap: 'wrap'
             }}>
-                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 Tableau de bord</Link>
-                <Link to="/products" className="btn btn-sm btn-outline">📦 Produits</Link>
-                <Link to="/sales" className="btn btn-sm btn-outline">💰 Ventes</Link>
-                <Link to="/reports" className="btn btn-sm btn-primary">📄 Rapports</Link>
-                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ Paramètres</Link>
+                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 {t('nav_dashboard')}</Link>
+                <Link to="/products" className="btn btn-sm btn-outline">📦 {t('nav_products')}</Link>
+                <Link to="/sales" className="btn btn-sm btn-outline">💰 {t('nav_sales')}</Link>
+                <Link to="/reports" className="btn btn-sm btn-primary">📄 {t('nav_reports')}</Link>
+                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ {t('nav_settings')}</Link>
             </div>
 
             <div style={{
@@ -96,10 +98,8 @@ const Reports = () => {
                 gap: 'var(--spacing-4)'
             }}>
                 <div>
-                    <h2>Rapports et exportations</h2>
-                    <p style={{ color: 'var(--gray-500)' }}>
-                        Exportez vos données en PDF ou Excel
-                    </p>
+                    <h2>{t('reports_title')}</h2>
+                    <p style={{ color: 'var(--gray-500)' }}>{t('reports_subtitle')}</p>
                 </div>
             </div>
 
@@ -112,11 +112,11 @@ const Reports = () => {
                 {/* Rapport inventaire */}
                 <div className="card">
                     <div className="card-header">
-                        <h3>📦 Rapport d'inventaire</h3>
+                        <h3>{t('inventory')}</h3>
                     </div>
                     <div className="card-body">
                         <p style={{ color: 'var(--gray-600)', marginBottom: 'var(--spacing-4)' }}>
-                            Exportez la liste complète de vos produits avec les stocks, prix et dates d'expiration.
+                            {t('inventory_desc')}
                         </p>
                         <div style={{ 
                             backgroundColor: 'var(--gray-50)', 
@@ -125,13 +125,10 @@ const Reports = () => {
                             marginBottom: 'var(--spacing-4)',
                             fontSize: '0.875rem'
                         }}>
-                            <strong>Contenu :</strong>
+                            <strong>{t('info_title')}</strong>
                             <ul style={{ margin: 'var(--spacing-2) 0 0 var(--spacing-4)', color: 'var(--gray-600)' }}>
-                                <li>Liste complète des produits</li>
-                                <li>Stocks et seuils d'alerte</li>
-                                <li>Prix d'achat et de vente</li>
-                                <li>Dates de fabrication et expiration</li>
-                                <li>Résumé des valeurs totales</li>
+                                <li>{t('info_pdf')}</li>
+                                <li>{t('info_excel')}</li>
                             </ul>
                         </div>
                         <div style={{ display: 'flex', gap: 'var(--spacing-3)', flexWrap: 'wrap' }}>
@@ -140,14 +137,14 @@ const Reports = () => {
                                 onClick={downloadInventoryPDF}
                                 disabled={loading}
                             >
-                                📄 Télécharger PDF
+                                📄 {t('download_pdf')}
                             </button>
                             <button 
                                 className="btn btn-secondary" 
                                 onClick={downloadInventoryExcel}
                                 disabled={loading}
                             >
-                                📊 Télécharger Excel
+                                📊 {t('download_excel')}
                             </button>
                         </div>
                     </div>
@@ -156,11 +153,11 @@ const Reports = () => {
                 {/* Rapport des ventes */}
                 <div className="card">
                     <div className="card-header">
-                        <h3>💰 Rapport des ventes</h3>
+                        <h3>{t('sales_report')}</h3>
                     </div>
                     <div className="card-body">
                         <p style={{ color: 'var(--gray-600)', marginBottom: 'var(--spacing-4)' }}>
-                            Exportez l'historique de vos ventes avec détails par transaction.
+                            {t('sales_desc')}
                         </p>
                         <div style={{ 
                             backgroundColor: 'var(--gray-50)', 
@@ -169,19 +166,16 @@ const Reports = () => {
                             marginBottom: 'var(--spacing-4)',
                             fontSize: '0.875rem'
                         }}>
-                            <strong>Contenu :</strong>
+                            <strong>{t('info_title')}</strong>
                             <ul style={{ margin: 'var(--spacing-2) 0 0 var(--spacing-4)', color: 'var(--gray-600)' }}>
-                                <li>Numéro de vente et date</li>
-                                <li>Articles vendus et quantités</li>
-                                <li>Montants (sous-total, remise, TVA, total)</li>
-                                <li>Mode de paiement</li>
-                                <li>Chiffre d'affaires total</li>
+                                <li>{t('info_filter')}</li>
+                                <li>{t('info_currency')}</li>
                             </ul>
                         </div>
                         
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-3)', marginBottom: 'var(--spacing-4)' }}>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Date début</label>
+                                <label className="form-label">{t('start_date')}</label>
                                 <input
                                     type="date"
                                     name="startDate"
@@ -191,7 +185,7 @@ const Reports = () => {
                                 />
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Date fin</label>
+                                <label className="form-label">{t('end_date')}</label>
                                 <input
                                     type="date"
                                     name="endDate"
@@ -208,10 +202,10 @@ const Reports = () => {
                             disabled={loading}
                             style={{ width: '100%' }}
                         >
-                            📊 Télécharger Excel
+                            📊 {t('download_excel')}
                         </button>
                         <div className="form-hint" style={{ marginTop: 'var(--spacing-2)', textAlign: 'center' }}>
-                            Laissez vide pour exporter toutes les ventes
+                            {t('leave_empty')}
                         </div>
                     </div>
                 </div>
@@ -220,15 +214,14 @@ const Reports = () => {
             {/* Informations supplémentaires */}
             <div className="card" style={{ marginTop: 'var(--spacing-6)' }}>
                 <div className="card-header">
-                    <h3>ℹ️ Informations sur les exports</h3>
+                    <h3>ℹ️ {t('info_title')}</h3>
                 </div>
                 <div className="card-body">
                     <ul style={{ margin: 0, paddingLeft: 'var(--spacing-4)', color: 'var(--gray-600)', lineHeight: '1.8' }}>
-                        <li>📄 <strong>PDF :</strong> Format optimisé pour l'impression et l'archivage</li>
-                        <li>📊 <strong>Excel :</strong> Format modifiable avec feuille de résumé et données détaillées</li>
-                        <li>📅 <strong>Filtrage :</strong> Les rapports de ventes peuvent être filtrés par période</li>
-                        <li>💵 <strong>Devise :</strong> Tous les montants sont affichés en Francs Guinéens (GNF)</li>
-                        <li>📁 <strong>Nom des fichiers :</strong> Format automatique avec date (ex: inventaire_2024-01-15.pdf)</li>
+                        <li>📄 <strong>{t('info_pdf')}</strong></li>
+                        <li>📊 <strong>{t('info_excel')}</strong></li>
+                        <li>📅 <strong>{t('info_filter')}</strong></li>
+                        <li>💵 <strong>{t('info_currency')}</strong></li>
                     </ul>
                 </div>
             </div>
@@ -236,7 +229,7 @@ const Reports = () => {
             {/* Bouton retour */}
             <div style={{ marginTop: 'var(--spacing-6)', textAlign: 'center' }}>
                 <Link to="/dashboard" className="btn btn-secondary">
-                    ← Retour au tableau de bord
+                    ← {t('back')}
                 </Link>
             </div>
         </div>

@@ -5,6 +5,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { authService } from './services/authService';
+import { LanguageProvider } from './context/LanguageContext';
 
 // Styles
 import './styles/main.css';
@@ -17,6 +18,8 @@ import './styles/layout/sidebar.css';
 // Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import Dashboard from './pages/dashboard/Dashboard';
 import Products from './pages/stock/Products';
 import Sales from './pages/sales/Sales';
@@ -27,11 +30,8 @@ import Subscription from './pages/settings/Subscription';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminCompanies from './pages/admin/Companies';
 import AdminUsers from './pages/admin/Users';
-import AdminLogs from './pages/admin/Logs';  // ← AJOUTER CET IMPORT
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/ResetPassword';
-
-
+import AdminLogs from './pages/admin/Logs';
+import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 
 
 
@@ -61,56 +61,61 @@ const SuperAdminRoute = ({ children }) => {
 
 function App() {
     return (
-        <Router>
-            <Routes>
-                {/* Routes publiques */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                
-                {/* Routes protégées (utilisateurs normaux) */}
-                <Route path="/" element={
-                    <ProtectedRoute>
-                        <Layout />
-                    </ProtectedRoute>
-                }>
-                    <Route index element={<Dashboard />} />
-                    <Route path="dashboard" element={<Dashboard />} />
-                    <Route path="products" element={<Products />} />
-                    <Route path="sales" element={<Sales />} />
-                    <Route path="reports" element={<Reports />} />
-                    <Route path="employees" element={<Employees />} />
-                    <Route path="settings" element={<Settings />} />
-                    <Route path="subscription" element={<Subscription />} />
-                </Route>
-                
-                {/* Routes super-admin (sans Layout standard) */}
-                <Route path="/admin" element={
-                    <SuperAdminRoute>
-                        <AdminDashboard />
-                    </SuperAdminRoute>
-                } />
-                <Route path="/admin/companies" element={
-                    <SuperAdminRoute>
-                        <AdminCompanies />
-                    </SuperAdminRoute>
-                } />
-                <Route path="/admin/users" element={
-                    <SuperAdminRoute>
-                        <AdminUsers />
-                    </SuperAdminRoute>
-                } />
-                <Route path="/admin/logs" element={
-                    <SuperAdminRoute>
-                        <AdminLogs />
-                    </SuperAdminRoute>
-                } />  {/* ← AJOUTER CETTE ROUTE */}
-                
-                {/* 404 */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-        </Router>
+        <LanguageProvider>
+            <Router>
+                <Routes>
+                    {/* Routes publiques */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    
+                    {/* Routes protégées (utilisateurs normaux) */}
+                    <Route path="/" element={
+                        <ProtectedRoute>
+                            <Layout />
+                        </ProtectedRoute>
+                    }>
+                        <Route index element={<Dashboard />} />
+                        <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="products" element={<Products />} />
+                        <Route path="sales" element={<Sales />} />
+                        <Route path="reports" element={<Reports />} />
+                        <Route path="employees" element={<Employees />} />
+                        <Route path="settings" element={<Settings />} />
+                        <Route path="subscription" element={<Subscription />} />
+                    </Route>
+                    
+                    {/* Routes super-admin (sans Layout standard) */}
+                    <Route path="/admin" element={
+                        <SuperAdminRoute>
+                            <AdminDashboard />
+                        </SuperAdminRoute>
+                    } />
+                    <Route path="/admin/companies" element={
+                        <SuperAdminRoute>
+                            <AdminCompanies />
+                        </SuperAdminRoute>
+                    } />
+                    <Route path="/admin/users" element={
+                        <SuperAdminRoute>
+                            <AdminUsers />
+                        </SuperAdminRoute>
+                    } />
+                    <Route path="/admin/logs" element={
+                        <SuperAdminRoute>
+                            <AdminLogs />
+                        </SuperAdminRoute>
+                    } />
+
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    
+                    {/* 404 */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </Router>
+        </LanguageProvider>
     );
 }
 

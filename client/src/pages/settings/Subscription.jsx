@@ -7,8 +7,10 @@ import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Subscription = () => {
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [loadingPayment, setLoadingPayment] = useState(false);
@@ -17,7 +19,6 @@ const Subscription = () => {
     const [subscription, setSubscription] = useState(null);
     const [plans, setPlans] = useState([]);
 
-    // Récupérer l'abonnement
     const fetchSubscription = useCallback(async () => {
         try {
             setLoading(true);
@@ -25,19 +26,19 @@ const Subscription = () => {
             setSubscription(response.subscription);
             setPlans(response.plans || []);
         } catch (err) {
-            setError('Erreur lors du chargement de l\'abonnement');
+            setError(t('error'));
             console.error(err);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
         fetchSubscription();
     }, [fetchSubscription]);
 
     const handleCancel = async () => {
-        if (!window.confirm('Annuler votre abonnement ? Vous pourrez continuer jusqu\'à la fin de la période.')) return;
+        if (!window.confirm(`${t('cancel_confirm') || 'Annuler votre abonnement ? Vous pourrez continuer jusqu\'à la fin de la période.'}`)) return;
         
         setSaving(true);
         setError('');
@@ -48,7 +49,7 @@ const Subscription = () => {
             fetchSubscription();
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de l\'annulation');
+            setError(err.response?.data?.message || t('error'));
         } finally {
             setSaving(false);
         }
@@ -66,10 +67,10 @@ const Subscription = () => {
             if (response.success && response.url) {
                 window.location.href = response.url;
             } else {
-                setError('Erreur lors de l\'initialisation du paiement');
+                setError(t('payment_error') || 'Erreur lors de l\'initialisation du paiement');
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de l\'initialisation du paiement');
+            setError(err.response?.data?.message || t('error'));
             console.error(err);
         } finally {
             setLoadingPayment(false);
@@ -93,18 +94,18 @@ const Subscription = () => {
                 borderBottom: '1px solid var(--gray-200)',
                 flexWrap: 'wrap'
             }}>
-                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 Tableau de bord</Link>
-                <Link to="/products" className="btn btn-sm btn-outline">📦 Produits</Link>
-                <Link to="/sales" className="btn btn-sm btn-outline">💰 Ventes</Link>
-                <Link to="/reports" className="btn btn-sm btn-outline">📄 Rapports</Link>
-                <Link to="/employees" className="btn btn-sm btn-outline">👥 Employés</Link>
-                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ Paramètres</Link>
-                <Link to="/subscription" className="btn btn-sm btn-primary">💎 Abonnement</Link>
+                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 {t('nav_dashboard')}</Link>
+                <Link to="/products" className="btn btn-sm btn-outline">📦 {t('nav_products')}</Link>
+                <Link to="/sales" className="btn btn-sm btn-outline">💰 {t('nav_sales')}</Link>
+                <Link to="/reports" className="btn btn-sm btn-outline">📄 {t('nav_reports')}</Link>
+                <Link to="/employees" className="btn btn-sm btn-outline">👥 {t('nav_employees')}</Link>
+                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ {t('nav_settings')}</Link>
+                <Link to="/subscription" className="btn btn-sm btn-primary">💎 {t('nav_subscription')}</Link>
             </div>
 
-            <h2>Abonnement</h2>
+            <h2>{t('subscription_title')}</h2>
             <p style={{ color: 'var(--gray-500)', marginBottom: 'var(--spacing-6)' }}>
-                Gérez votre abonnement et choisissez le plan adapté à vos besoins
+                {t('subscription_subtitle')}
             </p>
 
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -114,7 +115,7 @@ const Subscription = () => {
             {subscription && (
                 <div className="card" style={{ marginBottom: 'var(--spacing-6)', background: `linear-gradient(135deg, ${subscription.planColor || '#0F6B3A'}20, white)` }}>
                     <div className="card-header">
-                        <h3>📋 Votre abonnement actuel</h3>
+                        <h3>{t('current_subscription')}</h3>
                     </div>
                     <div className="card-body">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--spacing-4)' }}>
@@ -123,20 +124,20 @@ const Subscription = () => {
                                     {subscription.planName}
                                 </div>
                                 <div style={{ marginTop: 'var(--spacing-2)' }}>
-                                    <strong>Statut:</strong>{' '}
+                                    <strong>{t('status')}:</strong>{' '}
                                     <span className={subscription.isActive ? 'badge-success' : 'badge-danger'}>
-                                        {subscription.isActive ? 'Actif' : 'Expiré'}
+                                        {subscription.isActive ? t('active') : t('expired')}
                                     </span>
                                 </div>
                                 <div>
-                                    <strong>Valable jusqu'au:</strong> {new Date(subscription.endDate).toLocaleDateString('fr-FR')}
+                                    <strong>{t('valid_until')}:</strong> {new Date(subscription.endDate).toLocaleDateString('fr-FR')}
                                 </div>
                                 <div>
-                                    <strong>Jours restants:</strong> {subscription.daysRemaining} jours
+                                    <strong>{t('days_remaining')}:</strong> {subscription.daysRemaining} {t('days') || 'jours'}
                                 </div>
                                 {subscription.autoRenew && (
                                     <div>
-                                        <strong>Renouvellement:</strong> Automatique
+                                        <strong>{t('auto_renew')}:</strong> {t('yes')}
                                     </div>
                                 )}
                             </div>
@@ -147,7 +148,7 @@ const Subscription = () => {
                                         onClick={handleCancel}
                                         disabled={saving}
                                     >
-                                        Annuler l'abonnement
+                                        {t('cancel')}
                                     </button>
                                 )}
                             </div>
@@ -157,7 +158,7 @@ const Subscription = () => {
             )}
 
             {/* Plans d'abonnement */}
-            <h3 style={{ marginBottom: 'var(--spacing-4)' }}>📊 Choisissez votre plan</h3>
+            <h3 style={{ marginBottom: 'var(--spacing-4)' }}>{t('choose_plan')}</h3>
             
             <div style={{
                 display: 'grid',
@@ -180,39 +181,45 @@ const Subscription = () => {
                                 borderRadius: '20px',
                                 fontSize: '0.7rem'
                             }}>
-                                Actuel
+                                {t('current_plan')}
                             </div>
                         )}
                         <div className="card-header" style={{ textAlign: 'center' }}>
                             <h3>{plan.name}</h3>
                             <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--primary-500)' }}>
-                                {plan.price === 0 ? 'Gratuit' : `${formatPrice(plan.price)} GNF`}
+                                {plan.price === 0 ? t('free') : `${formatPrice(plan.price)} GNF`}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
-                                / {plan.duration} jours
+                                / {plan.duration} {t('days') || 'jours'}
                             </div>
                         </div>
                         <div className="card-body">
                             <ul style={{ margin: 0, paddingLeft: 'var(--spacing-4)', lineHeight: '1.8' }}>
-                                <li>📦 {plan.maxProducts} produits max</li>
-                                <li>👥 {plan.maxEmployees} employés max</li>
-                                {plan.features.map((feature, idx) => (
-                                    <li key={idx}>
-                                        {feature.includes('advanced') ? '⚡ ' : '✓ '}
-                                        {feature === 'stock_basic' && 'Gestion de stock basique'}
-                                        {feature === 'stock_advanced' && 'Gestion de stock avancée'}
-                                        {feature === 'sales_basic' && 'Ventes basiques'}
-                                        {feature === 'sales_advanced' && 'Ventes avancées + panier'}
-                                        {feature === 'reports_basic' && 'Rapports basiques'}
-                                        {feature === 'reports_advanced' && 'Rapports avancés + graphiques'}
-                                        {feature === 'pdf_exports' && 'Export PDF/Excel'}
-                                        {feature === 'employees' && 'Gestion des employés'}
-                                        {feature === 'advanced_stats' && 'Statistiques avancées'}
-                                        {feature === 'multiple_locations' && 'Multi-emplacements'}
-                                        {feature === 'api_access' && 'API Access'}
-                                        {feature === 'priority_support' && 'Support prioritaire'}
-                                    </li>
-                                ))}
+                                <li>📦 {plan.maxProducts} {t('products_max')}</li>
+                                <li>👥 {plan.maxEmployees} {t('employees_max')}</li>
+                                {plan.features.map((feature, idx) => {
+                                    let featureText = '';
+                                    if (feature === 'stock_basic') featureText = t('stock_basic');
+                                    else if (feature === 'stock_advanced') featureText = t('stock_advanced');
+                                    else if (feature === 'sales_basic') featureText = t('sales_basic');
+                                    else if (feature === 'sales_advanced') featureText = t('sales_advanced');
+                                    else if (feature === 'reports_basic') featureText = t('reports_basic');
+                                    else if (feature === 'reports_advanced') featureText = t('reports_advanced');
+                                    else if (feature === 'pdf_exports') featureText = t('pdf_exports');
+                                    else if (feature === 'employees') featureText = t('employees');
+                                    else if (feature === 'advanced_stats') featureText = t('advanced_stats');
+                                    else if (feature === 'multiple_locations') featureText = t('multiple_locations');
+                                    else if (feature === 'api_access') featureText = t('api_access');
+                                    else if (feature === 'priority_support') featureText = t('priority_support');
+                                    else featureText = feature;
+                                    
+                                    return (
+                                        <li key={idx}>
+                                            {feature.includes('advanced') ? '⚡ ' : '✓ '}
+                                            {featureText}
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         </div>
                         <div className="card-footer">
@@ -223,8 +230,8 @@ const Subscription = () => {
                                     onClick={() => handleSubscribe(plan.id)}
                                     disabled={saving || loadingPayment}
                                 >
-                                    {loadingPayment ? '⏳ Redirection...' : 
-                                     plan.price === 0 ? 'Commencer l\'essai' : `💰 Payer ${formatPrice(plan.price)} GNF`}
+                                    {loadingPayment ? '⏳ ' + (t('redirecting') || 'Redirection...') : 
+                                     plan.price === 0 ? t('trial') : `${t('subscribe')} ${formatPrice(plan.price)} GNF`}
                                 </button>
                             )}
                             {subscription?.plan === plan.id && (
@@ -233,7 +240,7 @@ const Subscription = () => {
                                     style={{ width: '100%' }}
                                     disabled
                                 >
-                                    Plan actuel
+                                    {t('current_plan')}
                                 </button>
                             )}
                         </div>

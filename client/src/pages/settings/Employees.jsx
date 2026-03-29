@@ -2,61 +2,52 @@
  * PAGE GESTION EMPLOYÉS
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal';
+import { useLanguage } from '../../context/LanguageContext';
 
 // Mapping des disciplines
-const getDisciplineLabel = (discipline) => {
+const getDisciplineLabel = (discipline, t) => {
     const labels = {
-        'pharmacien': '💊 Pharmacien',
-        'médecin': '🩺 Médecin',
-        'infirmier': '🩹 Infirmier',
-        'assistant': '📋 Assistant',
-        'comptable': '💰 Comptable',
-        'autre': '📁 Autre'
+        'pharmacien': `💊 ${t('pharmacist')}`,
+        'médecin': `🩺 ${t('doctor')}`,
+        'infirmier': `🩹 ${t('nurse')}`,
+        'assistant': `📋 ${t('assistant')}`,
+        'comptable': `💰 ${t('accountant')}`,
+        'autre': `📁 ${t('other')}`
     };
-    
-    if (!discipline) {
-        return '📁 Non défini';
-    }
-    
     return labels[discipline] || discipline;
 };
 
 // Couleur de fond selon discipline
 const getDisciplineColor = (discipline) => {
     switch(discipline) {
-        case 'pharmacien':
-            return { bg: '#E8F3EF', color: '#0F6B3A' };
-        case 'médecin':
-            return { bg: '#DBEAFE', color: '#1E40AF' };
-        case 'infirmier':
-            return { bg: '#FEF3C7', color: '#92400E' };
-        case 'assistant':
-            return { bg: '#F3F4F6', color: '#374151' };
-        case 'comptable':
-            return { bg: '#D1FAE5', color: '#065F46' };
-        default:
-            return { bg: '#F3F4F6', color: '#6B7280' };
+        case 'pharmacien': return { bg: '#E8F3EF', color: '#0F6B3A' };
+        case 'médecin': return { bg: '#DBEAFE', color: '#1E40AF' };
+        case 'infirmier': return { bg: '#FEF3C7', color: '#92400E' };
+        case 'assistant': return { bg: '#F3F4F6', color: '#374151' };
+        case 'comptable': return { bg: '#D1FAE5', color: '#065F46' };
+        default: return { bg: '#F3F4F6', color: '#6B7280' };
     }
 };
 
-const getPermissionLabel = (permission) => {
+const getPermissionLabel = (permission, t) => {
     const labels = {
-        manage_stock: '📦 Gestion stock',
-        make_sales: '💰 Ventes',
-        view_reports: '📊 Rapports',
-        manage_users: '👥 Gestion utilisateurs',
-        manage_settings: '⚙️ Paramètres'
+        manage_stock: `📦 ${t('manage_stock')}`,
+        make_sales: `💰 ${t('make_sales')}`,
+        view_reports: `📊 ${t('view_reports')}`,
+        manage_users: `👥 ${t('manage_users')}`,
+        manage_settings: `⚙️ ${t('manage_settings')}`
     };
     return labels[permission] || permission;
 };
 
 const Employees = () => {
+    const { t } = useLanguage();
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -80,22 +71,23 @@ const Employees = () => {
         permissions: ['make_sales']
     });
 
-    const fetchEmployees = async () => {
+    // Utiliser useCallback pour éviter les re-créations
+    const fetchEmployees = useCallback(async () => {
         try {
             setLoading(true);
             const response = await api.get('/employees');
             setEmployees(response.employees || []);
         } catch (err) {
-            setError('Erreur lors du chargement des employés');
+            setError(t('error'));
             console.error(err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [t]);
 
     useEffect(() => {
         fetchEmployees();
-    }, []);
+    }, [fetchEmployees]);
 
     const resetForm = () => {
         setFormData({
@@ -140,12 +132,12 @@ const Employees = () => {
         setError('');
         
         if (modalMode === 'create' && formData.password !== formData.confirmPassword) {
-            setError('Les mots de passe ne correspondent pas');
+            setError(t('password_mismatch') || 'Les mots de passe ne correspondent pas');
             return;
         }
         
         if (modalMode === 'create' && formData.password.length < 6) {
-            setError('Le mot de passe doit contenir au moins 6 caractères');
+            setError(t('password_too_short') || 'Le mot de passe doit contenir au moins 6 caractères');
             return;
         }
         
@@ -160,7 +152,7 @@ const Employees = () => {
                     discipline: formData.discipline,
                     permissions: formData.permissions
                 });
-                setSuccess('Employé ajouté avec succès');
+                setSuccess(t('employee_added') || 'Employé ajouté avec succès');
             } else {
                 await api.put(`/employees/${selectedEmployee._id}`, {
                     firstName: formData.firstName,
@@ -169,14 +161,14 @@ const Employees = () => {
                     discipline: formData.discipline,
                     permissions: formData.permissions
                 });
-                setSuccess('Employé modifié avec succès');
+                setSuccess(t('employee_updated') || 'Employé modifié avec succès');
             }
             
             setModalOpen(false);
             fetchEmployees();
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de l\'enregistrement');
+            setError(err.response?.data?.message || t('error'));
         }
     };
 
@@ -187,19 +179,19 @@ const Employees = () => {
             fetchEmployees();
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de la modification');
+            setError(err.response?.data?.message || t('error'));
         }
     };
 
     const deleteEmployee = async (employee) => {
-        if (window.confirm(`Voulez-vous vraiment supprimer ${employee.firstName} ${employee.lastName} ?`)) {
+        if (window.confirm(`${t('confirm_delete')} ${employee.firstName} ${employee.lastName} ?`)) {
             try {
                 await api.delete(`/employees/${employee._id}`);
-                setSuccess('Employé supprimé avec succès');
+                setSuccess(t('employee_deleted') || 'Employé supprimé avec succès');
                 fetchEmployees();
                 setTimeout(() => setSuccess(''), 3000);
             } catch (err) {
-                setError(err.response?.data?.message || 'Erreur lors de la suppression');
+                setError(err.response?.data?.message || t('error'));
             }
         }
     };
@@ -231,12 +223,12 @@ const Employees = () => {
                 borderBottom: '1px solid var(--gray-200)',
                 flexWrap: 'wrap'
             }}>
-                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 Tableau de bord</Link>
-                <Link to="/products" className="btn btn-sm btn-outline">📦 Produits</Link>
-                <Link to="/sales" className="btn btn-sm btn-outline">💰 Ventes</Link>
-                <Link to="/reports" className="btn btn-sm btn-outline">📄 Rapports</Link>
-                <Link to="/employees" className="btn btn-sm btn-primary">👥 Employés</Link>
-                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ Paramètres</Link>
+                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 {t('nav_dashboard')}</Link>
+                <Link to="/products" className="btn btn-sm btn-outline">📦 {t('nav_products')}</Link>
+                <Link to="/sales" className="btn btn-sm btn-outline">💰 {t('nav_sales')}</Link>
+                <Link to="/reports" className="btn btn-sm btn-outline">📄 {t('nav_reports')}</Link>
+                <Link to="/employees" className="btn btn-sm btn-primary">👥 {t('nav_employees')}</Link>
+                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ {t('nav_settings')}</Link>
             </div>
 
             <div style={{
@@ -248,11 +240,11 @@ const Employees = () => {
                 gap: 'var(--spacing-4)'
             }}>
                 <div>
-                    <h2>Gestion des employés</h2>
-                    <p style={{ color: 'var(--gray-500)' }}>Gérez les comptes de vos employés et leurs permissions</p>
+                    <h2>{t('employees_title')}</h2>
+                    <p style={{ color: 'var(--gray-500)' }}>{t('employees_subtitle')}</p>
                 </div>
                 <button className="btn btn-primary" onClick={openCreateModal}>
-                    + Ajouter un employé
+                    + {t('add_employee')}
                 </button>
             </div>
 
@@ -270,25 +262,22 @@ const Employees = () => {
                     borderBottom: '1px solid var(--gray-200)',
                     fontWeight: 600,
                     fontSize: '0.875rem',
-                    color: 'var(--gray-600)'
+                    color: 'var(--gray-600)',
+                    flexWrap: 'wrap'
                 }}>
-                    <div style={{ width: '200px' }}>Employé</div>
-                    <div style={{ width: '120px' }}>Contact</div>
-                    <div style={{ width: '140px' }}>Discipline</div>
-                    <div style={{ width: '200px' }}>Permissions</div>
-                    <div style={{ width: '80px' }}>Statut</div>
-                    <div style={{ flex: 1 }}>Actions</div>
+                    <div style={{ width: '180px' }}>{t('employee')}</div>
+                    <div style={{ width: '120px' }}>{t('contact')}</div>
+                    <div style={{ width: '140px' }}>{t('discipline')}</div>
+                    <div style={{ width: '180px' }}>{t('permissions')}</div>
+                    <div style={{ width: '80px' }}>{t('status')}</div>
+                    <div style={{ width: '100px' }}>{t('actions')}</div>
                 </div>
 
                 {/* Corps de la liste */}
                 <div>
                     {employees.length === 0 ? (
-                        <div style={{
-                            textAlign: 'center',
-                            padding: 'var(--spacing-8)',
-                            color: 'var(--gray-500)'
-                        }}>
-                            Aucun employé. Cliquez sur "Ajouter un employé" pour commencer.
+                        <div style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--gray-500)' }}>
+                            {t('no_employees')}
                         </div>
                     ) : (
                         employees.map(emp => {
@@ -302,12 +291,13 @@ const Employees = () => {
                                         padding: 'var(--spacing-3) var(--spacing-4)',
                                         borderBottom: '1px solid var(--gray-100)',
                                         alignItems: 'center',
-                                        transition: 'background-color 0.2s'
+                                        transition: 'background-color 0.2s',
+                                        flexWrap: 'wrap'
                                     }}
                                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
                                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                 >
-                                    <div style={{ width: '200px' }}>
+                                    <div style={{ width: '180px' }}>
                                         <strong>{emp.firstName} {emp.lastName}</strong>
                                         <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
                                             {emp.email}
@@ -326,10 +316,10 @@ const Employees = () => {
                                             fontSize: '0.75rem',
                                             fontWeight: 500
                                         }}>
-                                            {getDisciplineLabel(emp.discipline)}
+                                            {getDisciplineLabel(emp.discipline, t)}
                                         </span>
                                     </div>
-                                    <div style={{ width: '200px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                    <div style={{ width: '180px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                                         {emp.permissions?.map(p => (
                                             <span key={p} style={{
                                                 display: 'inline-block',
@@ -338,27 +328,27 @@ const Employees = () => {
                                                 borderRadius: '4px',
                                                 fontSize: '0.7rem'
                                             }}>
-                                                {getPermissionLabel(p)}
+                                                {getPermissionLabel(p, t)}
                                             </span>
                                         ))}
                                     </div>
                                     <div style={{ width: '80px' }}>
                                         <span className={emp.isActive ? 'badge-success' : 'badge-danger'}>
-                                            {emp.isActive ? 'Actif' : 'Inactif'}
+                                            {emp.isActive ? t('active') : t('inactive')}
                                         </span>
                                     </div>
-                                    <div style={{ flex: 1, display: 'flex', gap: 'var(--spacing-2)' }}>
+                                    <div style={{ width: '100px', display: 'flex', gap: 'var(--spacing-2)' }}>
                                         <button
                                             className="btn btn-sm btn-outline"
                                             onClick={() => openEditModal(emp)}
-                                            title="Modifier"
+                                            title={t('edit')}
                                         >
                                             ✏️
                                         </button>
                                         <button
                                             className="btn btn-sm btn-outline"
                                             onClick={() => toggleEmployee(emp)}
-                                            title={emp.isActive ? 'Désactiver' : 'Activer'}
+                                            title={emp.isActive ? t('deactivate') : t('activate')}
                                             style={{ color: emp.isActive ? 'var(--warning)' : 'var(--success)' }}
                                         >
                                             {emp.isActive ? '🔒' : '🔓'}
@@ -366,7 +356,7 @@ const Employees = () => {
                                         <button
                                             className="btn btn-sm btn-outline"
                                             onClick={() => deleteEmployee(emp)}
-                                            title="Supprimer"
+                                            title={t('delete')}
                                             style={{ color: 'var(--danger)' }}
                                         >
                                             🗑️
@@ -383,13 +373,13 @@ const Employees = () => {
             <Modal
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
-                title={modalMode === 'create' ? 'Ajouter un employé' : 'Modifier l\'employé'}
+                title={modalMode === 'create' ? t('add_employee') : t('edit')}
                 size="lg"
             >
                 <form onSubmit={handleSubmit}>
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label required">Prénom</label>
+                            <label className="form-label required">{t('first_name')}</label>
                             <input
                                 type="text"
                                 name="firstName"
@@ -400,7 +390,7 @@ const Employees = () => {
                             />
                         </div>
                         <div className="form-group">
-                            <label className="form-label required">Nom</label>
+                            <label className="form-label required">{t('last_name')}</label>
                             <input
                                 type="text"
                                 name="lastName"
@@ -413,7 +403,7 @@ const Employees = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label required">Email</label>
+                        <label className="form-label required">{t('email')}</label>
                         <input
                             type="email"
                             name="email"
@@ -424,14 +414,14 @@ const Employees = () => {
                             disabled={modalMode === 'edit'}
                         />
                         {modalMode === 'edit' && (
-                            <div className="form-hint">L'email ne peut pas être modifié</div>
+                            <div className="form-hint">{t('email_cannot_change') || "L'email ne peut pas être modifié"}</div>
                         )}
                     </div>
 
                     {modalMode === 'create' && (
                         <div className="form-row">
                             <div className="form-group">
-                                <label className="form-label required">Mot de passe</label>
+                                <label className="form-label required">{t('password')}</label>
                                 <div style={{ position: 'relative' }}>
                                     <input
                                         type={showPassword ? 'text' : 'password'}
@@ -463,7 +453,7 @@ const Employees = () => {
                                 </div>
                             </div>
                             <div className="form-group">
-                                <label className="form-label required">Confirmer</label>
+                                <label className="form-label required">{t('confirm_password')}</label>
                                 <div style={{ position: 'relative' }}>
                                     <input
                                         type={showConfirmPassword ? 'text' : 'password'}
@@ -497,7 +487,7 @@ const Employees = () => {
                     )}
 
                     <div className="form-group">
-                        <label className="form-label">Téléphone</label>
+                        <label className="form-label">{t('phone')}</label>
                         <input
                             type="tel"
                             name="phone"
@@ -508,7 +498,7 @@ const Employees = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label required">Discipline / Spécialité</label>
+                        <label className="form-label required">{t('discipline_label')}</label>
                         <select
                             name="discipline"
                             className="form-select"
@@ -516,17 +506,17 @@ const Employees = () => {
                             onChange={(e) => setFormData({...formData, discipline: e.target.value})}
                             required
                         >
-                            <option value="pharmacien">💊 Pharmacien</option>
-                            <option value="médecin">🩺 Médecin</option>
-                            <option value="infirmier">🩹 Infirmier</option>
-                            <option value="assistant">📋 Assistant</option>
-                            <option value="comptable">💰 Comptable</option>
-                            <option value="autre">📁 Autre</option>
+                            <option value="pharmacien">💊 {t('pharmacist')}</option>
+                            <option value="médecin">🩺 {t('doctor')}</option>
+                            <option value="infirmier">🩹 {t('nurse')}</option>
+                            <option value="assistant">📋 {t('assistant')}</option>
+                            <option value="comptable">💰 {t('accountant')}</option>
+                            <option value="autre">📁 {t('other')}</option>
                         </select>
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Permissions</label>
+                        <label className="form-label">{t('permissions_label')}</label>
                         <div style={{
                             display: 'grid',
                             gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
@@ -539,7 +529,7 @@ const Employees = () => {
                                     checked={formData.permissions.includes('manage_stock')}
                                     onChange={() => handlePermissionToggle('manage_stock')}
                                 />
-                                📦 Gestion stock
+                                📦 {t('manage_stock')}
                             </label>
                             <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
                                 <input
@@ -547,7 +537,7 @@ const Employees = () => {
                                     checked={formData.permissions.includes('make_sales')}
                                     onChange={() => handlePermissionToggle('make_sales')}
                                 />
-                                💰 Ventes
+                                💰 {t('make_sales')}
                             </label>
                             <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
                                 <input
@@ -555,7 +545,7 @@ const Employees = () => {
                                     checked={formData.permissions.includes('view_reports')}
                                     onChange={() => handlePermissionToggle('view_reports')}
                                 />
-                                📊 Rapports
+                                📊 {t('view_reports')}
                             </label>
                             <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
                                 <input
@@ -563,7 +553,7 @@ const Employees = () => {
                                     checked={formData.permissions.includes('manage_users')}
                                     onChange={() => handlePermissionToggle('manage_users')}
                                 />
-                                👥 Gestion utilisateurs
+                                👥 {t('manage_users')}
                             </label>
                             <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
                                 <input
@@ -571,17 +561,17 @@ const Employees = () => {
                                     checked={formData.permissions.includes('manage_settings')}
                                     onChange={() => handlePermissionToggle('manage_settings')}
                                 />
-                                ⚙️ Paramètres
+                                ⚙️ {t('manage_settings')}
                             </label>
                         </div>
                     </div>
 
                     <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-6)' }}>
                         <button type="submit" className="btn btn-primary">
-                            {modalMode === 'create' ? 'Ajouter l\'employé' : 'Enregistrer'}
+                            {modalMode === 'create' ? t('add_employee') : t('save')}
                         </button>
                         <button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>
-                            Annuler
+                            {t('cancel_btn')}
                         </button>
                     </div>
                 </form>

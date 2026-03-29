@@ -5,8 +5,10 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
+    const { t } = useLanguage();
     const navigate = useNavigate();
     const user = authService.getCurrentUser();
 
@@ -16,18 +18,26 @@ const Sidebar = ({ isOpen, onClose }) => {
     };
 
     const navItems = [
-        { path: '/dashboard', name: 'Tableau de bord', icon: '📊' },
-        { path: '/products', name: 'Produits', icon: '📦' },
-        { path: '/sales', name: 'Ventes', icon: '💰' },
-        { path: '/reports', name: 'Rapports', icon: '📄' },
-        { path: '/settings', name: 'Paramètres', icon: '⚙️' }
+        { path: '/dashboard', name: t('nav_dashboard'), icon: '📊' },
+        { path: '/products', name: t('nav_products'), icon: '📦' },
+        { path: '/sales', name: t('nav_sales'), icon: '💰' },
+        { path: '/reports', name: t('nav_reports'), icon: '📄' },
+        { path: '/employees', name: t('nav_employees'), icon: '👥' },
+        { path: '/settings', name: t('nav_settings'), icon: '⚙️' },
+        { path: '/subscription', name: t('nav_subscription'), icon: '💎' }
     ];
+
+    if (user?.role === 'super-admin') {
+        navItems.push({ path: '/admin', name: 'Admin', icon: '👑' });
+    }
 
     return (
         <>
-            {/* Overlay mobile */}
+            {/* Overlay pour mobile */}
             {isOpen && (
                 <div
+                    className="sidebar-overlay"
+                    onClick={onClose}
                     style={{
                         position: 'fixed',
                         top: 0,
@@ -35,52 +45,57 @@ const Sidebar = ({ isOpen, onClose }) => {
                         right: 0,
                         bottom: 0,
                         backgroundColor: 'rgba(0,0,0,0.5)',
-                        zIndex: 999,
-                        display: 'none'
+                        zIndex: 998,
+                        transition: 'opacity 0.3s ease'
                     }}
-                    className="sidebar-overlay"
-                    onClick={onClose}
                 />
             )}
 
             <aside
+                className="sidebar"
                 style={{
                     position: 'fixed',
                     left: 0,
                     top: 0,
-                    width: '260px',
+                    width: '280px',
                     height: '100vh',
                     backgroundColor: '#111827',
                     color: '#9CA3AF',
-                    transition: 'transform 0.25s ease',
-                    zIndex: 1000,
+                    transition: 'transform 0.3s ease',
+                    zIndex: 999,
                     overflowY: 'auto',
-                    transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'space-between'  // ← AJOUTE CETTE LIGNE
+                    transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+                    boxShadow: '2px 0 10px rgba(0,0,0,0.1)'
                 }}
             >
                 {/* En-tête */}
-                <div style={{ padding: '24px', borderBottom: '1px solid #374151' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '1.5rem' }}>💊</span>
-                        <h2 style={{ color: 'white', margin: 0, fontSize: '1.25rem' }}>StockMedi</h2>
-                    </div>
-                    {user && (
-                        <div style={{ marginTop: '12px', fontSize: '0.75rem' }}>
-                            <div>{user.firstName} {user.lastName}</div>
-                            <div style={{ color: '#6B7280' }}>{user.role === 'owner' ? 'Propriétaire' : 'Employé'}</div>
+                <div style={{ 
+                    padding: '24px 20px', 
+                    borderBottom: '1px solid #374151',
+                    marginBottom: '16px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '1.8rem' }}>💊</span>
+                        <div>
+                            <h2 style={{ color: 'white', margin: 0, fontSize: '1.25rem' }}>StockMedi</h2>
+                            {user && (
+                                <div style={{ fontSize: '0.7rem', color: '#6B7280', marginTop: '4px' }}>
+                                    {user.firstName} {user.lastName}
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* Navigation */}
-                <nav style={{ padding: '12px', flex: 1 }}>
+                <nav style={{ flex: 1, padding: '0 12px' }}>
                     {navItems.map((item) => (
                         <NavLink
                             key={item.path}
                             to={item.path}
+                            onClick={onClose}
                             style={({ isActive }) => ({
                                 display: 'flex',
                                 alignItems: 'center',
@@ -93,7 +108,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                                 textDecoration: 'none',
                                 transition: 'all 0.2s ease'
                             })}
-                            onClick={() => onClose()}
                         >
                             <span style={{ fontSize: '1.125rem' }}>{item.icon}</span>
                             <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{item.name}</span>
@@ -101,11 +115,10 @@ const Sidebar = ({ isOpen, onClose }) => {
                     ))}
                 </nav>
 
-                {/* Séparateur */}
-                <div style={{ height: '1px', backgroundColor: '#374151', margin: '8px 12px' }} />
+                <div style={{ height: '1px', backgroundColor: '#374151', margin: '16px 20px' }} />
 
-                {/* Déconnexion - EN BAS */}
-                <div style={{ padding: '12px', marginBottom: '16px' }}>
+                {/* Déconnexion */}
+                <div style={{ padding: '12px 20px', marginBottom: '24px' }}>
                     <button
                         onClick={handleLogout}
                         style={{
@@ -133,21 +146,21 @@ const Sidebar = ({ isOpen, onClose }) => {
                         }}
                     >
                         <span style={{ fontSize: '1.125rem' }}>🚪</span>
-                        <span>Déconnexion</span>
+                        <span>{t('nav_logout')}</span>
                     </button>
                 </div>
             </aside>
 
             <style>{`
+                /* Overlay pour mobile */
                 @media (max-width: 768px) {
-                    .sidebar {
-                        transform: translateX(-100%);
-                    }
-                    .sidebar.open {
-                        transform: translateX(0);
-                    }
                     .sidebar-overlay {
                         display: block !important;
+                    }
+                }
+                @media (min-width: 769px) {
+                    .sidebar-overlay {
+                        display: none !important;
                     }
                 }
             `}</style>

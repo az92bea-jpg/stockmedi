@@ -1,42 +1,49 @@
 /**
  * COMPOSANT LAYOUT - Structure principale de l'application
- * Contient la Sidebar, le Header et le contenu principal
  */
 
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import Footer from './Footer';
 
 const Layout = () => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+
+    const toggleSidebar = () => {
+        setSidebarOpen(!sidebarOpen);
+    };
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh' }}>
-            {/* Sidebar */}
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
             
-            {/* Contenu principal */}
-            <div style={{
+            <div className="main-content" style={{
                 flex: 1,
-                marginLeft: '260px',
-                transition: 'margin-left var(--transition-normal)',
                 display: 'flex',
                 flexDirection: 'column',
-                minHeight: '100vh'
-            }} className="main-content">
-                <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+                minHeight: '100vh',
+                transition: 'margin-left 0.3s ease'
+            }}>
+                <Header onMenuClick={toggleSidebar} isSidebarOpen={sidebarOpen} />
                 <main style={{
                     flex: 1,
-                    padding: 'var(--spacing-6)',
-                    backgroundColor: 'var(--gray-50)'
+                    padding: '24px',
+                    backgroundColor: '#F9FAFB'
                 }}>
                     <Outlet />
                 </main>
+                <Footer />
             </div>
 
-            {/* Styles responsives */}
             <style>{`
+                @media (min-width: 769px) {
+                    .main-content {
+                        margin-left: ${sidebarOpen ? '280px' : '0'};
+                        transition: margin-left 0.3s ease;
+                    }
+                }
                 @media (max-width: 768px) {
                     .main-content {
                         margin-left: 0 !important;
