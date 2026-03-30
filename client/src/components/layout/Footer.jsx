@@ -10,6 +10,13 @@ const Footer = () => {
     const { t } = useLanguage();
     const currentYear = new Date().getFullYear();
 
+    // Liens réseaux sociaux
+    const socialLinks = [
+        { name: 'Facebook', url: 'https://facebook.com/stockmedi', icon: '📘', color: '#1877F2' },
+        { name: 'WhatsApp', url: 'https://wa.me/224600000000', icon: '💬', color: '#25D366' },
+        { name: 'Telegram', url: 'https://t.me/stockmedi', icon: '✈️', color: '#26A5E4' }
+    ];
+
     return (
         <footer style={{
             backgroundColor: '#111827',
@@ -36,9 +43,40 @@ const Footer = () => {
                         {t('footer_description') || 'Solution de gestion pharmaceutique multi-espaces pour pharmacies, cliniques et hôpitaux.'}
                     </p>
                     <div style={{ display: 'flex', gap: '12px' }}>
-                        <Link to="/contact" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '1.25rem' }}>📧</Link>
-                        <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '1.25rem' }}>🐦</a>
-                        <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '1.25rem' }}>💼</a>
+                        {socialLinks.map((social) => (
+                            <a
+                                key={social.name}
+                                href={social.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    color: '#9CA3AF',
+                                    textDecoration: 'none',
+                                    fontSize: '1.25rem',
+                                    transition: 'all 0.2s ease',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '50%',
+                                    backgroundColor: 'rgba(255,255,255,0.1)'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = social.color;
+                                    e.currentTarget.style.color = 'white';
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                                    e.currentTarget.style.color = '#9CA3AF';
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                }}
+                                title={social.name}
+                            >
+                                {social.icon}
+                            </a>
+                        ))}
                     </div>
                 </div>
 
@@ -75,22 +113,22 @@ const Footer = () => {
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         <li style={{ marginBottom: '8px' }}>
                             <Link to="/about" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem' }}>
-                                {t('footer_about') || 'À propos'}
+                                📖 {t('footer_about') || 'À propos'}
                             </Link>
                         </li>
                         <li style={{ marginBottom: '8px' }}>
                             <Link to="/privacy" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem' }}>
-                                {t('footer_privacy') || 'Confidentialité'}
+                                🔒 {t('footer_privacy') || 'Confidentialité'}
                             </Link>
                         </li>
                         <li style={{ marginBottom: '8px' }}>
                             <Link to="/terms" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem' }}>
-                                {t('footer_terms') || 'Conditions d\'utilisation'}
+                                📜 {t('footer_terms') || "Conditions d'utilisation"}
                             </Link>
                         </li>
                         <li style={{ marginBottom: '8px' }}>
                             <Link to="/contact" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem' }}>
-                                {t('footer_contact') || 'Contact'}
+                                📧 {t('footer_contact') || 'Contact'}
                             </Link>
                         </li>
                     </ul>

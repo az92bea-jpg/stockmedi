@@ -32,9 +32,9 @@ import AdminCompanies from './pages/admin/Companies';
 import AdminUsers from './pages/admin/Users';
 import AdminLogs from './pages/admin/Logs';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
-
-
-
+import About from './pages/legal/About';
+import Terms from './pages/legal/Terms';
+import Contact from './pages/legal/Contact';
 
 // Layout
 import Layout from './components/layout/Layout';
@@ -70,6 +70,9 @@ function App() {
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/contact" element={<Contact />} />
                     
                     {/* Routes protégées (utilisateurs normaux) */}
                     <Route path="/" element={
@@ -108,8 +111,6 @@ function App() {
                             <AdminLogs />
                         </SuperAdminRoute>
                     } />
-
-                    <Route path="/privacy" element={<PrivacyPolicy />} />
                     
                     {/* 404 */}
                     <Route path="*" element={<Navigate to="/" replace />} />
