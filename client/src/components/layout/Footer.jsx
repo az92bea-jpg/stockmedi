@@ -24,7 +24,8 @@ const Footer = () => {
             marginTop: 'auto',
             borderTop: '1px solid #1F2937',
             width: '100%',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            flexShrink: 0
         }}>
             <div style={{
                 maxWidth: '1280px',

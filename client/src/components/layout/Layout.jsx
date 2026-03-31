@@ -16,7 +16,11 @@ const Layout = () => {
     };
 
     return (
-        <div style={{ display: 'flex', minHeight: '100vh' }}>
+        <div style={{ 
+            display: 'flex', 
+            minHeight: '100vh',
+            position: 'relative'
+        }}>
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
             
             <div className="main-content" style={{
@@ -24,15 +28,14 @@ const Layout = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 minHeight: '100vh',
-                transition: 'margin-left 0.3s ease'
+                transition: 'margin-left 0.3s ease',
+                width: '100%'
             }}>
                 <Header onMenuClick={toggleSidebar} isSidebarOpen={sidebarOpen} />
                 <main style={{
-                    flex: 1,
+                    flex: '1 0 auto',
                     padding: '24px',
                     backgroundColor: '#F9FAFB',
-                    // Éviter le débordement sur mobile
-                    overflowX: 'auto',
                     width: '100%',
                     boxSizing: 'border-box'
                 }}>
@@ -57,6 +60,14 @@ const Layout = () => {
                     }
                     main {
                         padding: 16px !important;
+                        flex: 1 0 auto !important;
+                    }
+                }
+                
+                /* Pour les très petits écrans */
+                @media (max-width: 480px) {
+                    main {
+                        padding: 12px !important;
                     }
                 }
             `}</style>

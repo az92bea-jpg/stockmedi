@@ -4,6 +4,7 @@ const InstallPrompt = () => {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [showPrompt, setShowPrompt] = useState(false);
     const [isInstalled, setIsInstalled] = useState(false);
+    const [dismissed, setDismissed] = useState(false);
     const hasChecked = useRef(false);
 
     useEffect(() => {
@@ -23,20 +24,11 @@ const InstallPrompt = () => {
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        
-        // Vérifier après 5 secondes
-        const timer = setTimeout(() => {
-            if (!showPrompt && !isInstalled) {
-                setIsInstalled(true);
-            }
-        }, 5000);
 
         return () => {
             window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-            clearTimeout(timer);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Tableau vide intentionnellement
+    }, []);
 
     const handleInstall = () => {
         if (deferredPrompt) {
@@ -47,6 +39,8 @@ const InstallPrompt = () => {
                     setShowPrompt(false);
                 } else {
                     console.log('❌ Utilisateur a refusé l\'installation');
+                    setDismissed(true);
+                    setShowPrompt(false);
                 }
                 setDeferredPrompt(null);
             });
@@ -54,10 +48,11 @@ const InstallPrompt = () => {
     };
 
     const handleDismiss = () => {
+        setDismissed(true);
         setShowPrompt(false);
     };
 
-    if (isInstalled || !showPrompt) return null;
+    if (isInstalled || dismissed || !showPrompt) return null;
 
     return (
         <div style={{

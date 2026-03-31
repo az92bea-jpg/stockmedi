@@ -129,3 +129,28 @@ body {
         font-size: 1.5rem !important;
     }
 }
+
+
+/* ========== CORRECTION FOOTER MOBILE ========== */
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* S'assurer que le contenu prend tout l'espace disponible */
+main {
+    flex: 1 0 auto;
+}
+
+/* Footer reste en bas */
+footer {
+    flex-shrink: 0;
+}
