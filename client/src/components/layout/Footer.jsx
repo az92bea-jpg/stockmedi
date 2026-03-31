@@ -10,11 +10,47 @@ const Footer = () => {
     const { t } = useLanguage();
     const currentYear = new Date().getFullYear();
 
+    // Configuration des réseaux sociaux avec chemins d'icônes personnalisées
     const socialLinks = [
-        { name: 'Facebook', url: 'https://facebook.com/stockmedi', icon: '📘', color: '#1877F2' },
-        { name: 'WhatsApp', url: 'https://wa.me/224600000000', icon: '💬', color: '#25D366' },
-        { name: 'Telegram', url: 'https://t.me/stockmedi', icon: '✈️', color: '#26A5E4' }
+        { 
+            name: 'Facebook', 
+            url: 'https://facebook.com/stockmedi', 
+            iconPath: '/assets/icons/social/facebook.svg',
+            fallbackIcon: '📘',
+            color: '#1877F2' 
+        },
+        { 
+            name: 'WhatsApp', 
+            url: 'https://wa.me/224600000000', 
+            iconPath: '/assets/icons/social/whatsapp.svg',
+            fallbackIcon: '💬',
+            color: '#25D366' 
+        },
+        { 
+            name: 'Telegram', 
+            url: 'https://t.me/stockmedi', 
+            iconPath: '/assets/icons/social/telegram.svg',
+            fallbackIcon: '✈️',
+            color: '#26A5E4' 
+        }
     ];
+
+    // Composant d'icône avec fallback
+    const SocialIcon = ({ link }) => {
+        const [imgError, setImgError] = React.useState(false);  // ← État pour savoir si l'image a échoué
+
+        if (!imgError) {
+            return (
+                <img 
+                    src={link.iconPath}      // ← Essayer de charger l'icône SVG
+                    alt={link.name}
+                    style={{ width: '20px', height: '20px' }}
+                    onError={() => setImgError(true)}  // ← Si erreur, passer au fallback
+                />
+            );
+        }
+        return <span style={{ fontSize: '1rem' }}>{link.fallbackIcon}</span>;  // ← Fallback emoji
+    };
 
     return (
         <footer style={{
@@ -52,31 +88,27 @@ const Footer = () => {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={{
-                                    color: '#9CA3AF',
-                                    textDecoration: 'none',
-                                    fontSize: '1.25rem',
-                                    transition: 'all 0.2s ease',
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     width: '36px',
                                     height: '36px',
                                     borderRadius: '50%',
-                                    backgroundColor: 'rgba(255,255,255,0.1)'
+                                    backgroundColor: 'rgba(255,255,255,0.1)',
+                                    transition: 'all 0.2s ease',
+                                    textDecoration: 'none'
                                 }}
                                 onMouseEnter={(e) => {
                                     e.currentTarget.style.backgroundColor = social.color;
-                                    e.currentTarget.style.color = 'white';
                                     e.currentTarget.style.transform = 'translateY(-2px)';
                                 }}
                                 onMouseLeave={(e) => {
                                     e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
-                                    e.currentTarget.style.color = '#9CA3AF';
                                     e.currentTarget.style.transform = 'translateY(0)';
                                 }}
                                 title={social.name}
                             >
-                                {social.icon}
+                                <SocialIcon link={social} />
                             </a>
                         ))}
                     </div>
