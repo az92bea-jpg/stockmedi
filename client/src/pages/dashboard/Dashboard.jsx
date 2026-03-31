@@ -162,7 +162,11 @@ const Dashboard = () => {
                     <h3>⚡ {t('quick_actions')}</h3>
                 </div>
                 <div className="card-body">
-                    <div style={{ display: 'flex', gap: 'var(--spacing-3)', flexWrap: 'wrap' }}>
+                    <div className="quick-actions" style={{
+                        display: 'flex',
+                        gap: 'var(--spacing-3)',
+                        flexWrap: 'wrap'
+                    }}>
                         <Link to="/products" className="btn btn-primary">
                             + {t('add_product')}
                         </Link>
@@ -191,15 +195,16 @@ const Dashboard = () => {
                                         <th>{t('product_name') || 'Produit'}</th>
                                         <th>{t('quantity_sold')}</th>
                                         <th>{t('revenue')}</th>
+                                    
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {stats.topProducts.map((product, index) => (
                                         <tr key={index}>
-                                            <td>{index + 1}</td>
+                                            <td style={{ textAlign: 'center' }}>{index + 1}</td>
                                             <td>{product.name}</td>
-                                            <td>{formatNumber(product.totalQuantity)}</td>
-                                            <td><strong>{formatNumber(product.totalRevenue)} GNF</strong></td>
+                                            <td style={{ textAlign: 'center' }}>{formatNumber(product.totalQuantity)}</td>
+                                            <td style={{ textAlign: 'right' }}><strong>{formatNumber(product.totalRevenue)} GNF</strong></td>
                                         </tr>
                                     ))}
                                 </tbody>

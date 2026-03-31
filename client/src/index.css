@@ -36,10 +36,15 @@ body {
     /* Ajuster les cartes */
     .card {
         border-radius: 12px !important;
+        margin-bottom: 16px !important;
     }
     
     .card-body {
         padding: 16px !important;
+    }
+    
+    .card-header {
+        padding: 12px 16px !important;
     }
     
     /* Ajuster les tableaux */
@@ -58,9 +63,43 @@ body {
         font-size: 14px !important;
     }
     
+    .btn-sm {
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+    }
+    
     /* Ajuster les formulaires */
     .form-input, .form-select, .form-textarea {
         font-size: 16px !important; /* Évite le zoom sur iOS */
+        padding: 10px 12px !important;
+    }
+    
+    .form-label {
+        font-size: 14px !important;
+        margin-bottom: 6px !important;
+    }
+    
+    /* Ajuster les grilles */
+    .form-row {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    
+    /* Ajuster les cartes statistiques */
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    
+    /* Ajuster les actions rapides */
+    .quick-actions {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    
+    .quick-actions .btn {
+        width: 100% !important;
+        text-align: center;
     }
 }
 
@@ -84,5 +123,9 @@ body {
     
     h3 {
         font-size: 1.125rem !important;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem !important;
     }
 }

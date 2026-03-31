@@ -35,6 +35,7 @@ import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import About from './pages/legal/About';
 import Terms from './pages/legal/Terms';
 import Contact from './pages/legal/Contact';
+import InstallPrompt from './components/common/InstallPrompt';
 
 // Layout
 import Layout from './components/layout/Layout';
@@ -116,6 +117,7 @@ function App() {
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Router>
+            <InstallPrompt />
         </LanguageProvider>
     );
 }

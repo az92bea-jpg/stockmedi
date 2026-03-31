@@ -16,6 +16,27 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+
+// ========== GESTION PWA ==========
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Empêcher l'affichage automatique
+    e.preventDefault();
+    // Stocker l'événement
+    deferredPrompt = e;
+    console.log('✅ PWA peut être installée');
+    
+    // Afficher une notification personnalisée
+    window.dispatchEvent(new CustomEvent('pwa-ready', { detail: deferredPrompt }));
+});
+
+// Écouter l'installation
+window.addEventListener('appinstalled', () => {
+    console.log('✅ PWA installée avec succès');
+    deferredPrompt = null;
+});
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <React.StrictMode>
