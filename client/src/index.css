@@ -1,13 +1,88 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ========== STYLES GLOBAUX ========== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #F9FAFB;
+}
+
+#root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========== RESPONSIVE ========== */
+
+/* Mobile (<= 768px) */
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+    
+    /* Ajuster les cartes */
+    .card {
+        border-radius: 12px !important;
+    }
+    
+    .card-body {
+        padding: 16px !important;
+    }
+    
+    /* Ajuster les tableaux */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .table {
+        min-width: 600px;
+    }
+    
+    /* Ajuster les boutons */
+    .btn {
+        padding: 10px 16px !important;
+        font-size: 14px !important;
+    }
+    
+    /* Ajuster les formulaires */
+    .form-input, .form-select, .form-textarea {
+        font-size: 16px !important; /* Évite le zoom sur iOS */
+    }
+}
+
+/* Petit mobile (<= 480px) */
+@media (max-width: 480px) {
+    main {
+        padding: 12px !important;
+    }
+    
+    .card-body {
+        padding: 12px !important;
+    }
+    
+    h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    h2 {
+        font-size: 1.25rem !important;
+    }
+    
+    h3 {
+        font-size: 1.125rem !important;
+    }
 }

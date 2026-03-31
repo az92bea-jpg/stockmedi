@@ -10,7 +10,6 @@ const Footer = () => {
     const { t } = useLanguage();
     const currentYear = new Date().getFullYear();
 
-    // Liens réseaux sociaux
     const socialLinks = [
         { name: 'Facebook', url: 'https://facebook.com/stockmedi', icon: '📘', color: '#1877F2' },
         { name: 'WhatsApp', url: 'https://wa.me/224600000000', icon: '💬', color: '#25D366' },
@@ -23,7 +22,9 @@ const Footer = () => {
             color: '#9CA3AF',
             padding: '32px 24px 24px',
             marginTop: 'auto',
-            borderTop: '1px solid #1F2937'
+            borderTop: '1px solid #1F2937',
+            width: '100%',
+            boxSizing: 'border-box'
         }}>
             <div style={{
                 maxWidth: '1280px',
@@ -42,7 +43,7 @@ const Footer = () => {
                     <p style={{ fontSize: '0.875rem', lineHeight: '1.5', marginBottom: '16px' }}>
                         {t('footer_description') || 'Solution de gestion pharmaceutique multi-espaces pour pharmacies, cliniques et hôpitaux.'}
                     </p>
-                    <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                         {socialLinks.map((social) => (
                             <a
                                 key={social.name}
@@ -137,13 +138,13 @@ const Footer = () => {
                 {/* Colonne 4 - Contact */}
                 <div>
                     <h4 style={{ color: 'white', marginBottom: '16px', fontSize: '1rem' }}>{t('footer_contact_title') || 'Contact'}</h4>
-                    <p style={{ fontSize: '0.875rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <p style={{ fontSize: '0.875rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         📧 <a href="mailto:support@stockmedi.com" style={{ color: '#9CA3AF', textDecoration: 'none' }}>support@stockmedi.com</a>
                     </p>
-                    <p style={{ fontSize: '0.875rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <p style={{ fontSize: '0.875rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         📞 <a href="tel:+224600000000" style={{ color: '#9CA3AF', textDecoration: 'none' }}>+224 600 000 000</a>
                     </p>
-                    <p style={{ fontSize: '0.875rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <p style={{ fontSize: '0.875rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         🕒 {t('footer_hours') || 'Lundi - Vendredi: 8h - 18h'}
                     </p>
                 </div>
@@ -156,7 +157,8 @@ const Footer = () => {
             <div style={{
                 textAlign: 'center',
                 fontSize: '0.75rem',
-                color: '#6B7280'
+                color: '#6B7280',
+                paddingBottom: '8px'
             }}>
                 <p>© {currentYear} {t('app_name')}. {t('footer_copyright') || 'Tous droits réservés.'}</p>
                 <p style={{ marginTop: '8px' }}>

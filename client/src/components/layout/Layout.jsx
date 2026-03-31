@@ -30,7 +30,11 @@ const Layout = () => {
                 <main style={{
                     flex: 1,
                     padding: '24px',
-                    backgroundColor: '#F9FAFB'
+                    backgroundColor: '#F9FAFB',
+                    // Éviter le débordement sur mobile
+                    overflowX: 'auto',
+                    width: '100%',
+                    boxSizing: 'border-box'
                 }}>
                     <Outlet />
                 </main>
@@ -38,15 +42,21 @@ const Layout = () => {
             </div>
 
             <style>{`
+                /* Desktop : le contenu principal se décale quand la sidebar est ouverte */
                 @media (min-width: 769px) {
                     .main-content {
                         margin-left: ${sidebarOpen ? '280px' : '0'};
                         transition: margin-left 0.3s ease;
                     }
                 }
+                
+                /* Mobile : le contenu principal reste toujours à gauche (pas de marge) */
                 @media (max-width: 768px) {
                     .main-content {
                         margin-left: 0 !important;
+                    }
+                    main {
+                        padding: 16px !important;
                     }
                 }
             `}</style>
