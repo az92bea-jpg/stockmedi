@@ -24,10 +24,10 @@ import Reports from './pages/reports/Reports';
 import Settings from './pages/settings/Settings';
 import Employees from './pages/settings/Employees';
 import Subscription from './pages/settings/Subscription';
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminCompanies from './pages/admin/Companies';
-import AdminUsers from './pages/admin/Users';
-import AdminLogs from './pages/admin/Logs';
+import AdminDashboard from './components/admin/Dashboard';
+import AdminCompanies from './components/admin/Companies';
+import AdminUsers from './components/admin/Users';
+import AdminLogs from './components/admin/Logs';
 
 
 

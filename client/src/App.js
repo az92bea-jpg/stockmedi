@@ -27,10 +27,14 @@ import Reports from './pages/reports/Reports';
 import Settings from './pages/settings/Settings';
 import Employees from './pages/settings/Employees';
 import Subscription from './pages/settings/Subscription';
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminCompanies from './pages/admin/Companies';
-import AdminUsers from './pages/admin/Users';
-import AdminLogs from './pages/admin/Logs';
+
+// Pages Admin (IMPORTS CORRIGÉS)
+import AdminDashboard from './components/admin/AdminDashboard';
+import AdminCompanies from './components/admin/AdminCompanies';
+import AdminUsers from './components/admin/AdminUsers';
+import AdminLogs from './components/admin/AdminLogs';
+
+// Pages légales
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import About from './pages/legal/About';
 import Terms from './pages/legal/Terms';

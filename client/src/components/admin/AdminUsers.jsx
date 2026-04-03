@@ -3,11 +3,11 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import api from '../../services/api';
-import Loader from '../../components/common/Loader';
-import Alert from '../../components/common/Alert';
-import Modal from '../../components/common/Modal';
+import Loader from '../common/Loader';
+import Alert from '../common/Alert';
+import Modal from '../common/Modal';
+import AdminNav from './AdminNav';
 
 const AdminUsers = () => {
     const [users, setUsers] = useState([]);
@@ -120,19 +120,7 @@ const AdminUsers = () => {
 
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
-            {/* Navigation Admin */}
-            <div style={{
-                display: 'flex',
-                gap: 'var(--spacing-2)',
-                marginBottom: 'var(--spacing-6)',
-                paddingBottom: 'var(--spacing-4)',
-                borderBottom: '1px solid var(--gray-200)',
-                flexWrap: 'wrap'
-            }}>
-                <Link to="/admin" className="btn btn-sm btn-outline">📊 Dashboard Admin</Link>
-                <Link to="/admin/companies" className="btn btn-sm btn-outline">🏢 Entreprises</Link>
-                <Link to="/admin/users" className="btn btn-sm btn-primary">👥 Utilisateurs</Link>
-            </div>
+            <AdminNav />
 
             <h2>Gestion des utilisateurs</h2>
             <p style={{ color: 'var(--gray-500)', marginBottom: 'var(--spacing-6)' }}>
