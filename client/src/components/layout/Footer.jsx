@@ -5,6 +5,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import Icon from '../ui/Icon';
 
 const Footer = () => {
     const { t } = useLanguage();
@@ -15,41 +16,44 @@ const Footer = () => {
         { 
             name: 'Facebook', 
             url: 'https://facebook.com/stockmedi', 
-            iconPath: '/assets/icons/social/facebook.svg',
+            iconName: 'facebook',
+            category: 'social',
             fallbackIcon: '📘',
             color: '#1877F2' 
         },
         { 
             name: 'WhatsApp', 
             url: 'https://wa.me/224600000000', 
-            iconPath: '/assets/icons/social/whatsapp.svg',
+            iconName: 'whatsapp',
+            category: 'social',
             fallbackIcon: '💬',
             color: '#25D366' 
         },
         { 
             name: 'Telegram', 
             url: 'https://t.me/stockmedi', 
-            iconPath: '/assets/icons/social/telegram.svg',
+            iconName: 'telegram',
+            category: 'social',
             fallbackIcon: '✈️',
             color: '#26A5E4' 
         }
     ];
 
-    // Composant d'icône avec fallback
+    // Composant d'icône sociale avec fallback
     const SocialIcon = ({ link }) => {
-        const [imgError, setImgError] = React.useState(false);  // ← État pour savoir si l'image a échoué
+        const [imgError, setImgError] = React.useState(false);
 
         if (!imgError) {
             return (
                 <img 
-                    src={link.iconPath}      // ← Essayer de charger l'icône SVG
+                    src={`/assets/icons/${link.category}/${link.iconName}.svg`}
                     alt={link.name}
                     style={{ width: '20px', height: '20px' }}
-                    onError={() => setImgError(true)}  // ← Si erreur, passer au fallback
+                    onError={() => setImgError(true)}
                 />
             );
         }
-        return <span style={{ fontSize: '1rem' }}>{link.fallbackIcon}</span>;  // ← Fallback emoji
+        return <span style={{ fontSize: '1rem' }}>{link.fallbackIcon}</span>;
     };
 
     return (
@@ -74,7 +78,12 @@ const Footer = () => {
                 {/* Colonne 1 - Logo et description */}
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                        <span style={{ fontSize: '1.5rem' }}>💊</span>
+                        {/* <img src="/assets/icons/nav/logo.svg" alt="Logo" style={{ width: '24px', height: '24px' }} /> */}
+                        <img 
+                            src="/assets/icons/nav/pill.svg" 
+                            alt="Pilule" 
+                            style={{ width: '24px', height: '24px', objectFit: 'contain' }}
+                        />
                         <h3 style={{ color: 'white', margin: 0, fontSize: '1.125rem' }}>{t('app_name')}</h3>
                     </div>
                     <p style={{ fontSize: '0.875rem', lineHeight: '1.5', marginBottom: '16px' }}>
@@ -119,23 +128,27 @@ const Footer = () => {
                     <h4 style={{ color: 'white', marginBottom: '16px', fontSize: '1rem' }}>{t('footer_quick_links') || 'Liens rapides'}</h4>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         <li style={{ marginBottom: '8px' }}>
-                            <Link to="/dashboard" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem' }}>
-                                📊 {t('nav_dashboard')}
+                            <Link to="/dashboard" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="dashboard" category="nav" fallback="📊" style={{ width: '1rem', height: '1rem' }} />
+                                {t('nav_dashboard')}
                             </Link>
                         </li>
                         <li style={{ marginBottom: '8px' }}>
-                            <Link to="/products" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem' }}>
-                                📦 {t('nav_products')}
+                            <Link to="/products" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="products" category="nav" fallback="📦" style={{ width: '1rem', height: '1rem' }} />
+                                {t('nav_products')}
                             </Link>
                         </li>
                         <li style={{ marginBottom: '8px' }}>
-                            <Link to="/sales" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem' }}>
-                                💰 {t('nav_sales')}
+                            <Link to="/sales" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="sales" category="nav" fallback="💰" style={{ width: '1rem', height: '1rem' }} />
+                                {t('nav_sales')}
                             </Link>
                         </li>
                         <li style={{ marginBottom: '8px' }}>
-                            <Link to="/reports" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem' }}>
-                                📄 {t('nav_reports')}
+                            <Link to="/reports" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="reports" category="nav" fallback="📄" style={{ width: '1rem', height: '1rem' }} />
+                                {t('nav_reports')}
                             </Link>
                         </li>
                     </ul>
@@ -146,23 +159,27 @@ const Footer = () => {
                     <h4 style={{ color: 'white', marginBottom: '16px', fontSize: '1rem' }}>{t('footer_information') || 'Informations'}</h4>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         <li style={{ marginBottom: '8px' }}>
-                            <Link to="/about" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem' }}>
-                                📖 {t('footer_about') || 'À propos'}
+                            <Link to="/about" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="about" category="actions" fallback="📖" style={{ width: '1rem', height: '1rem' }} />
+                                {t('footer_about') || 'À propos'}
                             </Link>
                         </li>
                         <li style={{ marginBottom: '8px' }}>
-                            <Link to="/privacy" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem' }}>
-                                🔒 {t('footer_privacy') || 'Confidentialité'}
+                            <Link to="/privacy" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="privacy" category="actions" fallback="🔒" style={{ width: '1rem', height: '1rem' }} />
+                                {t('footer_privacy') || 'Confidentialité'}
                             </Link>
                         </li>
                         <li style={{ marginBottom: '8px' }}>
-                            <Link to="/terms" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem' }}>
-                                📜 {t('footer_terms') || "Conditions d'utilisation"}
+                            <Link to="/terms" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="terms" category="actions" fallback="📜" style={{ width: '1rem', height: '1rem' }} />
+                                {t('footer_terms') || "Conditions d'utilisation"}
                             </Link>
                         </li>
                         <li style={{ marginBottom: '8px' }}>
-                            <Link to="/contact" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem' }}>
-                                📧 {t('footer_contact') || 'Contact'}
+                            <Link to="/contact" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="contact" category="actions" fallback="📧" style={{ width: '1rem', height: '1rem' }} />
+                                {t('footer_contact') || 'Contact'}
                             </Link>
                         </li>
                     </ul>
@@ -172,13 +189,16 @@ const Footer = () => {
                 <div>
                     <h4 style={{ color: 'white', marginBottom: '16px', fontSize: '1rem' }}>{t('footer_contact_title') || 'Contact'}</h4>
                     <p style={{ fontSize: '0.875rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        📧 <a href="mailto:support@stockmedi.com" style={{ color: '#9CA3AF', textDecoration: 'none' }}>support@stockmedi.com</a>
+                        <Icon name="email" category="status" fallback="📧" style={{ width: '1rem', height: '1rem' }} />
+                        <a href="mailto:support@stockmedi.com" style={{ color: '#9CA3AF', textDecoration: 'none' }}>support@stockmedi.com</a>
                     </p>
                     <p style={{ fontSize: '0.875rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        📞 <a href="tel:+224600000000" style={{ color: '#9CA3AF', textDecoration: 'none' }}>+224 600 000 000</a>
+                        <Icon name="phone" category="status" fallback="📞" style={{ width: '1rem', height: '1rem' }} />
+                        <a href="tel:+224600000000" style={{ color: '#9CA3AF', textDecoration: 'none' }}>+224 600 000 000</a>
                     </p>
                     <p style={{ fontSize: '0.875rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        🕒 {t('footer_hours') || 'Lundi - Vendredi: 8h - 18h'}
+                        <Icon name="clock" category="status" fallback="🕒" style={{ width: '1rem', height: '1rem' }} />
+                        {t('footer_hours') || 'Lundi - Vendredi: 8h - 18h'}
                     </p>
                 </div>
             </div>

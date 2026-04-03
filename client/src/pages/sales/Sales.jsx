@@ -3,7 +3,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { saleService } from '../../services/saleService';
 import { productService } from '../../services/productService';
 import Loader from '../../components/common/Loader';
@@ -196,22 +195,6 @@ const Sales = () => {
 
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
-            {/* Navigation rapide */}
-            <div style={{
-                display: 'flex',
-                gap: 'var(--spacing-2)',
-                marginBottom: 'var(--spacing-6)',
-                paddingBottom: 'var(--spacing-4)',
-                borderBottom: '1px solid var(--gray-200)',
-                flexWrap: 'wrap'
-            }}>
-                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 {t('nav_dashboard')}</Link>
-                <Link to="/products" className="btn btn-sm btn-outline">📦 {t('nav_products')}</Link>
-                <Link to="/sales" className="btn btn-sm btn-primary">💰 {t('nav_sales')}</Link>
-                <Link to="/reports" className="btn btn-sm btn-outline">📄 {t('nav_reports')}</Link>
-                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ {t('nav_settings')}</Link>
-            </div>
-
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -233,7 +216,7 @@ const Sales = () => {
             {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
             {!showHistory ? (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 'var(--spacing-6)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 450px', gap: 'var(--spacing-6)' }}>
                     {/* Panneau gauche - Recherche */}
                     <div>
                         <div className="card" style={{ marginBottom: 'var(--spacing-4)' }}>
@@ -291,7 +274,7 @@ const Sales = () => {
                                                     {formatPrice(product.sellingPrice)} GNF
                                                 </div>
                                                 {product.prescriptionRequired && (
-                                                    <div style={{ fontSize: '0.7rem', color: 'var(--warning)' }}>📋 {t('prescription_required')}</div>
+                                                    <div style={{ fontSize: '0.7rem', color: 'var(--warning)' }}>📋 Ordonnance requise</div>
                                                 )}
                                             </div>
                                         </div>
@@ -309,7 +292,7 @@ const Sales = () => {
                         )}
                     </div>
 
-                    {/* Panneau droit - Panier */}
+                    {/* Panneau droit - Panier (450px) */}
                     <div>
                         <div className="card">
                             <div className="card-header">
@@ -469,7 +452,7 @@ const Sales = () => {
                     </div>
                 </div>
             ) : (
-                // MODE HISTORIQUE - Version sans tableau
+                // MODE HISTORIQUE
                 <div className="card">
                     <div className="card-header">
                         <h3>{t('history')}</h3>
@@ -483,7 +466,6 @@ const Sales = () => {
                             </div>
                         ) : (
                             <div>
-                                {/* En-tête */}
                                 <div style={{
                                     display: 'flex',
                                     gap: 'var(--spacing-4)',

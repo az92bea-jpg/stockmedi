@@ -63,12 +63,52 @@ const Login = () => {
                     boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
                     padding: '32px'
                 }}>
+                    {/* Logo personnalisé + description 
                     <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                        <div style={{ fontSize: '3rem' }}>💊</div>
-                        <h1 style={{ color: '#0F6B3A', marginBottom: '8px' }}>{t('app_name')}</h1>
-                        <p style={{ color: '#6B7280', fontSize: '0.875rem' }}>{t('description')}</p>
-                    </div>
+                        <img 
+                            src="/assets/icons/nav/logo.svg" 
+                            alt="StockMedi Logo" 
+                            style={{ 
+                                width: '500px', 
+                                height: 'auto', 
+                                marginBottom: '2px',
+                                objectFit: 'contain'
+                            }}
+                        />
+                        <p style={{ color: '#6B7280', fontSize: '0.875rem' }}>Solution de gestion pharmaceutique</p>
+                    </div>*/}
 
+
+
+                    {/* Logo + description - CENTRÉ */}
+                    <div style={{ 
+                        textAlign: 'center', 
+                        marginBottom: '32px'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '8px'  // ← Espace FIXE entre logo et texte (8px)
+                        }}>
+                            <img 
+                                src="/assets/icons/nav/logo.svg" 
+                                alt="StockMedi Logo" 
+                                style={{ 
+                                    width: '160px',  // ← Peut être grand sans affecter l'espace
+                                    height: 'auto',
+                                    objectFit: 'contain'
+                                }}
+                            />
+                            <p style={{ 
+                                color: '#6B7280', 
+                                fontSize: '0.875rem',
+                                margin: 0
+                            }}>
+                                Solution de gestion pharmaceutique
+                            </p>
+                        </div>
+                    </div>
                     {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
                     <form onSubmit={handleSubmit}>

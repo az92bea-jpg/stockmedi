@@ -3,7 +3,6 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
@@ -85,24 +84,6 @@ const Subscription = () => {
 
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
-            {/* Navigation */}
-            <div style={{
-                display: 'flex',
-                gap: 'var(--spacing-2)',
-                marginBottom: 'var(--spacing-6)',
-                paddingBottom: 'var(--spacing-4)',
-                borderBottom: '1px solid var(--gray-200)',
-                flexWrap: 'wrap'
-            }}>
-                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 {t('nav_dashboard')}</Link>
-                <Link to="/products" className="btn btn-sm btn-outline">📦 {t('nav_products')}</Link>
-                <Link to="/sales" className="btn btn-sm btn-outline">💰 {t('nav_sales')}</Link>
-                <Link to="/reports" className="btn btn-sm btn-outline">📄 {t('nav_reports')}</Link>
-                <Link to="/employees" className="btn btn-sm btn-outline">👥 {t('nav_employees')}</Link>
-                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ {t('nav_settings')}</Link>
-                <Link to="/subscription" className="btn btn-sm btn-primary">💎 {t('nav_subscription')}</Link>
-            </div>
-
             <h2>{t('subscription_title')}</h2>
             <p style={{ color: 'var(--gray-500)', marginBottom: 'var(--spacing-6)' }}>
                 {t('subscription_subtitle')}

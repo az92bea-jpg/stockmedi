@@ -73,22 +73,6 @@ const Reports = () => {
 
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
-            {/* Navigation rapide */}
-            <div style={{
-                display: 'flex',
-                gap: 'var(--spacing-2)',
-                marginBottom: 'var(--spacing-6)',
-                paddingBottom: 'var(--spacing-4)',
-                borderBottom: '1px solid var(--gray-200)',
-                flexWrap: 'wrap'
-            }}>
-                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 {t('nav_dashboard')}</Link>
-                <Link to="/products" className="btn btn-sm btn-outline">📦 {t('nav_products')}</Link>
-                <Link to="/sales" className="btn btn-sm btn-outline">💰 {t('nav_sales')}</Link>
-                <Link to="/reports" className="btn btn-sm btn-primary">📄 {t('nav_reports')}</Link>
-                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ {t('nav_settings')}</Link>
-            </div>
-
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',

@@ -8,6 +8,7 @@ import { authService } from '../../services/authService';
 import NotificationBell from '../common/NotificationBell';
 import api from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
+import Icon from '../ui/Icon';
 
 const Header = ({ onMenuClick, isSidebarOpen }) => {
     const { t, language, changeLanguage } = useLanguage();
@@ -116,37 +117,46 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
 
             {/* Titre et infos entreprise */}
             <div style={{ flex: 1 }}>
+                {/* <img src="/assets/icons/nav/logo.svg" alt="Logo" style={{ width: '28px', height: '28px' }} /> remplacer h1 avec pour que le logo se presente a la place de StockMedi */}
                 <h1 style={{ fontSize: '1.25rem', margin: 0, color: '#111827' }}>StockMedi</h1>
                 {company && <div style={{ fontSize: '0.7rem', color: '#6B7280' }}>{company.name}</div>}
             </div>
 
-            {/* Navigation horizontale (visible sur desktop) - AVEC TRADUCTION */}
+            {/* Navigation horizontale (visible sur desktop) - AVEC ICÔNES SVG */}
             {!isMobile && (
                 <nav className="desktop-nav" style={{ display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <a href="/dashboard" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>
-                        📊 {t('nav_dashboard')}
+                    <a href="/dashboard" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Icon name="dashboard" category="nav" fallback="📊" style={{ width: '1rem', height: '1rem' }} />
+                        {t('nav_dashboard')}
                     </a>
-                    <a href="/products" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>
-                        📦 {t('nav_products')}
+                    <a href="/products" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Icon name="products" category="nav" fallback="📦" style={{ width: '1rem', height: '1rem' }} />
+                        {t('nav_products')}
                     </a>
-                    <a href="/sales" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>
-                        💰 {t('nav_sales')}
+                    <a href="/sales" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Icon name="sales" category="nav" fallback="💰" style={{ width: '1rem', height: '1rem' }} />
+                        {t('nav_sales')}
                     </a>
-                    <a href="/reports" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>
-                        📄 {t('nav_reports')}
+                    <a href="/reports" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Icon name="reports" category="nav" fallback="📄" style={{ width: '1rem', height: '1rem' }} />
+                        {t('nav_reports')}
                     </a>
-                    <a href="/employees" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>
-                        👥 {t('nav_employees')}
+                    <a href="/employees" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Icon name="employees" category="nav" fallback="👥" style={{ width: '1rem', height: '1rem' }} />
+                        {t('nav_employees')}
                     </a>
-                    <a href="/settings" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>
-                        ⚙️ {t('nav_settings')}
+                    <a href="/settings" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Icon name="settings" category="nav" fallback="⚙️" style={{ width: '1rem', height: '1rem' }} />
+                        {t('nav_settings')}
                     </a>
-                    <a href="/subscription" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>
-                        💎 {t('nav_subscription')}
+                    <a href="/subscription" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Icon name="subscription" category="nav" fallback="💎" style={{ width: '1rem', height: '1rem' }} />
+                        {t('nav_subscription')}
                     </a>
                     {user?.role === 'super-admin' && (
-                        <a href="/admin" style={{ color: '#EF4444', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>
-                            👑 {t('nav_admin')}
+                        <a href="/admin" style={{ color: '#EF4444', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Icon name="settings" category="nav" fallback="👑" style={{ width: '1rem', height: '1rem' }} />
+                            {t('nav_admin')}
                         </a>
                     )}
                 </nav>
@@ -202,13 +212,14 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
                     color: '#4B5563',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    gap: '6px',
                     padding: '6px 12px',
                     borderRadius: '6px',
                     transition: 'all 0.2s ease'
                 }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#EF4444'; e.currentTarget.style.color = 'white'; }}
                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#4B5563'; }}>
-                    🚪 {t('nav_logout')}
+                    <Icon name="logout" category="actions" fallback="🚪" style={{ width: '1rem', height: '1rem' }} />
+                    {t('nav_logout')}
                 </button>
             </div>
         </header>

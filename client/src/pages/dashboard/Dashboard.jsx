@@ -8,6 +8,7 @@ import api from '../../services/api';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import { useLanguage } from '../../context/LanguageContext';
+import Icon from '../../components/ui/Icon';
 
 const Dashboard = () => {
     const { t } = useLanguage();
@@ -46,22 +47,6 @@ const Dashboard = () => {
 
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
-            {/* Navigation rapide */}
-            <div style={{
-                display: 'flex',
-                gap: 'var(--spacing-2)',
-                marginBottom: 'var(--spacing-6)',
-                paddingBottom: 'var(--spacing-4)',
-                borderBottom: '1px solid var(--gray-200)',
-                flexWrap: 'wrap'
-            }}>
-                <Link to="/dashboard" className="btn btn-sm btn-primary">📊 {t('nav_dashboard')}</Link>
-                <Link to="/products" className="btn btn-sm btn-outline">📦 {t('nav_products')}</Link>
-                <Link to="/sales" className="btn btn-sm btn-outline">💰 {t('nav_sales')}</Link>
-                <Link to="/reports" className="btn btn-sm btn-outline">📄 {t('nav_reports')}</Link>
-                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ {t('nav_settings')}</Link>
-            </div>
-
             <h2>{t('dashboard_title')}</h2>
             <p style={{ color: 'var(--gray-500)', marginBottom: 'var(--spacing-6)' }}>
                 {t('dashboard_welcome')}
@@ -129,7 +114,10 @@ const Dashboard = () => {
             {(alerts?.lowStock?.count > 0 || alerts?.expiringSoon?.count > 0 || alerts?.outOfStock?.count > 0 || alerts?.expired?.count > 0) && (
                 <div className="card" style={{ marginBottom: 'var(--spacing-6)' }}>
                     <div className="card-header">
-                        <h3>⚠️ {t('alerts') || 'Alertes importantes'}</h3>
+                        <h3>
+                            <Icon name="warning" category="status" fallback="⚠️" style={{ marginRight: '0.5rem', width: '1.25rem', height: '1.25rem', verticalAlign: 'middle' }} />
+                            {t('alerts') || 'Alertes importantes'}
+                        </h3>
                     </div>
                     <div className="card-body">
                         {alerts?.outOfStock?.count > 0 && (
@@ -159,7 +147,10 @@ const Dashboard = () => {
             {/* Actions rapides */}
             <div className="card" style={{ marginBottom: 'var(--spacing-6)' }}>
                 <div className="card-header">
-                    <h3>⚡ {t('quick_actions')}</h3>
+                    <h3>
+                        <Icon name="success" category="status" fallback="⚡" style={{ marginRight: '0.5rem', width: '1.25rem', height: '1.25rem', verticalAlign: 'middle' }} />
+                        {t('quick_actions')}
+                    </h3>
                 </div>
                 <div className="card-body">
                     <div className="quick-actions" style={{
@@ -168,13 +159,16 @@ const Dashboard = () => {
                         flexWrap: 'wrap'
                     }}>
                         <Link to="/products" className="btn btn-primary">
-                            + {t('add_product')}
+                            <Icon name="add" category="actions" fallback="+" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem', verticalAlign: 'middle' }} />
+                            {t('add_product')}
                         </Link>
                         <Link to="/sales" className="btn btn-primary">
-                            💰 {t('new_sale')}
+                            <Icon name="sales" category="nav" fallback="💰" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem', verticalAlign: 'middle' }} />
+                            {t('new_sale')}
                         </Link>
                         <Link to="/reports" className="btn btn-secondary">
-                            📊 {t('export_report')}
+                            <Icon name="reports" category="nav" fallback="📊" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem', verticalAlign: 'middle' }} />
+                            {t('export_report')}
                         </Link>
                     </div>
                 </div>
@@ -184,7 +178,10 @@ const Dashboard = () => {
             {stats?.topProducts?.length > 0 && (
                 <div className="card">
                     <div className="card-header">
-                        <h3>🏆 {t('top_products')}</h3>
+                        <h3>
+                            <Icon name="success" category="status" fallback="🏆" style={{ marginRight: '0.5rem', width: '1.25rem', height: '1.25rem', verticalAlign: 'middle' }} />
+                            {t('top_products')}
+                        </h3>
                     </div>
                     <div className="card-body">
                         <div className="table-container">
@@ -195,7 +192,6 @@ const Dashboard = () => {
                                         <th>{t('product_name') || 'Produit'}</th>
                                         <th>{t('quantity_sold')}</th>
                                         <th>{t('revenue')}</th>
-                                    
                                     </tr>
                                 </thead>
                                 <tbody>

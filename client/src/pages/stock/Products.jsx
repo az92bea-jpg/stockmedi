@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { productService } from '../../services/productService';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
@@ -292,22 +292,6 @@ const Products = () => {
 
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
-            {/* Navigation rapide */}
-            <div style={{
-                display: 'flex',
-                gap: 'var(--spacing-2)',
-                marginBottom: 'var(--spacing-6)',
-                paddingBottom: 'var(--spacing-4)',
-                borderBottom: '1px solid var(--gray-200)',
-                flexWrap: 'wrap'
-            }}>
-                <Link to="/dashboard" className="btn btn-sm btn-outline">📊 {t('nav_dashboard')}</Link>
-                <Link to="/products" className="btn btn-sm btn-primary">📦 {t('nav_products')}</Link>
-                <Link to="/sales" className="btn btn-sm btn-outline">💰 {t('nav_sales')}</Link>
-                <Link to="/reports" className="btn btn-sm btn-outline">📄 {t('nav_reports')}</Link>
-                <Link to="/settings" className="btn btn-sm btn-outline">⚙️ {t('nav_settings')}</Link>
-            </div>
-
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -518,7 +502,6 @@ const Products = () => {
                 size="lg"
             >
                 <form onSubmit={handleSubmit}>
-                    {/* ... formulaire identique ... */}
                     <div className="form-row">
                         <div className="form-group">
                             <label className="form-label required">{t('product_name')}</label>

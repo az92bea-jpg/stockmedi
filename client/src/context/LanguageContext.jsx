@@ -19,6 +19,9 @@ const translations = {
         nav_subscription: 'Abonnement',
         nav_admin: 'Admin',
         nav_logout: 'Déconnexion',
+        forgot_password: 'Mot de passe oublié ?',
+        no_account: 'Pas de compte ?',
+        create_account: 'Créer un compte',
         
         // ========== DASHBOARD ==========
         dashboard_title: 'Tableau de bord',
@@ -352,6 +355,9 @@ const translations = {
         nav_subscription: 'Subscription',
         nav_admin: 'Admin',
         nav_logout: 'Logout',
+        forgot_password: 'Forgot password?',
+        no_account: "Don't have an account?",
+        create_account: 'Create account',
         
         // ========== DASHBOARD ==========
         dashboard_title: 'Dashboard',
