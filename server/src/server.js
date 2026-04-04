@@ -1,6 +1,6 @@
 /**
  * STOCKMEDI - SERVEUR PRINCIPAL
- * Point d'entrée de l'application backend
+ * Point d'entrée de l'application backend stripe etat test
  */
 
 const express = require('express');

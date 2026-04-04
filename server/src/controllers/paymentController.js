@@ -1,5 +1,5 @@
 /**
- * CONTRÔLEUR PAIEMENT - Stripe
+ * CONTRÔLEUR PAIEMENT - Stripe etat test
  */
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
