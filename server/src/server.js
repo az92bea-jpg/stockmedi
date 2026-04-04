@@ -42,9 +42,6 @@ const adminRoutes = require('./routes/adminRoutes');
 const logsRoutes = require('./routes/logsRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
-
-
-
 // Routes API
 app.use('/api/auth', authRoutes);
 app.use('/api/companies', companyRoutes);
@@ -56,12 +53,10 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/admin/logs', logsRoutes);  // ← Cette ligne est correcte
-// Pour Stripe webhook (body brut)
-app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
+app.use('/api/admin/logs', logsRoutes);
+
+// Route Stripe (la ligne suivante est la BONNE, ne pas en ajouter d'autre)
 app.use('/api/payment', paymentRoutes);
-
-
 
 // ========== ROUTE DE TEST ==========
 app.get('/api/health', (req, res) => {
