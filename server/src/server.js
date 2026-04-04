@@ -40,7 +40,10 @@ const adminRoutes = require('./routes/adminRoutes');
 const logsRoutes = require('./routes/logsRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
-// ⚠️ ROUTE WEBHOOK (doit être AVANT express.json())
+// ⚠️ IMPORTANT : Route webhook avec raw body (AVANT express.json())
+app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
+
+// Route paiement (sans raw body, utilise le router)
 app.use('/api/payment', paymentRoutes);
 
 // ========== PARSER JSON POUR LES AUTRES ROUTES ==========
