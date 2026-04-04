@@ -10,25 +10,23 @@ const dotenv = require('dotenv');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
-
 // Chargement des variables d'environnement
 dotenv.config();
 
 // Initialisation
 const app = express();
 
-// ========== MIDDLEWARES ==========
-app.use(helmet());           // Sécurité
-app.use(cors());             // Autoriser le frontend
-app.use(express.json());     // Parser JSON
-app.use(morgan('dev'));      // Logs
+// ========== MIDDLEWARES (sauf JSON) ==========
+app.use(helmet());           
+app.use(cors());             
+app.use(morgan('dev'));      
 
 // ========== CONNEXION MONGODB ==========
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('✅ MongoDB connecté'))
     .catch(err => console.error('❌ Erreur MongoDB:', err));
 
-/// ========== ROUTES ==========
+// ========== ROUTES ==========
 const authRoutes = require('./routes/authRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 const productRoutes = require('./routes/productRoutes');
@@ -42,7 +40,13 @@ const adminRoutes = require('./routes/adminRoutes');
 const logsRoutes = require('./routes/logsRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
-// Routes API
+// ⚠️ ROUTE WEBHOOK (doit être AVANT express.json())
+app.use('/api/payment', paymentRoutes);
+
+// ========== PARSER JSON POUR LES AUTRES ROUTES ==========
+app.use(express.json());
+
+// Routes API normales
 app.use('/api/auth', authRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/products', productRoutes);
@@ -54,9 +58,6 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/logs', logsRoutes);
-
-// Route Stripe (la ligne suivante est la BONNE, ne pas en ajouter d'autre)
-app.use('/api/payment', paymentRoutes);
 
 // ========== ROUTE DE TEST ==========
 app.get('/api/health', (req, res) => {
