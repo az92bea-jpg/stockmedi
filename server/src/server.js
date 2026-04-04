@@ -16,7 +16,7 @@ dotenv.config();
 // Initialisation
 const app = express();
 
-// ========== MIDDLEWARES (sauf JSON) ==========
+// ========== MIDDLEWARES DE BASE ==========
 app.use(helmet());           
 app.use(cors());             
 app.use(morgan('dev'));      
@@ -43,10 +43,10 @@ const paymentRoutes = require('./routes/paymentRoutes');
 // ⚠️ IMPORTANT : Route webhook avec raw body (AVANT express.json())
 app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
 
-// Route paiement (sans raw body, utilise le router)
+// Route paiement (utilise le router)
 app.use('/api/payment', paymentRoutes);
 
-// ========== PARSER JSON POUR LES AUTRES ROUTES ==========
+// ========== PARSER JSON POUR TOUTES LES AUTRES ROUTES ==========
 app.use(express.json());
 
 // Routes API normales

@@ -74,6 +74,7 @@ exports.createCheckoutSession = async (req, res) => {
             }
         });
 
+        // ✅ CORRECTION : Ajout de l'URL dans la réponse
         res.json({
             success: true,
             sessionId: session.id,
@@ -114,6 +115,7 @@ exports.stripeWebhook = async (req, res) => {
     if (!endpointSecret) {
         console.log('⚠️ Webhook secret non configuré, paiement simulé');
         
+        // Pour le webhook simulé, le body est déjà parsé
         const session = req.body;
         if (session.type === 'checkout.session.completed') {
             const { companyId, plan } = session.data.object.metadata;
