@@ -40,16 +40,17 @@ const adminRoutes = require('./routes/adminRoutes');
 const logsRoutes = require('./routes/logsRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
-// ⚠️ IMPORTANT : Route webhook avec raw body (AVANT express.json())
-app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
-
-// Route paiement (utilise le router)
-app.use('/api/payment', paymentRoutes);
+// ========== ROUTE WEBHOOK (raw body, AVANT express.json()) ==========
+app.post('/api/payment/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+    // Délégation au contrôleur
+    require('./controllers/paymentController').stripeWebhook(req, res);
+});
 
 // ========== PARSER JSON POUR TOUTES LES AUTRES ROUTES ==========
 app.use(express.json());
 
-// Routes API normales
+// ========== TOUTES LES ROUTES (y compris paiement) ==========
+app.use('/api/payment', paymentRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/products', productRoutes);
