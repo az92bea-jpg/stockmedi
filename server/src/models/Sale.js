@@ -12,6 +12,12 @@ const SaleSchema = new mongoose.Schema(
             required: true,
             index: true
         },
+        // ⭐ Établissement où la vente a eu lieu
+        establishmentId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Establishment',
+            required: true,
+        },
         saleNumber: {
             type: String,
             unique: true,
@@ -112,20 +118,27 @@ const SaleSchema = new mongoose.Schema(
         },
         cancelledAt: Date,
         cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-        cancellationReason: String
+        cancellationReason: String,
+        
+        // ⭐ Champ pour l'archivage
+        archived: {
+            type: Boolean,
+            default: false,
+            index: true
+        }
     },
     {
         timestamps: true
     }
 );
 
-// PAS DE MIDDLEWARE pre('save') !
-
 // ==================== INDEX ====================
 SaleSchema.index({ companyId: 1, saleNumber: 1 });
 SaleSchema.index({ companyId: 1, createdAt: -1 });
 SaleSchema.index({ companyId: 1, paymentStatus: 1 });
 SaleSchema.index({ companyId: 1, customerPhone: 1 });
+SaleSchema.index({ companyId: 1, archived: 1, createdAt: -1 });
+SaleSchema.index({ companyId: 1, establishmentId: 1 });
 
 // ==================== MÉTHODES ====================
 SaleSchema.methods.cancel = async function(userId, reason) {
@@ -143,9 +156,16 @@ SaleSchema.methods.cancel = async function(userId, reason) {
     
     for (const item of this.items) {
         const product = await Product.findById(item.productId);
-        if (product) {
-            product.quantity += item.quantity;
-            await product.save();
+        if (product && this.establishmentId) {
+            // ⭐ Restaurer le stock dans le bon établissement
+            const currentStock = product.getQuantityByEstablishment(this.establishmentId);
+            const newStock = currentStock + item.quantity;
+            await product.updateStockByEstablishment(
+                this.establishmentId, 
+                newStock, 
+                userId, 
+                `annulation_vente_${this._id}`
+            );
         }
     }
     

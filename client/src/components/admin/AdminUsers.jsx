@@ -15,9 +15,11 @@ const AdminUsers = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
+    const [roleModalOpen, setRoleModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [filters, setFilters] = useState({ search: '', role: '' });
     const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 });
+    const [newRole, setNewRole] = useState('');
 
     const fetchUsers = useCallback(async () => {
         try {
@@ -49,6 +51,29 @@ const AdminUsers = () => {
     const openEditModal = (user) => {
         setSelectedUser(user);
         setModalOpen(true);
+    };
+
+    const openRoleModal = (user) => {
+        setSelectedUser(user);
+        setNewRole(user.role);
+        setRoleModalOpen(true);
+    };
+
+    const handleRoleUpdate = async () => {
+        if (!selectedUser) return;
+        if (selectedUser.role === 'super-admin' && newRole !== 'super-admin') {
+            setError('Le rôle super-admin ne peut pas être modifié');
+            return;
+        }
+        try {
+            await api.put(`/admin/users/${selectedUser._id}`, { role: newRole });
+            setSuccess(`Rôle de ${selectedUser.firstName} ${selectedUser.lastName} mis à jour`);
+            fetchUsers();
+            setRoleModalOpen(false);
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Erreur lors de la mise à jour du rôle');
+        }
     };
 
     const handleUpdate = async (e) => {
@@ -217,6 +242,13 @@ const AdminUsers = () => {
                                             <td>
                                                 <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
                                                     <button 
+                                                        className="btn btn-sm btn-primary" 
+                                                        onClick={() => openRoleModal(user)}
+                                                        title="Changer le rôle"
+                                                    >
+                                                        👑 Rôle
+                                                    </button>
+                                                    <button 
                                                         className="btn btn-sm btn-outline" 
                                                         onClick={() => openEditModal(user)}
                                                         title="Modifier"
@@ -272,7 +304,7 @@ const AdminUsers = () => {
                 )}
             </div>
 
-            {/* Modal édition */}
+            {/* Modal édition utilisateur */}
             <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Modifier l'utilisateur" size="md">
                 {selectedUser && (
                     <form onSubmit={handleUpdate}>
@@ -328,6 +360,24 @@ const AdminUsers = () => {
                         </div>
                     </form>
                 )}
+            </Modal>
+
+            {/* Modal changement de rôle */}
+            <Modal isOpen={roleModalOpen} onClose={() => setRoleModalOpen(false)} title={`Changer le rôle de ${selectedUser?.firstName} ${selectedUser?.lastName}`} size="sm">
+                <div className="form-group">
+                    <label className="form-label">Nouveau rôle</label>
+                    <select className="form-select" value={newRole} onChange={(e) => setNewRole(e.target.value)}>
+                        <option value="owner">Propriétaire</option>
+                        <option value="employee">Employé</option>
+                    </select>
+                    {selectedUser?.role === 'super-admin' && (
+                        <div className="form-hint" style={{ color: 'var(--danger)' }}>⚠️ Le rôle super-admin ne peut pas être modifié</div>
+                    )}
+                </div>
+                <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}>
+                    <button className="btn btn-primary" onClick={handleRoleUpdate}>Enregistrer</button>
+                    <button className="btn btn-secondary" onClick={() => setRoleModalOpen(false)}>Annuler</button>
+                </div>
             </Modal>
         </div>
     );

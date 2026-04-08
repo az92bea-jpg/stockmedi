@@ -15,6 +15,7 @@ import './styles/components/forms.css';
 import './styles/components/table.css';
 import './styles/layout/sidebar.css';
 
+
 // Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -27,6 +28,8 @@ import Reports from './pages/reports/Reports';
 import Settings from './pages/settings/Settings';
 import Employees from './pages/settings/Employees';
 import Subscription from './pages/settings/Subscription';
+import Archives from './pages/archives/Archives';
+import Establishments from './pages/settings/Establishments';
 
 // Pages Admin (IMPORTS CORRIGÉS)
 import AdminDashboard from './components/admin/AdminDashboard';
@@ -79,6 +82,7 @@ function App() {
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/contact" element={<Contact />} />
                     
+                    
                     {/* Routes protégées (utilisateurs normaux) */}
                     <Route path="/" element={
                         <ProtectedRoute>
@@ -93,6 +97,8 @@ function App() {
                         <Route path="employees" element={<Employees />} />
                         <Route path="settings" element={<Settings />} />
                         <Route path="subscription" element={<Subscription />} />
+                        <Route path="archives" element={<Archives />} />
+                        <Route path="settings/establishments" element={<Establishments />} />
                     </Route>
                     
                     {/* Routes super-admin (sans Layout standard) */}

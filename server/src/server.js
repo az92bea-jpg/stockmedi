@@ -1,6 +1,6 @@
 /**
  * STOCKMEDI - SERVEUR PRINCIPAL
- * Point d'entrée de l'application backend stripe etat test
+ * Point d'entrée de l'application backend
  */
 
 const express = require('express');
@@ -9,6 +9,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const cron = require('node-cron');
 
 // Chargement des variables d'environnement
 dotenv.config();
@@ -39,20 +40,25 @@ const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const logsRoutes = require('./routes/logsRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const archiveRoutes = require('./routes/archiveRoutes');
+const establishmentRoutes = require('./routes/establishmentRoutes');
+
+// Import du contrôleur pour le nettoyage automatique
+const { cleanupExpiredArchives } = require('./controllers/archiveController');
 
 // ========== ROUTE WEBHOOK (raw body, AVANT express.json()) ==========
 app.post('/api/payment/webhook', express.raw({ type: 'application/json' }), (req, res) => {
-    // Délégation au contrôleur
     require('./controllers/paymentController').stripeWebhook(req, res);
 });
 
 // ========== PARSER JSON POUR TOUTES LES AUTRES ROUTES ==========
 app.use(express.json());
 
-// ========== TOUTES LES ROUTES (y compris paiement) ==========
+// ========== TOUTES LES ROUTES API ==========
 app.use('/api/payment', paymentRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/companies', companyRoutes);
+app.use('/api/archive', archiveRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/stock', stockRoutes);
 app.use('/api/sales', saleRoutes);
@@ -62,8 +68,19 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/logs', logsRoutes);
+app.use('/api/establishments', establishmentRoutes);
 
-// ========== ROUTE DE TEST ==========
+
+
+// ========== NETTOYAGE AUTOMATIQUE DES ARCHIVES (CRON) ==========
+// S'exécute tous les jours à 2h du matin (heure du serveur)
+cron.schedule('0 2 * * *', async () => {
+    console.log('🕒 Nettoyage automatique des archives...');
+    const deletedCount = await cleanupExpiredArchives();
+    console.log(`✅ Nettoyage terminé : ${deletedCount} archive(s) supprimée(s)`);
+});
+
+// ========== ROUTE DE TEST (health check) ==========
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'success',

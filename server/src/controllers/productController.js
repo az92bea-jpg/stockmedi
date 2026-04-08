@@ -3,6 +3,7 @@
  */
 
 const Product = require('../models/Product');
+const mongoose = require('mongoose');
 
 /**
  * @desc    Récupérer tous les produits
@@ -26,16 +27,26 @@ exports.getProducts = async (req, res) => {
             query.$expr = { $lte: ["$quantity", "$reorderPoint"] };
         }
         
+        // ⭐ Récupérer les produits
         const products = await Product.find(query)
+            .populate('establishmentId', 'name')
             .sort({ createdAt: -1 })
             .limit(limit * 1)
             .skip((page - 1) * limit);
+        
+        // ⭐ Convertir les prix en nombres
+        const formattedProducts = products.map(p => ({
+            ...p.toObject(),
+            purchasePrice: Number(p.purchasePrice) || 0,
+            sellingPrice: Number(p.sellingPrice) || 0,
+            quantity: Number(p.quantity) || 0
+        }));
         
         const total = await Product.countDocuments(query);
         
         res.json({
             success: true,
-            products,
+            products: formattedProducts,
             total,
             page: parseInt(page),
             pages: Math.ceil(total / limit)
@@ -58,7 +69,7 @@ exports.getProduct = async (req, res) => {
         const product = await Product.findOne({
             _id: req.params.id,
             companyId: req.user.companyId
-        });
+        }).populate('establishmentId', 'name');
 
         if (!product) {
             return res.status(404).json({
@@ -91,7 +102,8 @@ exports.createProduct = async (req, res) => {
             quantity, unit, reorderPoint, location,
             purchasePrice, sellingPrice,
             manufacturingDate, expirationDate,
-            prescriptionRequired, description
+            prescriptionRequired, description,
+            establishmentId
         } = req.body;
 
         if (!name) {
@@ -118,6 +130,12 @@ exports.createProduct = async (req, res) => {
                 message: 'La date d\'expiration est requise'
             });
         }
+        if (!establishmentId) {
+            return res.status(400).json({
+                success: false,
+                message: 'L\'établissement est requis pour créer un produit'
+            });
+        }
 
         const product = await Product.create({
             companyId: req.user.companyId,
@@ -127,12 +145,13 @@ exports.createProduct = async (req, res) => {
             manufacturer: manufacturer || '',
             batchNumber: batchNumber || '',
             barcode: barcode || '',
-            quantity: quantity || 0,
+            establishmentId: establishmentId,
+            quantity: parseInt(quantity) || 0,
             unit: unit || 'boîte(s)',
             reorderPoint: reorderPoint || 10,
             location: location || '',
-            purchasePrice,
-            sellingPrice,
+            purchasePrice: parseFloat(purchasePrice),
+            sellingPrice: parseFloat(sellingPrice),
             manufacturingDate: manufacturingDate || null,
             expirationDate,
             prescriptionRequired: prescriptionRequired || false,
@@ -145,7 +164,7 @@ exports.createProduct = async (req, res) => {
             product
         });
     } catch (error) {
-        console.error('Erreur création produit:', error);
+        console.error('❌ Erreur création produit:', error);
         res.status(500).json({
             success: false,
             message: 'Erreur lors de la création du produit',
@@ -171,12 +190,18 @@ exports.updateProduct = async (req, res) => {
             });
         }
 
-        const updates = req.body;
-        const allowedUpdates = ['name', 'genericName', 'category', 'manufacturer', 'batchNumber', 'barcode', 'quantity', 'unit', 'reorderPoint', 'location', 'purchasePrice', 'sellingPrice', 'manufacturingDate', 'expirationDate', 'prescriptionRequired', 'description'];
+        // Champs de base modifiables
+        const allowedUpdates = [
+            'name', 'genericName', 'category', 'manufacturer', 
+            'batchNumber', 'barcode', 'unit', 'reorderPoint', 
+            'location', 'purchasePrice', 'sellingPrice', 
+            'manufacturingDate', 'expirationDate', 
+            'prescriptionRequired', 'description', 'quantity'
+        ];
         
         allowedUpdates.forEach(key => {
-            if (updates[key] !== undefined) {
-                product[key] = updates[key];
+            if (req.body[key] !== undefined) {
+                product[key] = req.body[key];
             }
         });
 
@@ -187,7 +212,7 @@ exports.updateProduct = async (req, res) => {
             product
         });
     } catch (error) {
-        console.error('Erreur mise à jour produit:', error);
+        console.error('❌ Erreur mise à jour produit:', error);
         res.status(500).json({
             success: false,
             message: 'Erreur lors de la mise à jour du produit',
@@ -197,7 +222,7 @@ exports.updateProduct = async (req, res) => {
 };
 
 /**
- * @desc    Supprimer un produit (archivage)
+ * @desc    Supprimer un produit (archivage) - BLOQUÉ SI STOCK > 0
  */
 exports.deleteProduct = async (req, res) => {
     try {
@@ -216,7 +241,7 @@ exports.deleteProduct = async (req, res) => {
         if (product.quantity > 0) {
             return res.status(400).json({
                 success: false,
-                message: 'Impossible de supprimer un produit avec du stock. Vendez ou ajustez le stock d\'abord.'
+                message: `Impossible de supprimer ce produit car il reste ${product.quantity} ${product.unit} en stock. Vendez ou ajustez le stock d'abord.`
             });
         }
 
@@ -246,7 +271,6 @@ exports.getAlerts = async (req, res) => {
         const soonExpiration = new Date();
         soonExpiration.setDate(today.getDate() + 30);
 
-        // Stock faible - utilisation de $expr pour comparer deux champs
         const lowStock = await Product.find({
             companyId: req.user.companyId,
             isActive: true,
@@ -254,14 +278,12 @@ exports.getAlerts = async (req, res) => {
             $expr: { $lte: ["$quantity", "$reorderPoint"] }
         }).select('name quantity reorderPoint');
 
-        // Rupture de stock
         const outOfStock = await Product.find({
             companyId: req.user.companyId,
             isActive: true,
             quantity: 0
         }).select('name quantity');
 
-        // Expiration proche
         const expiringSoon = await Product.find({
             companyId: req.user.companyId,
             isActive: true,
@@ -269,7 +291,6 @@ exports.getAlerts = async (req, res) => {
             quantity: { $gt: 0 }
         }).select('name expirationDate quantity');
 
-        // Produits expirés
         const expired = await Product.find({
             companyId: req.user.companyId,
             isActive: true,

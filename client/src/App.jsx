@@ -14,6 +14,7 @@ import './styles/components/forms.css';
 import './styles/components/table.css';
 import './styles/layout/sidebar.css';
 
+
 // Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -77,6 +78,7 @@ function App() {
                     <Route path="employees" element={<Employees />} />
                     <Route path="settings" element={<Settings />} />
                     <Route path="subscription" element={<Subscription />} />
+                    
                 </Route>
                 
                 {/* Routes super-admin (sans Layout standard) */}

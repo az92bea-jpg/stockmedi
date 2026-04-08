@@ -9,6 +9,8 @@ import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal';
 import { useLanguage } from '../../context/LanguageContext';
+import EstablishmentSelector from '../../components/establishment/EstablishmentSelector';
+import api from '../../services/api';
 
 const Sales = () => {
     const { t } = useLanguage();
@@ -32,11 +34,28 @@ const Sales = () => {
     const [salesHistory, setSalesHistory] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(false);
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+    
+    const [selectedEstablishment, setSelectedEstablishment] = useState('');
+    const [establishments, setEstablishments] = useState([]);
 
+    // Charger les établissements
     useEffect(() => {
-        loadProducts();
+        loadEstablishments();
     }, []);
 
+    const loadEstablishments = async () => {
+        try {
+            const response = await api.get('/establishments');
+            setEstablishments(response.establishments || []);
+            if (response.establishments?.length > 0) {
+                setSelectedEstablishment(response.establishments[0]._id);
+            }
+        } catch (err) {
+            console.error('Erreur chargement établissements:', err);
+        }
+    };
+
+    // Charger tous les produits
     const loadProducts = async () => {
         try {
             const response = await productService.getProducts({});
@@ -47,22 +66,40 @@ const Sales = () => {
     };
 
     useEffect(() => {
-        if (searchTerm.length >= 2) {
+        loadProducts();
+    }, []);
+
+    // ⭐ RECHERCHE DES PRODUITS (CORRIGÉE)
+    useEffect(() => {
+        if (searchTerm.length >= 2 && selectedEstablishment) {
             const term = searchTerm.toLowerCase();
-            const results = products.filter(p => 
-                p.isActive && 
-                p.quantity > 0 &&
-                (p.name?.toLowerCase().includes(term) ||
-                 p.genericName?.toLowerCase().includes(term) ||
-                 p.barcode?.toLowerCase().includes(term))
-            );
+            const results = products.filter(p => {
+                // ⭐ Récupérer l'ID de l'établissement (peuplé ou non)
+                const productEstId = p.establishmentId?._id || p.establishmentId;
+                // ⭐ Comparaison correcte
+                const stockInEstablishment = (productEstId === selectedEstablishment) ? (p.quantity || 0) : 0;
+                
+                return p.isActive && 
+                       stockInEstablishment > 0 &&
+                       (p.name?.toLowerCase().includes(term) ||
+                        p.genericName?.toLowerCase().includes(term) ||
+                        p.barcode?.toLowerCase().includes(term));
+            });
             setSearchResults(results.slice(0, 10));
         } else {
             setSearchResults([]);
         }
-    }, [searchTerm, products]);
+    }, [searchTerm, products, selectedEstablishment]);
 
+    // ⭐ AJOUT AU PANIER (CORRIGÉ)
     const addToCart = (product) => {
+        const stockInEstablishment = product.quantity || 0;
+
+        if (stockInEstablishment === 0) {
+            setError('Stock insuffisant dans cet établissement');
+            return;
+        }
+
         if (product.prescriptionRequired && !prescriptionNumber) {
             setError(t('prescription_required_error') || 'Ce produit nécessite une ordonnance.');
             return;
@@ -71,8 +108,8 @@ const Sales = () => {
         const existingItem = cart.find(item => item.productId === product._id);
         
         if (existingItem) {
-            if (existingItem.quantity + 1 > product.quantity) {
-                setError(`${t('stock_insufficient') || 'Stock insuffisant'}. ${t('max_available') || 'Maximum'}: ${product.quantity}`);
+            if (existingItem.quantity + 1 > stockInEstablishment) {
+                setError(`Stock insuffisant. Maximum: ${stockInEstablishment}`);
                 return;
             }
             setCart(cart.map(item =>
@@ -87,7 +124,7 @@ const Sales = () => {
                 unitPrice: product.sellingPrice,
                 quantity: 1,
                 subtotal: product.sellingPrice,
-                maxStock: product.quantity,
+                maxStock: stockInEstablishment,
                 prescriptionRequired: product.prescriptionRequired
             }]);
         }
@@ -101,7 +138,7 @@ const Sales = () => {
             return;
         }
         if (newQuantity > item.maxStock) {
-            setError(`${t('stock_insufficient') || 'Stock insuffisant'}. ${t('max_available') || 'Maximum'}: ${item.maxStock}`);
+            setError(`Stock insuffisant. Maximum: ${item.maxStock}`);
             return;
         }
         setCart(cart.map(item =>
@@ -127,7 +164,11 @@ const Sales = () => {
 
     const validateSale = () => {
         if (cart.length === 0) {
-            setError(t('empty_cart') || 'Le panier est vide');
+            setError('Le panier est vide');
+            return false;
+        }
+        if (!selectedEstablishment) {
+            setError('Veuillez sélectionner un établissement');
             return false;
         }
         return true;
@@ -151,13 +192,14 @@ const Sales = () => {
                 paymentMethod,
                 customerName: customerName || undefined,
                 customerPhone: customerPhone || undefined,
-                prescriptionNumber: prescriptionNumber || undefined
+                prescriptionNumber: prescriptionNumber || undefined,
+                establishmentId: selectedEstablishment
             };
 
             const response = await saleService.createSale(saleData);
             
             if (response.success) {
-                setSuccess(t('sale_success') || 'Vente enregistrée avec succès !');
+                setSuccess('Vente enregistrée avec succès !');
                 clearCart();
                 setCustomerName('');
                 setCustomerPhone('');
@@ -167,7 +209,8 @@ const Sales = () => {
                 setTimeout(() => setSuccess(''), 3000);
             }
         } catch (err) {
-            setError(err.response?.data?.message || t('error'));
+            setError(err.response?.data?.message || 'Erreur lors de la vente');
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -193,6 +236,10 @@ const Sales = () => {
 
     const formatPrice = (price) => price?.toLocaleString() || 0;
 
+    if (!selectedEstablishment && establishments.length > 0) {
+        return <Loader />;
+    }
+
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
             <div style={{
@@ -217,8 +264,17 @@ const Sales = () => {
 
             {!showHistory ? (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 450px', gap: 'var(--spacing-6)' }}>
-                    {/* Panneau gauche - Recherche */}
+                    {/* Panneau gauche */}
                     <div>
+                        <div className="card" style={{ marginBottom: 'var(--spacing-4)' }}>
+                            <div className="card-body">
+                                <EstablishmentSelector
+                                    selectedId={selectedEstablishment}
+                                    onSelect={setSelectedEstablishment}
+                                />
+                            </div>
+                        </div>
+
                         <div className="card" style={{ marginBottom: 'var(--spacing-4)' }}>
                             <div className="card-body">
                                 <div className="form-group" style={{ marginBottom: 0 }}>
@@ -242,43 +298,46 @@ const Sales = () => {
                                     <h3>{t('available_products')}</h3>
                                 </div>
                                 <div className="card-body" style={{ padding: 0 }}>
-                                    {searchResults.map(product => (
-                                        <div
-                                            key={product._id}
-                                            style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                                padding: 'var(--spacing-3) var(--spacing-4)',
-                                                borderBottom: '1px solid var(--gray-100)',
-                                                cursor: 'pointer',
-                                                transition: 'background-color var(--transition-fast)'
-                                            }}
-                                            onClick={() => addToCart(product)}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                        >
-                                            <div>
-                                                <div style={{ fontWeight: 500 }}>{product.name}</div>
-                                                {product.genericName && (
-                                                    <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
-                                                        {product.genericName}
+                                    {searchResults.map(product => {
+                                        const stockInEstablishment = product.quantity || 0;
+                                        return (
+                                            <div
+                                                key={product._id}
+                                                style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    padding: 'var(--spacing-3) var(--spacing-4)',
+                                                    borderBottom: '1px solid var(--gray-100)',
+                                                    cursor: 'pointer',
+                                                    transition: 'background-color var(--transition-fast)'
+                                                }}
+                                                onClick={() => addToCart(product)}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                            >
+                                                <div>
+                                                    <div style={{ fontWeight: 500 }}>{product.name}</div>
+                                                    {product.genericName && (
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
+                                                            {product.genericName}
+                                                        </div>
+                                                    )}
+                                                    <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>
+                                                        Stock: {stockInEstablishment} {product.unit}
                                                     </div>
-                                                )}
-                                                <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>
-                                                    {t('stock')}: {product.quantity} {product.unit}
+                                                </div>
+                                                <div style={{ textAlign: 'right' }}>
+                                                    <div style={{ fontWeight: 600, color: 'var(--primary-500)' }}>
+                                                        {formatPrice(product.sellingPrice)} GNF
+                                                    </div>
+                                                    {product.prescriptionRequired && (
+                                                        <div style={{ fontSize: '0.7rem', color: 'var(--warning)' }}>📋 Ordonnance requise</div>
+                                                    )}
                                                 </div>
                                             </div>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <div style={{ fontWeight: 600, color: 'var(--primary-500)' }}>
-                                                    {formatPrice(product.sellingPrice)} GNF
-                                                </div>
-                                                {product.prescriptionRequired && (
-                                                    <div style={{ fontSize: '0.7rem', color: 'var(--warning)' }}>📋 Ordonnance requise</div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -286,13 +345,13 @@ const Sales = () => {
                         {searchTerm.length >= 2 && searchResults.length === 0 && (
                             <div className="card">
                                 <div className="card-body" style={{ textAlign: 'center', color: 'var(--gray-500)' }}>
-                                    {t('no_products')}
+                                    Aucun produit trouvé dans cet établissement
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    {/* Panneau droit - Panier (450px) */}
+                    {/* Panneau droit - Panier */}
                     <div>
                         <div className="card">
                             <div className="card-header">
@@ -353,7 +412,7 @@ const Sales = () => {
                                     <input
                                         type="text"
                                         className="form-input"
-                                        placeholder={t('customer_name_placeholder') || 'Nom du client (optionnel)'}
+                                        placeholder="Nom du client (optionnel)"
                                         value={customerName}
                                         onChange={(e) => setCustomerName(e.target.value)}
                                     />
@@ -363,7 +422,7 @@ const Sales = () => {
                                     <input
                                         type="tel"
                                         className="form-input"
-                                        placeholder={t('customer_phone_placeholder') || 'Téléphone (optionnel)'}
+                                        placeholder="Téléphone (optionnel)"
                                         value={customerPhone}
                                         onChange={(e) => setCustomerPhone(e.target.value)}
                                     />
@@ -373,7 +432,7 @@ const Sales = () => {
                                     <input
                                         type="text"
                                         className="form-input"
-                                        placeholder={t('prescription_placeholder') || 'Si applicable'}
+                                        placeholder="Si applicable"
                                         value={prescriptionNumber}
                                         onChange={(e) => setPrescriptionNumber(e.target.value)}
                                     />
@@ -435,7 +494,7 @@ const Sales = () => {
                                         className="btn btn-primary"
                                         style={{ flex: 2 }}
                                         onClick={() => setConfirmModalOpen(true)}
-                                        disabled={cart.length === 0 || loading}
+                                        disabled={cart.length === 0 || loading || !selectedEstablishment}
                                     >
                                         {loading ? <Loader size="sm" /> : t('validate')}
                                     </button>
@@ -462,7 +521,7 @@ const Sales = () => {
                             <Loader />
                         ) : salesHistory.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--gray-500)' }}>
-                                {t('no_sales') || 'Aucune vente enregistrée'}
+                                Aucune vente enregistrée
                             </div>
                         ) : (
                             <div>
@@ -477,13 +536,13 @@ const Sales = () => {
                                     color: 'var(--gray-600)',
                                     flexWrap: 'wrap'
                                 }}>
-                                    <div style={{ width: '120px' }}>{t('sale_number') || 'N° vente'}</div>
-                                    <div style={{ width: '150px' }}>{t('date') || 'Date'}</div>
-                                    <div style={{ width: '150px' }}>{t('customer')}</div>
-                                    <div style={{ width: '80px' }}>{t('items')}</div>
-                                    <div style={{ width: '120px' }}>{t('total')}</div>
-                                    <div style={{ width: '120px' }}>{t('payment')}</div>
-                                    <div style={{ width: '80px' }}>{t('status')}</div>
+                                    <div style={{ width: '120px' }}>N° vente</div>
+                                    <div style={{ width: '150px' }}>Date</div>
+                                    <div style={{ width: '150px' }}>Client</div>
+                                    <div style={{ width: '80px' }}>Articles</div>
+                                    <div style={{ width: '120px' }}>Total</div>
+                                    <div style={{ width: '120px' }}>Paiement</div>
+                                    <div style={{ width: '80px' }}>Statut</div>
                                 </div>
 
                                 {salesHistory.map(sale => (
@@ -538,27 +597,27 @@ const Sales = () => {
             <Modal
                 isOpen={confirmModalOpen}
                 onClose={() => setConfirmModalOpen(false)}
-                title={t('confirm_sale')}
+                title="Confirmer la vente"
             >
                 <div style={{ marginBottom: 'var(--spacing-4)' }}>
-                    <p>{t('confirm_message')}</p>
+                    <p>Confirmez-vous cette vente ?</p>
                     <div style={{ 
                         backgroundColor: 'var(--gray-50)', 
                         padding: 'var(--spacing-3)', 
                         borderRadius: 'var(--radius-md)',
                         marginTop: 'var(--spacing-3)'
                     }}>
-                        <div><strong>{t('total')} :</strong> {formatPrice(total)} GNF</div>
-                        <div><strong>{t('items')} :</strong> {cart.reduce((sum, i) => sum + i.quantity, 0)}</div>
-                        <div><strong>{t('payment_method')} :</strong> {paymentMethod === 'cash' ? t('cash') : paymentMethod === 'card' ? t('card') : t('mobile_money')}</div>
+                        <div><strong>Total :</strong> {formatPrice(total)} GNF</div>
+                        <div><strong>Articles :</strong> {cart.reduce((sum, i) => sum + i.quantity, 0)}</div>
+                        <div><strong>Paiement :</strong> {paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : 'Mobile Money'}</div>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--spacing-3)' }}>
                     <button className="btn btn-primary" onClick={handleConfirmSale} disabled={loading}>
-                        {loading ? <Loader size="sm" /> : t('confirm')}
+                        {loading ? <Loader size="sm" /> : 'Confirmer'}
                     </button>
                     <button className="btn btn-secondary" onClick={() => setConfirmModalOpen(false)}>
-                        {t('cancel_btn')}
+                        Annuler
                     </button>
                 </div>
             </Modal>

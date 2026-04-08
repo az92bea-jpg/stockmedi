@@ -518,3 +518,163 @@ exports.getSystemLogs = async (req, res) => {
         });
     }
 };
+
+// ==================== NOUVELLES FONCTIONS ====================
+
+/**
+ * @desc    Mettre à jour l'abonnement d'une entreprise (manuellement)
+ * @route   PUT /api/admin/companies/:id/subscription
+ * @access  Private (super-admin)
+ */
+exports.updateCompanySubscription = async (req, res) => {
+    try {
+        const { plan, status, endDate } = req.body;
+        const companyId = req.params.id;
+
+        const company = await Company.findById(companyId);
+        if (!company) {
+            return res.status(404).json({ success: false, message: 'Entreprise non trouvée' });
+        }
+
+        // Mettre à jour l'abonnement dans Company
+        company.subscription.plan = plan;
+        company.subscription.status = status;
+        if (endDate) company.subscription.endDate = new Date(endDate);
+        await company.save();
+
+        // Mettre à jour ou créer l'abonnement dans Subscription
+        let subscription = await Subscription.findOne({ companyId });
+        if (subscription) {
+            subscription.plan = plan;
+            subscription.status = status;
+            subscription.endDate = endDate ? new Date(endDate) : subscription.endDate;
+            await subscription.save();
+        } else {
+            subscription = await Subscription.create({
+                companyId,
+                plan,
+                status,
+                endDate: endDate ? new Date(endDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                startDate: new Date()
+            });
+        }
+
+        // Mettre à jour les limites de l'entreprise (stats)
+        await company.updateStats();
+
+        res.json({
+            success: true,
+            message: `Abonnement de ${company.name} mis à jour vers ${plan}`,
+            company: {
+                id: company._id,
+                name: company.name,
+                subscription: company.subscription
+            }
+        });
+    } catch (error) {
+        console.error('❌ Erreur mise à jour abonnement:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * @desc    Obtenir des statistiques avancées pour le super-admin
+ * @route   GET /api/admin/advanced-stats
+ * @access  Private (super-admin)
+ */
+exports.getAdvancedStats = async (req, res) => {
+    try {
+        const totalCompanies = await Company.countDocuments();
+        const totalUsers = await User.countDocuments();
+        const totalProducts = await Product.countDocuments();
+        const totalSales = await Sale.countDocuments();
+
+        const companiesByPlan = await Company.aggregate([
+            { $group: { _id: '$subscription.plan', count: { $sum: 1 } } }
+        ]);
+
+        const recentCompanies = await Company.find()
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .populate('ownerId', 'firstName lastName email');
+
+        res.json({
+            success: true,
+            stats: {
+                totalCompanies,
+                totalUsers,
+                totalProducts,
+                totalSales,
+                companiesByPlan,
+                recentCompanies
+            }
+        });
+    } catch (error) {
+        console.error('❌ Erreur stats avancées:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * @desc    Supprimer un log spécifique (par ID)
+ * @route   DELETE /api/admin/logs/:id
+ * @access  Private (super-admin)
+ */
+exports.deleteLog = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { type } = req.query; // 'user', 'sale', ou 'subscription'
+
+        let result;
+        if (type === 'user') {
+            result = await User.findByIdAndDelete(id);
+        } else if (type === 'sale') {
+            result = await Sale.findByIdAndDelete(id);
+        } else if (type === 'subscription') {
+            result = await Subscription.findByIdAndDelete(id);
+        } else {
+            return res.status(400).json({ success: false, message: 'Type de log invalide' });
+        }
+
+        if (!result) {
+            return res.status(404).json({ success: false, message: 'Log non trouvé' });
+        }
+
+        res.json({
+            success: true,
+            message: 'Log supprimé avec succès'
+        });
+    } catch (error) {
+        console.error('❌ Erreur suppression log:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * @desc    Supprimer tous les logs d'un type
+ * @route   DELETE /api/admin/logs/clear-all
+ * @access  Private (super-admin)
+ */
+exports.clearAllLogs = async (req, res) => {
+    try {
+        const { type } = req.query; // 'user', 'sale', 'subscription', ou 'all'
+
+        if (type === 'user' || type === 'all') {
+            await User.deleteMany({ role: { $ne: 'super-admin' } });
+        }
+        if (type === 'sale' || type === 'all') {
+            await Sale.deleteMany({});
+        }
+        if (type === 'subscription' || type === 'all') {
+            await Subscription.deleteMany({});
+        }
+
+        res.json({
+            success: true,
+            message: `Logs ${type === 'all' ? 'tous' : type} supprimés avec succès`
+        });
+    } catch (error) {
+        console.error('❌ Erreur suppression logs:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import Icon from '../ui/Icon';
 
 const AdminNav = () => {
     return (
@@ -20,25 +21,29 @@ const AdminNav = () => {
                 className={({ isActive }) => isActive ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'}
                 end
             >
-                👑 Dashboard Admin
+                <Icon name="dashboard" category="nav" fallback="👑" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
+                Dashboard Admin
             </NavLink>
             <NavLink 
                 to="/admin/companies" 
                 className={({ isActive }) => isActive ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'}
             >
-                🏢 Entreprises
+                <Icon name="settings" category="nav" fallback="🏢" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
+                Entreprises
             </NavLink>
             <NavLink 
                 to="/admin/users" 
                 className={({ isActive }) => isActive ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'}
             >
-                👥 Utilisateurs
+                <Icon name="employees" category="nav" fallback="👥" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
+                Utilisateurs
             </NavLink>
             <NavLink 
                 to="/admin/logs" 
                 className={({ isActive }) => isActive ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'}
             >
-                📋 Logs
+                <Icon name="reports" category="nav" fallback="📋" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
+                Logs
             </NavLink>
         </div>
     );

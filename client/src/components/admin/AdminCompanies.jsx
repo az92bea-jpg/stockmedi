@@ -15,9 +15,17 @@ const AdminCompanies = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
+    const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [filters, setFilters] = useState({ search: '', status: '' });
     const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 });
+    
+    // Formulaire pour l'abonnement
+    const [subscriptionForm, setSubscriptionForm] = useState({
+        plan: 'basic',
+        status: 'active',
+        endDate: ''
+    });
 
     const fetchCompanies = useCallback(async () => {
         try {
@@ -49,6 +57,32 @@ const AdminCompanies = () => {
     const openEditModal = (company) => {
         setSelectedCompany(company);
         setModalOpen(true);
+    };
+
+    const openSubscriptionModal = (company) => {
+        setSelectedCompany(company);
+        setSubscriptionForm({
+            plan: company.subscription?.plan || 'basic',
+            status: company.subscription?.status || 'active',
+            endDate: company.subscription?.endDate ? company.subscription.endDate.split('T')[0] : ''
+        });
+        setSubscriptionModalOpen(true);
+    };
+
+    const handleSubscriptionUpdate = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await api.put(`/admin/companies/${selectedCompany._id}/subscription`, subscriptionForm);
+            setSuccess(`Abonnement de ${selectedCompany.name} mis à jour`);
+            fetchCompanies();
+            setSubscriptionModalOpen(false);
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Erreur lors de la mise à jour');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleUpdate = async (e) => {
@@ -212,6 +246,13 @@ const AdminCompanies = () => {
                                         <td>
                                             <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
                                                 <button 
+                                                    className="btn btn-sm btn-primary" 
+                                                    onClick={() => openSubscriptionModal(company)}
+                                                    title="Modifier l'abonnement"
+                                                >
+                                                    💎 Plan
+                                                </button>
+                                                <button 
                                                     className="btn btn-sm btn-outline" 
                                                     onClick={() => openEditModal(company)}
                                                     title="Modifier"
@@ -257,7 +298,7 @@ const AdminCompanies = () => {
                 )}
             </div>
 
-            {/* Modal édition */}
+            {/* Modal édition entreprise */}
             <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Modifier l'entreprise" size="md">
                 {selectedCompany && (
                     <form onSubmit={handleUpdate}>
@@ -311,6 +352,36 @@ const AdminCompanies = () => {
                         </div>
                     </form>
                 )}
+            </Modal>
+
+            {/* Modal modification abonnement (simple) */}
+            <Modal isOpen={subscriptionModalOpen} onClose={() => setSubscriptionModalOpen(false)} title={`Modifier l'abonnement - ${selectedCompany?.name}`} size="md">
+                <form onSubmit={handleSubscriptionUpdate}>
+                    <div className="form-group">
+                        <label className="form-label">Plan</label>
+                        <select className="form-select" value={subscriptionForm.plan} onChange={(e) => setSubscriptionForm({ ...subscriptionForm, plan: e.target.value })}>
+                            <option value="basic">Basic</option>
+                            <option value="premium">Premium</option>
+                            <option value="enterprise">Enterprise</option>
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Statut</label>
+                        <select className="form-select" value={subscriptionForm.status} onChange={(e) => setSubscriptionForm({ ...subscriptionForm, status: e.target.value })}>
+                            <option value="active">Actif</option>
+                            <option value="expired">Expiré</option>
+                            <option value="suspended">Suspendu</option>
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Date d'expiration</label>
+                        <input type="date" className="form-input" value={subscriptionForm.endDate} onChange={(e) => setSubscriptionForm({ ...subscriptionForm, endDate: e.target.value })} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}>
+                        <button type="submit" className="btn btn-primary">Enregistrer</button>
+                        <button type="button" className="btn btn-secondary" onClick={() => setSubscriptionModalOpen(false)}>Annuler</button>
+                    </div>
+                </form>
             </Modal>
         </div>
     );

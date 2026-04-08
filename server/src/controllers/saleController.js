@@ -2,13 +2,11 @@
  * CONTRÔLEUR VENTES
  */
 
-/**
- * CONTRÔLEUR VENTES
- */
-
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
 const Company = require('../models/Company');
+const Establishment = require('../models/Establishment');
+const mongoose = require('mongoose');
 
 // Fonction pour générer le numéro de vente
 async function generateSaleNumber(companyId) {
@@ -32,7 +30,17 @@ async function generateSaleNumber(companyId) {
  */
 exports.createSale = async (req, res) => {
     try {
-        const { items, discount, discountType, paymentMethod, customerName, customerPhone, prescriptionNumber, notes } = req.body;
+        const { 
+            items, 
+            discount, 
+            discountType, 
+            paymentMethod, 
+            customerName, 
+            customerPhone, 
+            prescriptionNumber, 
+            notes,
+            establishmentId
+        } = req.body;
 
         if (!items || items.length === 0) {
             return res.status(400).json({
@@ -41,14 +49,31 @@ exports.createSale = async (req, res) => {
             });
         }
 
-        // Récupérer la configuration de l'entreprise pour la TVA
+        if (!establishmentId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Établissement requis pour la vente'
+            });
+        }
+
+        const establishment = await Establishment.findOne({
+            _id: establishmentId,
+            companyId: req.user.companyId
+        });
+
+        if (!establishment) {
+            return res.status(400).json({
+                success: false,
+                message: 'Établissement non trouvé'
+            });
+        }
+
         const company = await Company.findById(req.user.companyId);
         const taxRate = (company?.settings?.taxRate || 18) / 100;
 
         let subtotal = 0;
         const saleItems = [];
 
-        // Traiter chaque article
         for (const item of items) {
             const product = await Product.findOne({
                 _id: item.productId,
@@ -63,7 +88,7 @@ exports.createSale = async (req, res) => {
                 });
             }
 
-            // Vérifier si le produit peut être vendu
+            // ⭐ Vérifier si le produit peut être vendu (sans establishmentId, car le produit a déjà son propre établissement)
             const canSell = product.canBeSold(item.quantity);
             if (!canSell.can) {
                 return res.status(400).json({
@@ -86,27 +111,23 @@ exports.createSale = async (req, res) => {
 
             subtotal += subtotalItem;
 
-            // Diminuer le stock
-            product.quantity -= item.quantity;
-            await product.save();
+            // ⭐ CORRECTION : product.sell attend (quantity, userId, saleId)
+            // Le sale n'existe pas encore, on passe null pour saleId
+            await product.sell(item.quantity, req.user.id, null);
         }
 
-        // Calculer la remise
         let discountAmount = discount || 0;
         if (discountType === 'percentage') {
             discountAmount = (subtotal * discount) / 100;
         }
 
-        // Calculer la TVA
         const taxAmount = (subtotal - discountAmount) * taxRate;
         const total = subtotal - discountAmount + taxAmount;
-
-        // Générer le numéro de vente
         const saleNumber = await generateSaleNumber(req.user.companyId);
 
-        // Créer la vente
         const sale = await Sale.create({
             companyId: req.user.companyId,
+            establishmentId,
             saleNumber: saleNumber,
             items: saleItems,
             subtotal,
@@ -137,7 +158,7 @@ exports.createSale = async (req, res) => {
     }
 };
 
-// ... le reste des fonctions (getSales, getSale, cancelSale, getSalesStats)
+
 /**
  * @desc    Récupérer toutes les ventes
  */
@@ -156,6 +177,7 @@ exports.getSales = async (req, res) => {
 
         const sales = await Sale.find(query)
             .populate('userId', 'firstName lastName')
+            .populate('establishmentId', 'name')
             .sort({ createdAt: -1 })
             .limit(limit * 1)
             .skip((page - 1) * limit);
@@ -201,7 +223,8 @@ exports.getSale = async (req, res) => {
             _id: req.params.id,
             companyId: req.user.companyId
         }).populate('userId', 'firstName lastName')
-          .populate('items.productId', 'name barcode');
+          .populate('items.productId', 'name barcode')
+          .populate('establishmentId', 'name');
 
         if (!sale) {
             return res.status(404).json({
@@ -268,10 +291,21 @@ exports.cancelSale = async (req, res) => {
 };
 
 /**
- * @desc    Récupérer les statistiques des ventes
+ * @desc    Récupérer les statistiques des ventes (IGNORE LES VENTES ARCHIVÉES)
  */
 exports.getSalesStats = async (req, res) => {
     try {
+        const { establishmentId } = req.query;
+        
+        const matchQuery = { 
+            companyId: req.user.companyId, 
+            archived: false 
+        };
+        
+        if (establishmentId) {
+            matchQuery.establishmentId = new mongoose.Types.ObjectId(establishmentId);
+        }
+        
         const today = new Date();
         const startOfDay = new Date(today.setHours(0, 0, 0, 0));
         const startOfWeek = new Date(today);
@@ -283,35 +317,35 @@ exports.getSalesStats = async (req, res) => {
 
         // Ventes du jour
         const dailySales = await Sale.aggregate([
-            { $match: { companyId: req.user.companyId, createdAt: { $gte: startOfDay } } },
+            { $match: { ...matchQuery, createdAt: { $gte: startOfDay } } },
             { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
         ]);
         stats.daily = dailySales[0] || { total: 0, count: 0 };
 
         // Ventes de la semaine
         const weeklySales = await Sale.aggregate([
-            { $match: { companyId: req.user.companyId, createdAt: { $gte: startOfWeek } } },
+            { $match: { ...matchQuery, createdAt: { $gte: startOfWeek } } },
             { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
         ]);
         stats.weekly = weeklySales[0] || { total: 0, count: 0 };
 
         // Ventes du mois
         const monthlySales = await Sale.aggregate([
-            { $match: { companyId: req.user.companyId, createdAt: { $gte: startOfMonth } } },
+            { $match: { ...matchQuery, createdAt: { $gte: startOfMonth } } },
             { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
         ]);
         stats.monthly = monthlySales[0] || { total: 0, count: 0 };
 
         // Ventes de l'année
         const yearlySales = await Sale.aggregate([
-            { $match: { companyId: req.user.companyId, createdAt: { $gte: startOfYear } } },
+            { $match: { ...matchQuery, createdAt: { $gte: startOfYear } } },
             { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
         ]);
         stats.yearly = yearlySales[0] || { total: 0, count: 0 };
 
-        // Top produits vendus
+        // Top produits
         const topProducts = await Sale.aggregate([
-            { $match: { companyId: req.user.companyId } },
+            { $match: matchQuery },
             { $unwind: '$items' },
             {
                 $group: {

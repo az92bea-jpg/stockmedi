@@ -18,7 +18,10 @@ export const productService = {
 
     // Créer un produit
     async createProduct(data) {
-        return await api.post('/products', data);
+        console.log('📡 API createProduct appelée avec:', data);
+        const response = await api.post('/products', data);
+        console.log('✅ Réponse API:', response);
+        return response;
     },
 
     // Mettre à jour un produit

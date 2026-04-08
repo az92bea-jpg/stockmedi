@@ -2,16 +2,34 @@
  * COMPOSANT SIDEBAR - Menu de navigation latéral
  */
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { useLanguage } from '../../context/LanguageContext';
 import Icon from '../ui/Icon';
+import api from '../../services/api';
 
 const Sidebar = ({ isOpen, onClose }) => {
     const { t } = useLanguage();
     const navigate = useNavigate();
     const user = authService.getCurrentUser();
+    const [subscription, setSubscription] = useState(null);
+
+    // ⭐ Correction : useCallback pour éviter la boucle infinie
+    const fetchSubscription = useCallback(async () => {
+        try {
+            const response = await api.get('/subscription');
+            setSubscription(response.subscription);
+        } catch (err) {
+            console.error('Erreur chargement abonnement:', err);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (user?.role === 'owner') {
+            fetchSubscription();
+        }
+    }, [user?.role, fetchSubscription]);
 
     const handleLogout = () => {
         authService.logout();
@@ -27,6 +45,16 @@ const Sidebar = ({ isOpen, onClose }) => {
         { path: '/settings', name: t('nav_settings'), iconName: 'settings', fallback: '⚙️' },
         { path: '/subscription', name: t('nav_subscription'), iconName: 'subscription', fallback: '💎' }
     ];
+
+    // Ajouter le lien Établissements uniquement pour le plan Enterprise
+    if (subscription?.plan === 'enterprise') {
+        navItems.push({
+            path: '/settings/establishments',
+            name: 'Établissements',
+            iconName: 'settings',
+            fallback: '🏢'
+        });
+    }
 
     if (user?.role === 'super-admin') {
         navItems.push({ 
@@ -83,7 +111,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                     marginBottom: '16px'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {/* <img src="/assets/icons/nav/logo.svg" alt="Logo" style={{ width: '32px', height: '32px' }} /> remplacer la ligne Icon name ci_dessous, logo se presente a la place de pilule */}
                         <img 
                             src="/assets/icons/nav/pill.svg" 
                             alt="Pilule" 

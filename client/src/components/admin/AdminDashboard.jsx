@@ -12,12 +12,17 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [stats, setStats] = useState(null);
+    const [advancedStats, setAdvancedStats] = useState(null);
 
     const fetchStats = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await api.get('/admin/stats');
-            setStats(response.stats);
+            const [statsRes, advancedRes] = await Promise.all([
+                api.get('/admin/stats'),
+                api.get('/admin/advanced-stats')
+            ]);
+            setStats(statsRes.stats);
+            setAdvancedStats(advancedRes.stats);
         } catch (err) {
             setError('Erreur lors du chargement des statistiques');
             console.error(err);
@@ -111,6 +116,29 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
+            {/* Répartition des plans */}
+            {advancedStats?.companiesByPlan && advancedStats.companiesByPlan.length > 0 && (
+                <div className="card" style={{ marginBottom: 'var(--spacing-6)' }}>
+                    <div className="card-header">
+                        <h3>📋 Répartition par plan d'abonnement</h3>
+                    </div>
+                    <div className="card-body">
+                        <div style={{ display: 'flex', gap: 'var(--spacing-4)', flexWrap: 'wrap' }}>
+                            {advancedStats.companiesByPlan.map(item => (
+                                <div key={item._id} style={{ textAlign: 'center', minWidth: '100px' }}>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                                        {formatNumber(item.count)}
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
+                                        {item._id === 'basic' ? 'Basic' : item._id === 'premium' ? 'Premium' : item._id === 'enterprise' ? 'Enterprise' : 'Trial'}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Abonnements */}
             <div className="card" style={{ marginBottom: 'var(--spacing-6)' }}>
                 <div className="card-header">
@@ -187,6 +215,39 @@ const AdminDashboard = () => {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Entreprises récentes */}
+            {advancedStats?.recentCompanies && advancedStats.recentCompanies.length > 0 && (
+                <div className="card" style={{ marginTop: 'var(--spacing-6)' }}>
+                    <div className="card-header">
+                        <h3>🆕 Dernières entreprises inscrites</h3>
+                    </div>
+                    <div className="card-body">
+                        <div className="table-container">
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Email</th>
+                                        <th>Propriétaire</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {advancedStats.recentCompanies.map(company => (
+                                        <tr key={company._id}>
+                                            <td>{company.name}</td>
+                                            <td>{company.email}</td>
+                                            <td>{company.ownerId?.firstName} {company.ownerId?.lastName}</td>
+                                            <td>{new Date(company.createdAt).toLocaleDateString('fr-FR')}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}

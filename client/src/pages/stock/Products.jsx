@@ -6,14 +6,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { productService } from '../../services/productService';
+import api from '../../services/api';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal';
 import { useLanguage } from '../../context/LanguageContext';
+import { authService } from '../../services/authService';
+import EstablishmentSelector from '../../components/establishment/EstablishmentSelector';
 
 const Products = () => {
     const { t } = useLanguage();
     const location = useLocation();
+    const user = authService.getCurrentUser();
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -30,6 +34,9 @@ const Products = () => {
         stockStatus: ''
     });
     
+    const [selectedEstablishment, setSelectedEstablishment] = useState('');
+    const [establishments, setEstablishments] = useState([]);
+
     const [formData, setFormData] = useState({
         name: '',
         genericName: '',
@@ -49,6 +56,19 @@ const Products = () => {
         description: ''
     });
 
+    // Charger les établissements
+    const loadEstablishments = useCallback(async () => {
+        try {
+            const response = await api.get('/establishments');
+            setEstablishments(response.establishments || []);
+            if (response.establishments?.length > 0 && !selectedEstablishment) {
+                setSelectedEstablishment(response.establishments[0]._id);
+            }
+        } catch (err) {
+            console.error('Erreur chargement établissements:', err);
+        }
+    }, [selectedEstablishment]);
+
     const fetchProducts = useCallback(async () => {
         try {
             setLoading(true);
@@ -65,7 +85,10 @@ const Products = () => {
 
     useEffect(() => {
         fetchProducts();
-    }, [fetchProducts]);
+        if (user?.role === 'owner') {
+            loadEstablishments();
+        }
+    }, [fetchProducts, user?.role, loadEstablishments]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -192,6 +215,12 @@ const Products = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (modalMode === 'create' && user?.role === 'owner' && !selectedEstablishment) {
+            setError('Veuillez sélectionner un établissement');
+            return;
+        }
+
         if (!validatePrices()) return;
         if (!validateDates()) return;
         if (!formData.name) {
@@ -210,12 +239,36 @@ const Products = () => {
             setError(t('expiration_date_required') || 'La date d\'expiration est requise');
             return;
         }
+
         try {
+            const productData = {
+                ...formData,
+                establishmentId: modalMode === 'create' ? selectedEstablishment : undefined
+            };
+
             if (modalMode === 'create') {
-                await productService.createProduct(formData);
+                await productService.createProduct(productData);
                 setSuccess(t('product_created') || 'Produit créé avec succès');
             } else {
-                await productService.updateProduct(selectedProduct._id, formData);
+                await productService.updateProduct(selectedProduct._id, {
+                    name: formData.name,
+                    genericName: formData.genericName,
+                    category: formData.category,
+                    manufacturer: formData.manufacturer,
+                    batchNumber: formData.batchNumber,
+                    barcode: formData.barcode,
+                    unit: formData.unit,
+                    reorderPoint: formData.reorderPoint,
+                    location: formData.location,
+                    purchasePrice: formData.purchasePrice,
+                    sellingPrice: formData.sellingPrice,
+                    manufacturingDate: formData.manufacturingDate,
+                    expirationDate: formData.expirationDate,
+                    prescriptionRequired: formData.prescriptionRequired,
+                    description: formData.description,
+                    quantity: formData.quantity,
+                    establishmentId: selectedEstablishment
+                });
                 setSuccess(t('product_updated') || 'Produit modifié avec succès');
             }
             setModalOpen(false);
@@ -259,18 +312,6 @@ const Products = () => {
 
     const resetFilters = () => {
         setFilters({ search: '', category: '', stockStatus: '' });
-    };
-
-    const getStockStatusClass = (product) => {
-        if (product.quantity === 0) return 'badge-danger';
-        if (product.quantity <= product.reorderPoint) return 'badge-warning';
-        return 'badge-success';
-    };
-
-    const getStockStatusText = (product) => {
-        if (product.quantity === 0) return t('out_of_stock');
-        if (product.quantity <= product.reorderPoint) return t('low_stock');
-        return t('in_stock') || 'En stock';
     };
 
     const getExpirationStatusClass = (product) => {
@@ -369,130 +410,160 @@ const Products = () => {
                 </div>
             </div>
 
-            {/* Liste des produits - Version sans tableau */}
-            <div className="card">
-                {/* En-tête */}
-                <div style={{
-                    display: 'flex',
-                    gap: 'var(--spacing-4)',
-                    padding: 'var(--spacing-3) var(--spacing-4)',
-                    backgroundColor: 'var(--gray-50)',
-                    borderBottom: '1px solid var(--gray-200)',
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                    color: 'var(--gray-600)',
-                    flexWrap: 'wrap'
-                }}>
-                    <div style={{ width: '180px' }}>{t('name')}</div>
-                    <div style={{ width: '100px' }}>{t('category_col')}</div>
-                    <div style={{ width: '100px' }}>{t('stock')}</div>
-                    <div style={{ width: '100px' }}>{t('purchase_price')}</div>
-                    <div style={{ width: '100px' }}>{t('selling_price')}</div>
-                    <div style={{ width: '80px' }}>{t('margin')}</div>
-                    <div style={{ width: '120px' }}>{t('expiration')}</div>
-                    <div style={{ width: '80px' }}>{t('actions')}</div>
+            {/* Liste des produits - Version simplifiée (un produit = un établissement) */}
+            {filteredProducts.length === 0 ? (
+                <div className="card">
+                    <div className="card-body" style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--gray-500)' }}>
+                        {filters.search ? t('no_products_search') || 'Aucun produit ne correspond à votre recherche' : t('no_products')}
+                    </div>
                 </div>
+            ) : (
+                <div className="card">
+                    <div style={{
+                        display: 'flex',
+                        gap: 'var(--spacing-4)',
+                        padding: 'var(--spacing-3) var(--spacing-4)',
+                        backgroundColor: 'var(--gray-50)',
+                        borderBottom: '1px solid var(--gray-200)',
+                        fontWeight: 600,
+                        fontSize: '0.875rem',
+                        color: 'var(--gray-600)',
+                        flexWrap: 'wrap'
+                    }}>
+                        <div style={{ width: '180px' }}>{t('name')}</div>
+                        <div style={{ width: '100px' }}>{t('category_col')}</div>
+                        <div style={{ width: '100px' }}>{t('stock')}</div>
+                        <div style={{ width: '100px' }}>{t('purchase_price')}</div>
+                        <div style={{ width: '100px' }}>{t('selling_price')}</div>
+                        <div style={{ width: '80px' }}>{t('margin')}</div>
+                        <div style={{ width: '120px' }}>{t('expiration')}</div>
+                        <div style={{ width: '80px' }}>{t('actions')}</div>
+                    </div>
 
-                {/* Corps de la liste */}
-                <div>
-                    {filteredProducts.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--gray-500)' }}>
-                            {filters.search ? t('no_products_search') || 'Aucun produit ne correspond à votre recherche' : t('no_products')}
-                        </div>
-                    ) : (
-                        filteredProducts.map((product) => {
-                            const margin = product.purchasePrice > 0 
-                                ? ((product.sellingPrice - product.purchasePrice) / product.purchasePrice * 100).toFixed(1)
-                                : 0;
-                            const isLoss = product.sellingPrice < product.purchasePrice;
-                            return (
-                                <div
-                                    key={product._id}
-                                    style={{
-                                        display: 'flex',
-                                        gap: 'var(--spacing-4)',
-                                        padding: 'var(--spacing-3) var(--spacing-4)',
-                                        borderBottom: '1px solid var(--gray-100)',
-                                        alignItems: 'center',
-                                        transition: 'background-color 0.2s',
-                                        flexWrap: 'wrap'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                >
-                                    <div style={{ width: '180px' }}>
-                                        <strong>{product.name}</strong>
-                                        {product.genericName && (
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
-                                                {product.genericName}
-                                            </div>
-                                        )}
-                                        {product.batchNumber && (
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>
-                                                {t('batch_number')}: {product.batchNumber}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div style={{ width: '100px', fontSize: '0.75rem' }}>
+                    {filteredProducts.map((product) => {
+                        /* const margin = product.purchasePrice > 0 
+                            ? ((product.sellingPrice - product.purchasePrice) / product.purchasePrice * 100).toFixed(1)
+                            : 0;
+                        const isLoss = product.sellingPrice < product.purchasePrice;
+                        */
+                        return (
+                            <div
+                                key={product._id}
+                                style={{
+                                    display: 'flex',
+                                    gap: 'var(--spacing-4)',
+                                    padding: 'var(--spacing-3) var(--spacing-4)',
+                                    borderBottom: '1px solid var(--gray-100)',
+                                    alignItems: 'center',
+                                    transition: 'background-color 0.2s',
+                                    flexWrap: 'wrap'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                                <div style={{ width: '180px' }}>
+                                    <strong>{product.name}</strong>
+                                    {product.genericName && (
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
+                                            {product.genericName}
+                                        </div>
+                                    )}
+                                    {product.batchNumber && (
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>
+                                            {t('batch_number')}: {product.batchNumber}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div style={{ width: '100px', fontSize: '0.75rem' }}>
+                                    <div>
                                         {product.category === 'médicament' ? '💊 ' + (t('medication') || 'Médicament') :
                                          product.category === 'dispositif_médical' ? '🩺 ' + (t('medical_device') || 'DM') :
                                          product.category === 'consommable' ? '🧻 ' + (t('consumable') || 'Consommable') : 
                                          product.category === 'parapharmacie' ? '🧴 ' + (t('parapharmacy') || 'Parapharmacie') : product.category}
                                     </div>
-                                    <div style={{ width: '100px' }}>
-                                        <span className={getStockStatusClass(product)}>
-                                            {formatPrice(product.quantity)} {product.unit}
-                                        </span>
-                                        <div style={{ fontSize: '0.7rem' }}>{getStockStatusText(product)}</div>
-                                    </div>
-                                    <div style={{ width: '100px', fontSize: '0.875rem' }}>
-                                        {formatPrice(product.purchasePrice)} GNF
-                                    </div>
-                                    <div style={{ width: '100px', fontSize: '0.875rem' }}>
-                                        <strong>{formatPrice(product.sellingPrice)} GNF</strong>
-                                    </div>
-                                    <div style={{ width: '80px' }}>
-                                        <span style={{ 
-                                            color: isLoss ? '#EF4444' : margin > 0 ? '#10B981' : '#F59E0B',
-                                            fontWeight: 500
-                                        }}>
-                                            {margin}%
-                                            {isLoss && ' ⚠️'}
-                                        </span>
-                                    </div>
-                                    <div style={{ width: '120px' }}>
-                                        <span className={getExpirationStatusClass(product)}>
-                                            {product.expirationDate ? new Date(product.expirationDate).toLocaleDateString('fr-FR') : 'N/A'}
-                                        </span>
-                                        {product.manufacturingDate && (
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
-                                                {t('manufacturing_date')}: {new Date(product.manufacturingDate).toLocaleDateString('fr-FR')}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div style={{ width: '80px', display: 'flex', gap: 'var(--spacing-2)' }}>
-                                        <button
-                                            className="btn btn-sm btn-outline"
-                                            onClick={() => openEditModal(product)}
-                                            title={t('edit')}
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button
-                                            className="btn btn-sm btn-outline"
-                                            onClick={() => handleDelete(product)}
-                                            style={{ color: '#EF4444' }}
-                                            title={t('delete')}
-                                        >
-                                            🗑️
-                                        </button>
+                                    <div style={{ fontSize: '0.65rem', color: 'var(--primary-500)', marginTop: '4px' }}>
+                                        🏪 {product.establishmentId?.name || 'Chargement...'}
                                     </div>
                                 </div>
-                            );
-                        })
-                    )}
+
+                                <div style={{ width: '100px' }}>
+                                    <span className={product.quantity === 0 ? 'badge-danger' : product.quantity <= product.reorderPoint ? 'badge-warning' : 'badge-success'}>
+                                        {formatPrice(product.quantity)} {product.unit}
+                                    </span>
+                                    <div style={{ fontSize: '0.7rem' }}>
+                                        {product.quantity === 0 ? t('out_of_stock') : product.quantity <= product.reorderPoint ? t('low_stock') : t('in_stock') || 'En stock'}
+                                    </div>
+                                    {product.location && (
+                                        <div style={{ fontSize: '0.65rem', color: 'var(--gray-500)', marginTop: '2px' }}>
+                                            📍 {product.location}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div style={{ width: '100px', fontSize: '0.875rem' }}>
+                                    {formatPrice(product.purchasePrice)} GNF
+                                </div>
+
+                                <div style={{ width: '100px', fontSize: '0.875rem' }}>
+                                    <strong>{formatPrice(product.sellingPrice)} GNF</strong>
+                                </div>
+
+                               
+                             
+                                 <div style={{ width: '80px' }}>
+                                    {(() => {
+                                        const purchase = Number(product.purchasePrice);
+                                        const selling = Number(product.sellingPrice);
+                                        
+                                        if (purchase === 0 || isNaN(purchase)) {
+                                            return <span style={{ color: '#F59E0B', fontWeight: 500 }}>N/A</span>;
+                                        }
+                                        
+                                        const margin = ((selling - purchase) / purchase * 100).toFixed(1);
+                                        
+                                        if (selling < purchase) {
+                                            return <span style={{ color: '#EF4444', fontWeight: 500 }}>{margin}% ⚠️ PERTE</span>;
+                                        } else if (selling > purchase) {
+                                            return <span style={{ color: '#10B981', fontWeight: 500 }}>+{margin}%</span>;
+                                        } else {
+                                            return <span style={{ color: '#F59E0B', fontWeight: 500 }}>{margin}%</span>;
+                                        }
+                                    })()}
+                                </div>
+                                <div style={{ width: '120px' }}>
+                                    <span className={getExpirationStatusClass(product)}>
+                                        {product.expirationDate ? new Date(product.expirationDate).toLocaleDateString('fr-FR') : 'N/A'}
+                                    </span>
+                                    {product.manufacturingDate && (
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
+                                            {t('manufacturing_date')}: {new Date(product.manufacturingDate).toLocaleDateString('fr-FR')}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div style={{ width: '80px', display: 'flex', gap: 'var(--spacing-2)' }}>
+                                    <button
+                                        className="btn btn-sm btn-outline"
+                                        onClick={() => openEditModal(product)}
+                                        title={t('edit')}
+                                    >
+                                        ✏️
+                                    </button>
+                                    <button
+                                        className="btn btn-sm btn-outline"
+                                        onClick={() => handleDelete(product)}
+                                        style={{ color: '#EF4444' }}
+                                        title={t('delete')}
+                                    >
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
-            </div>
+            )}
 
             {/* Modal de création/édition */}
             <Modal
@@ -502,6 +573,14 @@ const Products = () => {
                 size="lg"
             >
                 <form onSubmit={handleSubmit}>
+                    {modalMode === 'create' && user?.role === 'owner' && establishments.length > 0 && (
+                        <EstablishmentSelector
+                            selectedId={selectedEstablishment}
+                            onSelect={setSelectedEstablishment}
+                            className="mb-4"
+                        />
+                    )}
+
                     <div className="form-row">
                         <div className="form-group">
                             <label className="form-label required">{t('product_name')}</label>
