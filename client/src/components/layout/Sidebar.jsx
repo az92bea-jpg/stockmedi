@@ -15,7 +15,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     const user = authService.getCurrentUser();
     const [subscription, setSubscription] = useState(null);
 
-    // ⭐ Correction : useCallback pour éviter la boucle infinie
+    // Charger l'abonnement
     const fetchSubscription = useCallback(async () => {
         try {
             const response = await api.get('/subscription');
@@ -36,15 +36,43 @@ const Sidebar = ({ isOpen, onClose }) => {
         navigate('/login');
     };
 
+    // Menu de base (accessible à tous)
     const navItems = [
         { path: '/dashboard', name: t('nav_dashboard'), iconName: 'dashboard', fallback: '📊' },
         { path: '/products', name: t('nav_products'), iconName: 'products', fallback: '📦' },
         { path: '/sales', name: t('nav_sales'), iconName: 'sales', fallback: '💰' },
-        { path: '/reports', name: t('nav_reports'), iconName: 'reports', fallback: '📄' },
-        { path: '/employees', name: t('nav_employees'), iconName: 'employees', fallback: '👥' },
-        { path: '/settings', name: t('nav_settings'), iconName: 'settings', fallback: '⚙️' },
-        { path: '/subscription', name: t('nav_subscription'), iconName: 'subscription', fallback: '💎' }
+        { path: '/reports', name: t('nav_reports'), iconName: 'reports', fallback: '📄' }
     ];
+
+    // Ajouter Employés uniquement si owner
+    if (user?.role === 'owner') {
+        navItems.push({ 
+            path: '/employees', 
+            name: t('nav_employees'), 
+            iconName: 'employees', 
+            fallback: '👥' 
+        });
+    }
+
+    // Ajouter Paramètres uniquement si owner
+    if (user?.role === 'owner') {
+        navItems.push({ 
+            path: '/settings', 
+            name: t('nav_settings'), 
+            iconName: 'settings', 
+            fallback: '⚙️' 
+        });
+    }
+
+    // Ajouter Abonnement uniquement si owner
+    if (user?.role === 'owner') {
+        navItems.push({ 
+            path: '/subscription', 
+            name: t('nav_subscription'), 
+            iconName: 'subscription', 
+            fallback: '💎' 
+        });
+    }
 
     // Ajouter le lien Établissements uniquement pour le plan Enterprise
     if (subscription?.plan === 'enterprise') {
@@ -56,6 +84,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         });
     }
 
+    // Ajouter Admin pour super-admin
     if (user?.role === 'super-admin') {
         navItems.push({ 
             path: '/admin', 
@@ -121,6 +150,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                             {user && (
                                 <div style={{ fontSize: '0.7rem', color: '#6B7280', marginTop: '4px' }}>
                                     {user.firstName} {user.lastName}
+                                    {user.role === 'employee' && <span style={{ color: '#F59E0B' }}> (Employé)</span>}
                                 </div>
                             )}
                         </div>

@@ -11,6 +11,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const cron = require('node-cron');
 
+
 // Chargement des variables d'environnement
 dotenv.config();
 
@@ -42,6 +43,9 @@ const logsRoutes = require('./routes/logsRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const archiveRoutes = require('./routes/archiveRoutes');
 const establishmentRoutes = require('./routes/establishmentRoutes');
+
+// ⭐ CRON JOBS (notifications email + nettoyage archives)
+/* require('./utils/cronJobs');  // charger resend */
 
 // Import du contrôleur pour le nettoyage automatique
 const { cleanupExpiredArchives } = require('./controllers/archiveController');

@@ -536,6 +536,8 @@ exports.updateCompanySubscription = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Entreprise non trouvée' });
         }
 
+        const oldPlan = company.subscription?.plan || 'trial';
+
         // Mettre à jour l'abonnement dans Company
         company.subscription.plan = plan;
         company.subscription.status = status;
@@ -561,6 +563,14 @@ exports.updateCompanySubscription = async (req, res) => {
 
         // Mettre à jour les limites de l'entreprise (stats)
         await company.updateStats();
+
+        /* // ⭐ NOTIFICATION : Changement manuel par super-admin
+        //const { notifySubscriptionChanged } = require('./notificationController');
+        //await notifySubscriptionChanged({
+        //    companyId: company._id,
+        //    newPlan: plan,
+        //    reason: 'admin'
+        //}); */
 
         res.json({
             success: true,

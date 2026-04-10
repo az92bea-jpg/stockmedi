@@ -19,7 +19,7 @@ const StockMovementSchema = new mongoose.Schema({
     establishmentId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Establishment',
-        required: true
+        required: false  // ⭐ CHANGÉ : optionnel pour les comptes sans établissement
     },
     fromEstablishmentId: {
         type: mongoose.Schema.Types.ObjectId,

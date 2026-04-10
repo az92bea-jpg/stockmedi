@@ -17,15 +17,17 @@ const { protect, hasPermission } = require('../middleware/auth');
 // Toutes les routes nécessitent d'être authentifié
 router.use(protect);
 
-// Routes consultables par tous
+// ==================== ROUTES ACCESSIBLES À TOUS LES UTILISATEURS AUTHENTIFIÉS ====================
+// Lecture des ventes et statistiques
 router.get('/', getSales);
 router.get('/stats', getSalesStats);
 router.get('/:id', getSale);
 
-// Routes nécessitant la permission de vente
+// ==================== ROUTES NÉCESSITANT UNE PERMISSION ====================
+// Création de vente : permission 'make_sales'
 router.post('/', hasPermission('make_sales'), createSale);
 
-// Annulation (owner uniquement via middleware spécifique)
-router.put('/:id/cancel', hasPermission('manage_users'), cancelSale);
+// Annulation de vente : permission 'cancel_sales'
+router.put('/:id/cancel', hasPermission('cancel_sales'), cancelSale);
 
 module.exports = router;

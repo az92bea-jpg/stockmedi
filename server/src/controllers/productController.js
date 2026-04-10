@@ -3,6 +3,7 @@
  */
 
 const Product = require('../models/Product');
+const Establishment = require('../models/Establishment');
 const mongoose = require('mongoose');
 
 /**
@@ -27,26 +28,17 @@ exports.getProducts = async (req, res) => {
             query.$expr = { $lte: ["$quantity", "$reorderPoint"] };
         }
         
-        // ⭐ Récupérer les produits
         const products = await Product.find(query)
             .populate('establishmentId', 'name')
             .sort({ createdAt: -1 })
             .limit(limit * 1)
             .skip((page - 1) * limit);
         
-        // ⭐ Convertir les prix en nombres
-        const formattedProducts = products.map(p => ({
-            ...p.toObject(),
-            purchasePrice: Number(p.purchasePrice) || 0,
-            sellingPrice: Number(p.sellingPrice) || 0,
-            quantity: Number(p.quantity) || 0
-        }));
-        
         const total = await Product.countDocuments(query);
         
         res.json({
             success: true,
-            products: formattedProducts,
+            products,
             total,
             page: parseInt(page),
             pages: Math.ceil(total / limit)
@@ -130,12 +122,24 @@ exports.createProduct = async (req, res) => {
                 message: 'La date d\'expiration est requise'
             });
         }
-        if (!establishmentId) {
+
+        // ⭐ Vérifier si l'utilisateur a des établissements (plan Enterprise)
+        const userEstablishments = await Establishment.find({ companyId: req.user.companyId });
+        const hasEstablishments = userEstablishments.length > 0;
+
+        // ⭐ Si l'utilisateur a des établissements, il doit fournir un establishmentId valide
+        if (hasEstablishments && (!establishmentId || establishmentId === '')) {
             return res.status(400).json({
                 success: false,
                 message: 'L\'établissement est requis pour créer un produit'
             });
         }
+
+        // ⭐ Nettoyer establishmentId (undefined si chaîne vide ou pas d'établissements)
+        const cleanEstablishmentId = (hasEstablishments && establishmentId && establishmentId !== '') ? establishmentId : null;
+        
+        // ⭐ Convertir la quantité en nombre
+        const productQuantity = parseInt(quantity) || 0;
 
         const product = await Product.create({
             companyId: req.user.companyId,
@@ -145,8 +149,8 @@ exports.createProduct = async (req, res) => {
             manufacturer: manufacturer || '',
             batchNumber: batchNumber || '',
             barcode: barcode || '',
-            establishmentId: establishmentId,
-            quantity: parseInt(quantity) || 0,
+            establishmentId: cleanEstablishmentId,
+            quantity: productQuantity,
             unit: unit || 'boîte(s)',
             reorderPoint: reorderPoint || 10,
             location: location || '',
@@ -190,13 +194,12 @@ exports.updateProduct = async (req, res) => {
             });
         }
 
-        // Champs de base modifiables
         const allowedUpdates = [
             'name', 'genericName', 'category', 'manufacturer', 
             'batchNumber', 'barcode', 'unit', 'reorderPoint', 
             'location', 'purchasePrice', 'sellingPrice', 
             'manufacturingDate', 'expirationDate', 
-            'prescriptionRequired', 'description', 'quantity'
+            'prescriptionRequired', 'description', 'quantity', 'establishmentId'
         ];
         
         allowedUpdates.forEach(key => {
@@ -222,7 +225,7 @@ exports.updateProduct = async (req, res) => {
 };
 
 /**
- * @desc    Supprimer un produit (archivage) - BLOQUÉ SI STOCK > 0
+ * @desc    Supprimer un produit (archivage)
  */
 exports.deleteProduct = async (req, res) => {
     try {

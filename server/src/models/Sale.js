@@ -1,5 +1,6 @@
 /**
  * MODÈLE SALE - Gestion des ventes
+ * ⭐ Suppression automatique après 30 jours
  */
 
 const mongoose = require('mongoose');
@@ -12,11 +13,12 @@ const SaleSchema = new mongoose.Schema(
             required: true,
             index: true
         },
-        // ⭐ Établissement où la vente a eu lieu
         establishmentId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Establishment',
-            required: true,
+            required: false,
+            default: null,
+            index: true
         },
         saleNumber: {
             type: String,
@@ -119,12 +121,16 @@ const SaleSchema = new mongoose.Schema(
         cancelledAt: Date,
         cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         cancellationReason: String,
-        
-        // ⭐ Champ pour l'archivage
         archived: {
             type: Boolean,
             default: false,
             index: true
+        },
+        // ⭐ NOUVEAU : Date d'expiration pour suppression auto (30 jours)
+        expiresAt: {
+            type: Date,
+            default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            index: { expires: 0 } // MongoDB TTL : suppression automatique après 30 jours
         }
     },
     {
@@ -141,6 +147,9 @@ SaleSchema.index({ companyId: 1, archived: 1, createdAt: -1 });
 SaleSchema.index({ companyId: 1, establishmentId: 1 });
 
 // ==================== MÉTHODES ====================
+/**
+ * Annuler une vente et restaurer le stock
+ */
 SaleSchema.methods.cancel = async function(userId, reason) {
     if (this.isCancelled) {
         throw new Error('Cette vente est déjà annulée');
@@ -156,17 +165,45 @@ SaleSchema.methods.cancel = async function(userId, reason) {
     
     for (const item of this.items) {
         const product = await Product.findById(item.productId);
-        if (product && this.establishmentId) {
-            // ⭐ Restaurer le stock dans le bon établissement
-            const currentStock = product.getQuantityByEstablishment(this.establishmentId);
-            const newStock = currentStock + item.quantity;
-            await product.updateStockByEstablishment(
-                this.establishmentId, 
-                newStock, 
-                userId, 
-                `annulation_vente_${this._id}`
-            );
+        if (!product) continue;
+        
+        if (this.establishmentId) {
+            if (typeof product.getQuantityByEstablishment === 'function' && 
+                typeof product.updateStockByEstablishment === 'function') {
+                const currentStock = product.getQuantityByEstablishment(this.establishmentId);
+                const newStock = currentStock + item.quantity;
+                await product.updateStockByEstablishment(
+                    this.establishmentId, 
+                    newStock, 
+                    userId, 
+                    `annulation_vente_${this._id}`
+                );
+            } else {
+                product.quantity += item.quantity;
+                await product.save();
+            }
+        } else {
+            product.quantity += item.quantity;
+            await product.save();
         }
+        
+        const StockMovement = mongoose.model('StockMovement');
+        const movementData = {
+            companyId: this.companyId,
+            productId: product._id,
+            type: 'in',
+            quantity: item.quantity,
+            previousQuantity: product.quantity - item.quantity,
+            newQuantity: product.quantity,
+            reason: `Annulation vente #${this.saleNumber || this._id}`,
+            userId: userId
+        };
+        
+        if (this.establishmentId) {
+            movementData.establishmentId = this.establishmentId;
+        }
+        
+        await StockMovement.create(movementData);
     }
     
     await this.save();

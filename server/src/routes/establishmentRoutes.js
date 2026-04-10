@@ -16,14 +16,18 @@ const { protect, authorize, hasPermission } = require('../middleware/auth');
 // Toutes ces routes nécessitent d'être authentifié
 router.use(protect);
 
-// Routes accessibles uniquement aux propriétaires (plan enterprise)
-router.use(authorize('owner'));
-
+// ==================== ROUTES ACCESSIBLES À TOUS LES UTILISATEURS AUTHENTIFIÉS ====================
+// GET / : Tout utilisateur peut voir la liste des établissements (pour le sélecteur, les ventes, etc.)
 router.get('/', getEstablishments);
-router.post('/', createEstablishment);
-router.put('/:id', updateEstablishment);
-router.delete('/:id', deleteEstablishment);
-router.post('/transfer', transferStock);
 
+// ==================== ROUTES RÉSERVÉES AU PROPRIÉTAIRE ====================
+// Création, modification, suppression d'établissements : owner uniquement
+router.post('/', authorize('owner'), createEstablishment);
+router.put('/:id', authorize('owner'), updateEstablishment);
+router.delete('/:id', authorize('owner'), deleteEstablishment);
+
+// ==================== ROUTES AVEC PERMISSION SPÉCIFIQUE ====================
+// Transfert de stock : nécessite la permission 'manage_stock' (ou owner)
+router.post('/transfer', hasPermission('manage_stock'), transferStock);
 
 module.exports = router;

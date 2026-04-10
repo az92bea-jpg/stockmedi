@@ -4,12 +4,21 @@
 
 const User = require('../models/User');
 const Company = require('../models/Company');
+const Subscription = require('../models/Subscription'); // ⭐ AJOUT
 const crypto = require('crypto');
 
 // Fonction pour hasher le mot de passe
 function hashPassword(password) {
     return crypto.createHash('sha256').update(password).digest('hex');
 }
+
+// ⭐ Plans et limites d'employés
+const PLAN_LIMITS = {
+    trial: 3,
+    basic: 10,
+    premium: 30,
+    enterprise: 999
+};
 
 /**
  * @desc    Récupérer tous les employés
@@ -50,6 +59,23 @@ exports.addEmployee = async (req, res) => {
         const { email, password, firstName, lastName, phone, discipline, permissions } = req.body;
 
         console.log('📝 Ajout employé:', { email, firstName, lastName, discipline });
+
+        // ⭐ VÉRIFIER LA LIMITE D'EMPLOYÉS SELON LE PLAN
+        const subscription = await Subscription.findOne({ companyId: req.user.companyId });
+        const currentEmployeeCount = await User.countDocuments({ 
+            companyId: req.user.companyId, 
+            role: 'employee' 
+        });
+        
+        const plan = subscription?.plan || 'trial';
+        const maxEmployees = PLAN_LIMITS[plan];
+        
+        if (currentEmployeeCount >= maxEmployees) {
+            return res.status(403).json({
+                success: false,
+                message: `Limite d'employés atteinte (${maxEmployees}). Passez à un plan supérieur pour ajouter plus d'employés.`
+            });
+        }
 
         // Vérifier si l'email existe déjà
         const existingUser = await User.findOne({ email });

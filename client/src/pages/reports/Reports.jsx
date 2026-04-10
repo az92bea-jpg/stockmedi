@@ -2,15 +2,18 @@
  * PAGE RAPPORTS - Export PDF/Excel
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import { useLanguage } from '../../context/LanguageContext';
+import { authService } from '../../services/authService';
+import EstablishmentSelector from '../../components/establishment/EstablishmentSelector';
 
 const Reports = () => {
     const { t } = useLanguage();
+    const user = authService.getCurrentUser();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -18,6 +21,34 @@ const Reports = () => {
         startDate: '',
         endDate: ''
     });
+    
+    // ⭐ État pour le sélecteur d'établissement
+    const [selectedEstablishment, setSelectedEstablishment] = useState('');
+    const [establishments, setEstablishments] = useState([]);
+    const [subscription, setSubscription] = useState(null);
+
+    // Charger les établissements et l'abonnement
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const [subRes, estRes] = await Promise.all([
+                    api.get('/subscription'),
+                    api.get('/establishments')
+                ]);
+                setSubscription(subRes.subscription);
+                setEstablishments(estRes.establishments || []);
+                if (estRes.establishments?.length > 0) {
+                    setSelectedEstablishment(estRes.establishments[0]._id);
+                }
+            } catch (err) {
+                console.error('Erreur chargement données:', err);
+            }
+        };
+        
+        if (user?.role === 'owner') {
+            loadData();
+        }
+    }, [user?.role]);
 
     const handleDateChange = (e) => {
         const { name, value } = e.target;
@@ -32,7 +63,14 @@ const Reports = () => {
         setError('');
         
         try {
-            const response = await api.get(url, {
+            // ⭐ Ajouter l'établissement à l'URL si sélectionné
+            let finalUrl = url;
+            if (selectedEstablishment && subscription?.plan === 'enterprise') {
+                const separator = url.includes('?') ? '&' : '?';
+                finalUrl = `${url}${separator}establishmentId=${selectedEstablishment}`;
+            }
+            
+            const response = await api.get(finalUrl, {
                 responseType: 'blob'
             });
             
@@ -71,6 +109,8 @@ const Reports = () => {
         downloadFile(url, `ventes_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
+    const isEnterprise = subscription?.plan === 'enterprise';
+
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
             <div style={{
@@ -86,6 +126,21 @@ const Reports = () => {
                     <p style={{ color: 'var(--gray-500)' }}>{t('reports_subtitle')}</p>
                 </div>
             </div>
+
+            {/* ⭐ Sélecteur d'établissement (visible uniquement pour Enterprise) */}
+            {user?.role === 'owner' && isEnterprise && establishments.length > 0 && (
+                <div className="card" style={{ marginBottom: 'var(--spacing-4)' }}>
+                    <div className="card-body">
+                        <EstablishmentSelector
+                            selectedId={selectedEstablishment}
+                            onSelect={setSelectedEstablishment}
+                        />
+                        <div className="form-hint" style={{ marginTop: '8px' }}>
+                            ℹ️ Les rapports seront générés pour l'établissement sélectionné.
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
             {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
@@ -113,6 +168,7 @@ const Reports = () => {
                             <ul style={{ margin: 'var(--spacing-2) 0 0 var(--spacing-4)', color: 'var(--gray-600)' }}>
                                 <li>{t('info_pdf')}</li>
                                 <li>{t('info_excel')}</li>
+                                {isEnterprise && <li>🏢 Filtrable par établissement</li>}
                             </ul>
                         </div>
                         <div style={{ display: 'flex', gap: 'var(--spacing-3)', flexWrap: 'wrap' }}>
@@ -154,6 +210,7 @@ const Reports = () => {
                             <ul style={{ margin: 'var(--spacing-2) 0 0 var(--spacing-4)', color: 'var(--gray-600)' }}>
                                 <li>{t('info_filter')}</li>
                                 <li>{t('info_currency')}</li>
+                                {isEnterprise && <li>🏢 Filtrable par établissement</li>}
                             </ul>
                         </div>
                         
@@ -206,6 +263,7 @@ const Reports = () => {
                         <li>📊 <strong>{t('info_excel')}</strong></li>
                         <li>📅 <strong>{t('info_filter')}</strong></li>
                         <li>💵 <strong>{t('info_currency')}</strong></li>
+                        {isEnterprise && <li>🏢 <strong>Rapports filtrables par établissement</strong> (plan Enterprise)</li>}
                     </ul>
                 </div>
             </div>

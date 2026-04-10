@@ -6,6 +6,7 @@
 const Establishment = require('../models/Establishment');
 const Product = require('../models/Product');
 const StockMovement = require('../models/StockMovement');
+const Subscription = require('../models/Subscription'); // ← AJOUT
 const mongoose = require('mongoose');
 
 /**

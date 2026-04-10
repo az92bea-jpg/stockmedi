@@ -7,6 +7,7 @@ const ExcelJS = require('exceljs');
 const Product = require('../models/Product');
 const Sale = require('../models/Sale');
 const Company = require('../models/Company');
+const Establishment = require('../models/Establishment');
 
 /**
  * Formate un nombre en devise (sans espaces parasites)
@@ -32,11 +33,23 @@ const formatNumber = (value) => {
  */
 exports.generateInventoryPDF = async (req, res) => {
     try {
+        const { establishmentId } = req.query;
         const company = await Company.findById(req.user.companyId);
-        const products = await Product.find({
-            companyId: req.user.companyId,
-            isActive: true
-        }).sort({ name: 1 });
+        
+        // Construire la requête produits
+        const productQuery = { companyId: req.user.companyId, isActive: true };
+        
+        // ⭐ Ajouter le filtre par établissement si fourni
+        let establishmentName = 'Tous les établissements';
+        if (establishmentId) {
+            productQuery.establishmentId = establishmentId;
+            const establishment = await Establishment.findById(establishmentId);
+            establishmentName = establishment?.name || 'Établissement inconnu';
+        }
+        
+        const products = await Product.find(productQuery)
+            .populate('establishmentId', 'name')
+            .sort({ name: 1 });
 
         const doc = new PDFDocument({ margin: 50, size: 'A4' });
         
@@ -48,6 +61,7 @@ exports.generateInventoryPDF = async (req, res) => {
         // En-tête
         doc.fontSize(20).text('RAPPORT D\'INVENTAIRE', { align: 'center' });
         doc.fontSize(12).text(company.name, { align: 'center' });
+        doc.fontSize(10).text(`Établissement: ${establishmentName}`, { align: 'center' });
         doc.fontSize(10).text(`Généré le: ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`, { align: 'center' });
         doc.moveDown();
 
@@ -75,14 +89,15 @@ exports.generateInventoryPDF = async (req, res) => {
         // En-têtes du tableau
         let y = doc.y;
         const startX = 50;
-        const colWidths = [150, 70, 80, 80, 80];
+        const colWidths = [130, 60, 70, 70, 70, 80];
         
-        doc.fontSize(9).font('Helvetica-Bold');
+        doc.fontSize(8).font('Helvetica-Bold');
         doc.text('Produit', startX, y);
-        doc.text('Stock', startX + colWidths[0], y);
-        doc.text('Prix achat', startX + colWidths[0] + colWidths[1], y);
-        doc.text('Prix vente', startX + colWidths[0] + colWidths[1] + colWidths[2], y);
-        doc.text('Expiration', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], y);
+        doc.text('Établissement', startX + colWidths[0], y);
+        doc.text('Stock', startX + colWidths[0] + colWidths[1], y);
+        doc.text('Prix achat', startX + colWidths[0] + colWidths[1] + colWidths[2], y);
+        doc.text('Prix vente', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], y);
+        doc.text('Expiration', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4], y);
         
         y += 20;
         doc.font('Helvetica');
@@ -91,24 +106,28 @@ exports.generateInventoryPDF = async (req, res) => {
             if (y > 700) {
                 doc.addPage();
                 y = 50;
-                doc.fontSize(9).font('Helvetica-Bold');
+                doc.fontSize(8).font('Helvetica-Bold');
                 doc.text('Produit', startX, y);
-                doc.text('Stock', startX + colWidths[0], y);
-                doc.text('Prix achat', startX + colWidths[0] + colWidths[1], y);
-                doc.text('Prix vente', startX + colWidths[0] + colWidths[1] + colWidths[2], y);
-                doc.text('Expiration', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], y);
+                doc.text('Établissement', startX + colWidths[0], y);
+                doc.text('Stock', startX + colWidths[0] + colWidths[1], y);
+                doc.text('Prix achat', startX + colWidths[0] + colWidths[1] + colWidths[2], y);
+                doc.text('Prix vente', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], y);
+                doc.text('Expiration', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4], y);
                 y += 20;
                 doc.font('Helvetica');
             }
             
-            doc.fontSize(8);
-            doc.text(product.name.substring(0, 40), startX, y);
-            doc.text(`${formatNumber(product.quantity)} ${product.unit}`, startX + colWidths[0], y);
-            doc.text(formatCurrency(product.purchasePrice), startX + colWidths[0] + colWidths[1], y);
-            doc.text(formatCurrency(product.sellingPrice), startX + colWidths[0] + colWidths[1] + colWidths[2], y);
+            const establishmentName_product = product.establishmentId?.name || 'N/A';
+            
+            doc.fontSize(7);
+            doc.text(product.name.substring(0, 35), startX, y);
+            doc.text(establishmentName_product.substring(0, 20), startX + colWidths[0], y);
+            doc.text(`${formatNumber(product.quantity)} ${product.unit}`, startX + colWidths[0] + colWidths[1], y);
+            doc.text(formatCurrency(product.purchasePrice), startX + colWidths[0] + colWidths[1] + colWidths[2], y);
+            doc.text(formatCurrency(product.sellingPrice), startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], y);
             doc.text(product.expirationDate ? new Date(product.expirationDate).toLocaleDateString('fr-FR') : 'N/A', 
-                startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], y);
-            y += 18;
+                startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4], y);
+            y += 16;
         }
 
         doc.end();
@@ -129,17 +148,30 @@ exports.generateInventoryPDF = async (req, res) => {
  */
 exports.generateInventoryExcel = async (req, res) => {
     try {
+        const { establishmentId } = req.query;
         const company = await Company.findById(req.user.companyId);
-        const products = await Product.find({
-            companyId: req.user.companyId,
-            isActive: true
-        }).sort({ name: 1 });
+        
+        // Construire la requête produits
+        const productQuery = { companyId: req.user.companyId, isActive: true };
+        
+        // ⭐ Ajouter le filtre par établissement si fourni
+        let establishmentName = 'Tous les établissements';
+        if (establishmentId) {
+            productQuery.establishmentId = establishmentId;
+            const establishment = await Establishment.findById(establishmentId);
+            establishmentName = establishment?.name || 'Établissement inconnu';
+        }
+        
+        const products = await Product.find(productQuery)
+            .populate('establishmentId', 'name')
+            .sort({ name: 1 });
 
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Inventaire');
 
         worksheet.columns = [
             { header: 'Nom du produit', key: 'name', width: 35 },
+            { header: 'Établissement', key: 'establishment', width: 25 },
             { header: 'Générique', key: 'genericName', width: 25 },
             { header: 'Catégorie', key: 'category', width: 18 },
             { header: 'Lot', key: 'batchNumber', width: 15 },
@@ -170,6 +202,7 @@ exports.generateInventoryExcel = async (req, res) => {
                 
             worksheet.addRow({
                 name: product.name,
+                establishment: product.establishmentId?.name || 'N/A',
                 genericName: product.genericName || '',
                 category: product.category === 'médicament' ? '💊 Médicament' :
                           product.category === 'dispositif_médical' ? '🩺 DM' :
@@ -207,6 +240,7 @@ exports.generateInventoryExcel = async (req, res) => {
         };
         
         summarySheet.addRow({ metric: 'Entreprise', value: company.name });
+        summarySheet.addRow({ metric: 'Établissement', value: establishmentName });
         summarySheet.addRow({ metric: 'Date de génération', value: new Date().toLocaleString('fr-FR') });
         summarySheet.addRow({ metric: 'Nombre total de produits', value: formatNumber(products.length) });
         summarySheet.addRow({ metric: 'Valeur totale du stock (achat)', value: formatCurrency(totalValue) });
@@ -237,10 +271,19 @@ exports.generateInventoryExcel = async (req, res) => {
  */
 exports.generateSalesExcel = async (req, res) => {
     try {
-        const { startDate, endDate } = req.query;
+        const { startDate, endDate, establishmentId } = req.query;
         const company = await Company.findById(req.user.companyId);
         
         const query = { companyId: req.user.companyId };
+        
+        // ⭐ Ajouter le filtre par établissement si fourni
+        let establishmentName = 'Tous les établissements';
+        if (establishmentId) {
+            query.establishmentId = establishmentId;
+            const establishment = await Establishment.findById(establishmentId);
+            establishmentName = establishment?.name || 'Établissement inconnu';
+        }
+        
         if (startDate && endDate) {
             query.createdAt = {
                 $gte: new Date(startDate),
@@ -248,7 +291,9 @@ exports.generateSalesExcel = async (req, res) => {
             };
         }
         
-        const sales = await Sale.find(query).sort({ createdAt: -1 });
+        const sales = await Sale.find(query)
+            .populate('establishmentId', 'name')
+            .sort({ createdAt: -1 });
 
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Ventes');
@@ -256,6 +301,7 @@ exports.generateSalesExcel = async (req, res) => {
         worksheet.columns = [
             { header: 'N° vente', key: 'saleNumber', width: 20 },
             { header: 'Date', key: 'date', width: 20 },
+            { header: 'Établissement', key: 'establishment', width: 25 },
             { header: 'Client', key: 'customer', width: 25 },
             { header: 'Articles', key: 'items', width: 12 },
             { header: 'Sous-total', key: 'subtotal', width: 18 },
@@ -287,6 +333,7 @@ exports.generateSalesExcel = async (req, res) => {
             worksheet.addRow({
                 saleNumber: sale.saleNumber,
                 date: new Date(sale.createdAt).toLocaleString('fr-FR'),
+                establishment: sale.establishmentId?.name || 'N/A',
                 customer: sale.customerName || '-',
                 items: totalItems,
                 subtotal: sale.subtotal,
@@ -314,6 +361,7 @@ exports.generateSalesExcel = async (req, res) => {
         };
         
         summarySheet.addRow({ metric: 'Entreprise', value: company.name });
+        summarySheet.addRow({ metric: 'Établissement', value: establishmentName });
         summarySheet.addRow({ metric: 'Période', value: startDate && endDate ? 
             `${new Date(startDate).toLocaleDateString('fr-FR')} - ${new Date(endDate).toLocaleDateString('fr-FR')}` : 
             'Toutes les ventes' });

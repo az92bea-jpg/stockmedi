@@ -15,7 +15,6 @@ import './styles/components/forms.css';
 import './styles/components/table.css';
 import './styles/layout/sidebar.css';
 
-
 // Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -31,7 +30,7 @@ import Subscription from './pages/settings/Subscription';
 import Archives from './pages/archives/Archives';
 import Establishments from './pages/settings/Establishments';
 
-// Pages Admin (IMPORTS CORRIGÉS)
+// Pages Admin
 import AdminDashboard from './components/admin/AdminDashboard';
 import AdminCompanies from './components/admin/AdminCompanies';
 import AdminUsers from './components/admin/AdminUsers';
@@ -47,7 +46,9 @@ import InstallPrompt from './components/common/InstallPrompt';
 // Layout
 import Layout from './components/layout/Layout';
 
-// Composant de protection des routes
+// ==================== COMPOSANTS DE PROTECTION ====================
+
+// Protection de base (authentification uniquement)
 const ProtectedRoute = ({ children }) => {
     if (!authService.isAuthenticated()) {
         return <Navigate to="/login" replace />;
@@ -55,7 +56,7 @@ const ProtectedRoute = ({ children }) => {
     return children;
 };
 
-// Composant de protection pour super-admin
+// Protection super-admin
 const SuperAdminRoute = ({ children }) => {
     const user = authService.getCurrentUser();
     if (!authService.isAuthenticated()) {
@@ -66,6 +67,20 @@ const SuperAdminRoute = ({ children }) => {
     }
     return children;
 };
+
+// Protection owner uniquement
+const OwnerRoute = ({ children }) => {
+    const user = authService.getCurrentUser();
+    if (!authService.isAuthenticated()) {
+        return <Navigate to="/login" replace />;
+    }
+    if (user?.role !== 'owner' && user?.role !== 'super-admin') {
+        return <Navigate to="/dashboard" replace />;
+    }
+    return children;
+};
+
+// ==================== APPLICATION ====================
 
 function App() {
     return (
@@ -82,8 +97,7 @@ function App() {
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/contact" element={<Contact />} />
                     
-                    
-                    {/* Routes protégées (utilisateurs normaux) */}
+                    {/* Routes protégées (avec Layout) */}
                     <Route path="/" element={
                         <ProtectedRoute>
                             <Layout />
@@ -94,14 +108,32 @@ function App() {
                         <Route path="products" element={<Products />} />
                         <Route path="sales" element={<Sales />} />
                         <Route path="reports" element={<Reports />} />
-                        <Route path="employees" element={<Employees />} />
-                        <Route path="settings" element={<Settings />} />
-                        <Route path="subscription" element={<Subscription />} />
                         <Route path="archives" element={<Archives />} />
-                        <Route path="settings/establishments" element={<Establishments />} />
+                        
+                        {/* Routes réservées au propriétaire */}
+                        <Route path="employees" element={
+                            <OwnerRoute>
+                                <Employees />
+                            </OwnerRoute>
+                        } />
+                        <Route path="settings" element={
+                            <OwnerRoute>
+                                <Settings />
+                            </OwnerRoute>
+                        } />
+                        <Route path="subscription" element={
+                            <OwnerRoute>
+                                <Subscription />
+                            </OwnerRoute>
+                        } />
+                        <Route path="settings/establishments" element={
+                            <OwnerRoute>
+                                <Establishments />
+                            </OwnerRoute>
+                        } />
                     </Route>
                     
-                    {/* Routes super-admin (sans Layout standard) */}
+                    {/* Routes super-admin (sans Layout) */}
                     <Route path="/admin" element={
                         <SuperAdminRoute>
                             <AdminDashboard />

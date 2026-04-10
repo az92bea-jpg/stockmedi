@@ -5,6 +5,7 @@
 const Subscription = require('../models/Subscription');
 const Company = require('../models/Company');
 const User = require('../models/User');
+const { notifySubscriptionChanged } = require('./rnnotificationController');
 
 // Plans d'abonnement
 const PLANS = {
@@ -50,7 +51,6 @@ exports.getSubscription = async (req, res) => {
         let subscription = await Subscription.findOne({ companyId: req.user.companyId });
         
         if (!subscription) {
-            // Créer un abonnement trial par défaut
             const endDate = new Date();
             endDate.setDate(endDate.getDate() + 30);
             
@@ -122,16 +122,15 @@ exports.changePlan = async (req, res) => {
             });
         }
 
-        // Vérifier si l'utilisateur a déjà utilisé l'essai gratuit
+        const oldPlan = subscription.plan;
+
         if (plan !== 'trial' && subscription.trialUsed && subscription.plan === 'trial') {
-            // L'utilisateur passe de trial à payant
             subscription.trialUsed = true;
         }
 
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + PLANS[plan].duration);
 
-        // Mettre à jour l'abonnement
         subscription.plan = plan;
         subscription.autoRenew = autoRenew !== undefined ? autoRenew : subscription.autoRenew;
         subscription.startDate = new Date();
@@ -144,12 +143,18 @@ exports.changePlan = async (req, res) => {
 
         await subscription.save();
 
-        // Mettre à jour les limites dans Company
         const company = await Company.findById(req.user.companyId);
         company.subscription.plan = plan;
         company.subscription.status = 'active';
         company.subscription.endDate = subscription.endDate;
         await company.save();
+
+        /* // ⭐ NOTIFICATION EMAIL: Changement d'abonnement (système)
+        //await notifySubscriptionChanged({
+        //    companyId: company._id,
+        //    newPlan: plan,
+        //    reason: 'payment'
+        //}); */
 
         res.json({
             success: true,
@@ -272,7 +277,6 @@ exports.checkExpiredSubscriptions = async () => {
             sub.status = 'expired';
             await sub.save();
             
-            // Désactiver l'entreprise
             await Company.findByIdAndUpdate(sub.companyId, { isActive: false });
         }
         

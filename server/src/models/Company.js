@@ -12,10 +12,18 @@ const CompanySchema = new mongoose.Schema({
     email: { type: String, lowercase: true },
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     subscription: {
-        plan: { type: String, enum: ['basic', 'premium', 'enterprise'], default: 'basic' },
+        plan: { 
+            type: String, 
+            enum: ['trial', 'basic', 'premium', 'enterprise'], // ⭐ Ajout de 'trial'
+            default: 'trial' // ⭐ Changé de 'basic' à 'trial'
+        },
         startDate: { type: Date, default: Date.now },
         endDate: { type: Date, required: true },
-        status: { type: String, enum: ['active', 'expired', 'suspended', 'trial'], default: 'trial' },
+        status: { 
+            type: String, 
+            enum: ['active', 'expired', 'suspended', 'trial'], 
+            default: 'trial' 
+        },
         autoRenew: { type: Boolean, default: false }
     },
     settings: {
@@ -42,7 +50,7 @@ const CompanySchema = new mongoose.Schema({
  * Vérifier si l'abonnement est actif
  */
 CompanySchema.methods.isSubscriptionActive = function() {
-    if (this.subscription.status !== 'active') return false;
+    if (this.subscription.status !== 'active' && this.subscription.status !== 'trial') return false;
     if (this.subscription.endDate < new Date()) return false;
     return true;
 };
@@ -52,12 +60,13 @@ CompanySchema.methods.isSubscriptionActive = function() {
  */
 CompanySchema.methods.canAddEmployee = function() {
     const limits = {
-        basic: 5,
-        premium: 20,
+        trial: 3,
+        basic: 10,
+        premium: 30,
         enterprise: 999
     };
     
-    const limit = limits[this.subscription.plan] || 5;
+    const limit = limits[this.subscription.plan] || 3;
     return this.stats.totalEmployees < limit;
 };
 
@@ -72,20 +81,17 @@ CompanySchema.methods.updateStats = async function() {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     
-    // Compter les employés
     const totalEmployees = await User.countDocuments({
         companyId: this._id,
         role: 'employee',
         isActive: true
     });
     
-    // Compter les produits
     const totalProducts = await Product.countDocuments({
         companyId: this._id,
         isActive: true
     });
     
-    // Compter les ventes du mois
     const sales = await Sale.aggregate([
         { $match: { companyId: this._id, createdAt: { $gte: startOfMonth } } },
         { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }

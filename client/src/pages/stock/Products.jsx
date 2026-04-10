@@ -1,6 +1,5 @@
 /**
  * PAGE PRODUITS - Gestion complète du stock
- * Version avec div flex (sans tableau HTML)
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -18,6 +17,7 @@ const Products = () => {
     const { t } = useLanguage();
     const location = useLocation();
     const user = authService.getCurrentUser();
+    const canManageStock = user?.role === 'owner' || user?.role === 'super-admin' || (user?.permissions && user.permissions.includes('manage_stock'));
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -39,13 +39,14 @@ const Products = () => {
 
     const [formData, setFormData] = useState({
         name: '',
-        genericName: '',
-        category: 'médicament',
+        type: 'Générique',
+        category: 'Médicament',
+        subCategory: '',
         manufacturer: '',
         batchNumber: '',
         barcode: '',
         quantity: 0,
-        unit: 'boîte(s)',
+        unit: 'Boîtes',
         reorderPoint: 10,
         location: '',
         purchasePrice: 0,
@@ -119,26 +120,28 @@ const Products = () => {
         setFilteredProducts(results);
     }, [products, filters]);
 
-    const calculateMargin = () => {
+    /* const calculateMargin = () => {
         const purchase = parseFloat(formData.purchasePrice) || 0;
         const selling = parseFloat(formData.sellingPrice) || 0;
         if (purchase === 0) return 0;
         return ((selling - purchase) / purchase * 100).toFixed(1);
     };
+    */
 
     const validatePrices = () => {
-        const purchase = parseFloat(formData.purchasePrice);
-        const selling = parseFloat(formData.sellingPrice);
+        const purchase = parseFloat(formData.purchasePrice) || 0;
+        const selling = parseFloat(formData.sellingPrice) || 0;
+        
         if (purchase === 0) {
-            setError(t('purchase_price_zero') || 'Le prix d\'achat ne peut pas être nul');
+            setError("Le prix d'achat ne peut pas être nul");
             return false;
         }
         if (selling < purchase) {
-            setError(`⚠️ ${t('sell_at_loss')} : ${selling.toLocaleString()} GNF < ${purchase.toLocaleString()} GNF`);
+            setError(`⚠️ Prix de vente (${selling} GNF) inférieur au prix d'achat (${purchase} GNF)`);
             return false;
         }
         if (selling === purchase) {
-            if (!window.confirm(`⚠️ ${t('margin_zero')} ${t('confirm')} ?`)) {
+            if (!window.confirm(`⚠️ Marge nulle. Confirmer ?`)) {
                 return false;
             }
         }
@@ -146,14 +149,23 @@ const Products = () => {
     };
 
     const validateDates = () => {
-        if (formData.expirationDate && formData.manufacturingDate) {
-            if (new Date(formData.manufacturingDate) > new Date(formData.expirationDate)) {
-                setError(t('manufacturing_after_expiration') || 'La date de fabrication ne peut pas être postérieure à la date d\'expiration');
-                return false;
-            }
+        if (!formData.manufacturingDate) return true;
+        
+        const fabDate = new Date(formData.manufacturingDate);
+        const expDate = new Date(formData.expirationDate);
+        fabDate.setHours(0, 0, 0, 0);
+        expDate.setHours(0, 0, 0, 0);
+        
+        if (fabDate > expDate) {
+            setError(`La date de fabrication (${formData.manufacturingDate}) est postérieure à la date d'expiration (${formData.expirationDate})`);
+            return false;
         }
-        if (formData.expirationDate && new Date(formData.expirationDate) < new Date()) {
-            if (!window.confirm(`⚠️ ${t('expired_confirm') || 'La date d\'expiration est déjà dépassée. Voulez-vous continuer ?'}`)) {
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (expDate < today) {
+            if (!window.confirm(`⚠️ La date d'expiration (${formData.expirationDate}) est déjà dépassée. Voulez-vous continuer ?`)) {
                 return false;
             }
         }
@@ -163,13 +175,14 @@ const Products = () => {
     const resetForm = () => {
         setFormData({
             name: '',
-            genericName: '',
-            category: 'médicament',
+            type: 'Générique',
+            category: 'Médicament',
+            subCategory: '',
             manufacturer: '',
             batchNumber: '',
             barcode: '',
             quantity: 0,
-            unit: 'boîte(s)',
+            unit: 'Boîtes',
             reorderPoint: 10,
             location: '',
             purchasePrice: 0,
@@ -191,13 +204,14 @@ const Products = () => {
     const openEditModal = (product) => {
         setFormData({
             name: product.name || '',
-            genericName: product.genericName || '',
-            category: product.category || 'médicament',
+            type: product.type || 'Générique',
+            category: product.category || 'Médicament',
+            subCategory: product.subCategory || '',
             manufacturer: product.manufacturer || '',
             batchNumber: product.batchNumber || '',
             barcode: product.barcode || '',
             quantity: product.quantity || 0,
-            unit: product.unit || 'boîte(s)',
+            unit: product.unit || 'Boîtes',
             reorderPoint: product.reorderPoint || 10,
             location: product.location || '',
             purchasePrice: product.purchasePrice || 0,
@@ -216,7 +230,7 @@ const Products = () => {
         e.preventDefault();
         setError('');
 
-        if (modalMode === 'create' && user?.role === 'owner' && !selectedEstablishment) {
+        if (modalMode === 'create' && user?.role === 'owner' && establishments.length > 0 && !selectedEstablishment) {
             setError('Veuillez sélectionner un établissement');
             return;
         }
@@ -224,51 +238,43 @@ const Products = () => {
         if (!validatePrices()) return;
         if (!validateDates()) return;
         if (!formData.name) {
-            setError(t('product_name_required') || 'Le nom du produit est requis');
-            return;
-        }
-        if (!formData.purchasePrice) {
-            setError(t('purchase_price_required') || 'Le prix d\'achat est requis');
-            return;
-        }
-        if (!formData.sellingPrice) {
-            setError(t('selling_price_required') || 'Le prix de vente est requis');
-            return;
-        }
-        if (!formData.expirationDate) {
-            setError(t('expiration_date_required') || 'La date d\'expiration est requise');
+            setError('La DCI est requise');
             return;
         }
 
         try {
-            const productData = {
-                ...formData,
-                establishmentId: modalMode === 'create' ? selectedEstablishment : undefined
-            };
-
+            const shouldSendEstablishment = establishments.length > 0 && selectedEstablishment;
+            
             if (modalMode === 'create') {
+                const productData = {
+                    ...formData,
+                    establishmentId: shouldSendEstablishment ? selectedEstablishment : undefined
+                };
                 await productService.createProduct(productData);
                 setSuccess(t('product_created') || 'Produit créé avec succès');
             } else {
-                await productService.updateProduct(selectedProduct._id, {
+                // ⭐ Pour l'édition, n'envoyer que les champs modifiables
+                const updateData = {
                     name: formData.name,
-                    genericName: formData.genericName,
+                    type: formData.type,
                     category: formData.category,
+                    subCategory: formData.subCategory,
                     manufacturer: formData.manufacturer,
                     batchNumber: formData.batchNumber,
                     barcode: formData.barcode,
+                    quantity: formData.quantity,
                     unit: formData.unit,
                     reorderPoint: formData.reorderPoint,
                     location: formData.location,
                     purchasePrice: formData.purchasePrice,
                     sellingPrice: formData.sellingPrice,
-                    manufacturingDate: formData.manufacturingDate,
+                    manufacturingDate: formData.manufacturingDate || null,
                     expirationDate: formData.expirationDate,
                     prescriptionRequired: formData.prescriptionRequired,
                     description: formData.description,
-                    quantity: formData.quantity,
-                    establishmentId: selectedEstablishment
-                });
+                    establishmentId: shouldSendEstablishment ? selectedEstablishment : undefined
+                };
+                await productService.updateProduct(selectedProduct._id, updateData);
                 setSuccess(t('product_updated') || 'Produit modifié avec succès');
             }
             setModalOpen(false);
@@ -279,7 +285,6 @@ const Products = () => {
             console.error(err);
         }
     };
-
     const handleDelete = async (product) => {
         if (window.confirm(`${t('confirm_delete')} "${product.name}" ?`)) {
             try {
@@ -329,6 +334,22 @@ const Products = () => {
         return Math.round(price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     };
 
+    const getCategoryLabel = (category) => {
+        const labels = {
+            'Médicament': '💊 Médicament',
+            'Dispositif médical': '🩺 Dispositif médical',
+            'Parapharmaceutique': '🧴 Parapharmaceutique',
+            'Complément alimentaire': '💪 Complément alimentaire',
+            'Vitamine': '🌟 Vitamine',
+            'Prestation médicale': '🏥 Prestation médicale',
+            'médicament': '💊 Médicament',
+            'dispositif_médical': '🩺 Dispositif médical',
+            'consommable': '🧻 Consommable',
+            'parapharmacie': '🧴 Parapharmacie'
+        };
+        return labels[category] || category;
+    };
+
     if (loading && products.length === 0) return <Loader />;
 
     return (
@@ -345,9 +366,11 @@ const Products = () => {
                     <h2>{t('products_title')}</h2>
                     <p style={{ color: 'var(--gray-500)' }}>{t('products_subtitle')}</p>
                 </div>
-                <button className="btn btn-primary" onClick={openCreateModal}>
-                    + {t('new_product')}
-                </button>
+                {canManageStock && (
+                    <button className="btn btn-primary" onClick={openCreateModal}>
+                        + {t('new_product')}
+                    </button>
+                )}
             </div>
 
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -382,10 +405,12 @@ const Products = () => {
                                 onChange={handleFilterChange}
                             >
                                 <option value="">{t('all_categories')}</option>
-                                <option value="médicament">💊 {t('medication') || 'Médicament'}</option>
-                                <option value="dispositif_médical">🩺 {t('medical_device') || 'Dispositif médical'}</option>
-                                <option value="consommable">🧻 {t('consumable') || 'Consommable'}</option>
-                                <option value="parapharmacie">🧴 {t('parapharmacy') || 'Parapharmacie'}</option>
+                                <option value="Médicament">💊 Médicament</option>
+                                <option value="Dispositif médical">🩺 Dispositif médical</option>
+                                <option value="Parapharmaceutique">🧴 Parapharmaceutique</option>
+                                <option value="Complément alimentaire">💪 Complément alimentaire</option>
+                                <option value="Vitamine">🌟 Vitamine</option>
+                                <option value="Prestation médicale">🏥 Prestation médicale</option>
                             </select>
                         </div>
                         <div className="form-group" style={{ marginBottom: 0 }}>
@@ -410,7 +435,7 @@ const Products = () => {
                 </div>
             </div>
 
-            {/* Liste des produits - Version simplifiée (un produit = un établissement) */}
+            {/* Liste des produits */}
             {filteredProducts.length === 0 ? (
                 <div className="card">
                     <div className="card-body" style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--gray-500)' }}>
@@ -430,138 +455,101 @@ const Products = () => {
                         color: 'var(--gray-600)',
                         flexWrap: 'wrap'
                     }}>
-                        <div style={{ width: '180px' }}>{t('name')}</div>
-                        <div style={{ width: '100px' }}>{t('category_col')}</div>
-                        <div style={{ width: '100px' }}>{t('stock')}</div>
-                        <div style={{ width: '100px' }}>{t('purchase_price')}</div>
-                        <div style={{ width: '100px' }}>{t('selling_price')}</div>
-                        <div style={{ width: '80px' }}>{t('margin')}</div>
-                        <div style={{ width: '120px' }}>{t('expiration')}</div>
-                        <div style={{ width: '80px' }}>{t('actions')}</div>
+                        <div style={{ width: '180px' }}>DCI</div>
+                        <div style={{ width: '100px' }}>Type</div>
+                        <div style={{ width: '120px' }}>Catégorie</div>
+                        <div style={{ width: '80px' }}>Stock</div>
+                        <div style={{ width: '100px' }}>Prix vente</div>
+                        <div style={{ width: '80px' }}>Marge</div>
+                        <div style={{ width: '100px' }}>Expiration</div>
+                        <div style={{ width: '80px' }}>Actions</div>
                     </div>
 
-                    {filteredProducts.map((product) => {
-                        /* const margin = product.purchasePrice > 0 
-                            ? ((product.sellingPrice - product.purchasePrice) / product.purchasePrice * 100).toFixed(1)
-                            : 0;
-                        const isLoss = product.sellingPrice < product.purchasePrice;
-                        */
-                        return (
-                            <div
-                                key={product._id}
-                                style={{
-                                    display: 'flex',
-                                    gap: 'var(--spacing-4)',
-                                    padding: 'var(--spacing-3) var(--spacing-4)',
-                                    borderBottom: '1px solid var(--gray-100)',
-                                    alignItems: 'center',
-                                    transition: 'background-color 0.2s',
-                                    flexWrap: 'wrap'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
-                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                            >
-                                <div style={{ width: '180px' }}>
-                                    <strong>{product.name}</strong>
-                                    {product.genericName && (
-                                        <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
-                                            {product.genericName}
-                                        </div>
-                                    )}
-                                    {product.batchNumber && (
-                                        <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>
-                                            {t('batch_number')}: {product.batchNumber}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div style={{ width: '100px', fontSize: '0.75rem' }}>
-                                    <div>
-                                        {product.category === 'médicament' ? '💊 ' + (t('medication') || 'Médicament') :
-                                         product.category === 'dispositif_médical' ? '🩺 ' + (t('medical_device') || 'DM') :
-                                         product.category === 'consommable' ? '🧻 ' + (t('consumable') || 'Consommable') : 
-                                         product.category === 'parapharmacie' ? '🧴 ' + (t('parapharmacy') || 'Parapharmacie') : product.category}
+                    {filteredProducts.map((product) => (
+                        <div
+                            key={product._id}
+                            style={{
+                                display: 'flex',
+                                gap: 'var(--spacing-4)',
+                                padding: 'var(--spacing-3) var(--spacing-4)',
+                                borderBottom: '1px solid var(--gray-100)',
+                                alignItems: 'center',
+                                transition: 'background-color 0.2s',
+                                flexWrap: 'wrap'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                            <div style={{ width: '180px' }}>
+                                <strong>{product.name}</strong>
+                                {product.batchNumber && (
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>
+                                        Lot: {product.batchNumber}
                                     </div>
-                                    <div style={{ fontSize: '0.65rem', color: 'var(--primary-500)', marginTop: '4px' }}>
-                                        🏪 {product.establishmentId?.name || 'Chargement...'}
-                                    </div>
-                                </div>
-
-                                <div style={{ width: '100px' }}>
-                                    <span className={product.quantity === 0 ? 'badge-danger' : product.quantity <= product.reorderPoint ? 'badge-warning' : 'badge-success'}>
-                                        {formatPrice(product.quantity)} {product.unit}
-                                    </span>
-                                    <div style={{ fontSize: '0.7rem' }}>
-                                        {product.quantity === 0 ? t('out_of_stock') : product.quantity <= product.reorderPoint ? t('low_stock') : t('in_stock') || 'En stock'}
-                                    </div>
-                                    {product.location && (
-                                        <div style={{ fontSize: '0.65rem', color: 'var(--gray-500)', marginTop: '2px' }}>
-                                            📍 {product.location}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div style={{ width: '100px', fontSize: '0.875rem' }}>
-                                    {formatPrice(product.purchasePrice)} GNF
-                                </div>
-
-                                <div style={{ width: '100px', fontSize: '0.875rem' }}>
-                                    <strong>{formatPrice(product.sellingPrice)} GNF</strong>
-                                </div>
-
-                               
-                             
-                                 <div style={{ width: '80px' }}>
-                                    {(() => {
-                                        const purchase = Number(product.purchasePrice);
-                                        const selling = Number(product.sellingPrice);
-                                        
-                                        if (purchase === 0 || isNaN(purchase)) {
-                                            return <span style={{ color: '#F59E0B', fontWeight: 500 }}>N/A</span>;
-                                        }
-                                        
-                                        const margin = ((selling - purchase) / purchase * 100).toFixed(1);
-                                        
-                                        if (selling < purchase) {
-                                            return <span style={{ color: '#EF4444', fontWeight: 500 }}>{margin}% ⚠️ PERTE</span>;
-                                        } else if (selling > purchase) {
-                                            return <span style={{ color: '#10B981', fontWeight: 500 }}>+{margin}%</span>;
-                                        } else {
-                                            return <span style={{ color: '#F59E0B', fontWeight: 500 }}>{margin}%</span>;
-                                        }
-                                    })()}
-                                </div>
-                                <div style={{ width: '120px' }}>
-                                    <span className={getExpirationStatusClass(product)}>
-                                        {product.expirationDate ? new Date(product.expirationDate).toLocaleDateString('fr-FR') : 'N/A'}
-                                    </span>
-                                    {product.manufacturingDate && (
-                                        <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
-                                            {t('manufacturing_date')}: {new Date(product.manufacturingDate).toLocaleDateString('fr-FR')}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div style={{ width: '80px', display: 'flex', gap: 'var(--spacing-2)' }}>
-                                    <button
-                                        className="btn btn-sm btn-outline"
-                                        onClick={() => openEditModal(product)}
-                                        title={t('edit')}
-                                    >
-                                        ✏️
-                                    </button>
-                                    <button
-                                        className="btn btn-sm btn-outline"
-                                        onClick={() => handleDelete(product)}
-                                        style={{ color: '#EF4444' }}
-                                        title={t('delete')}
-                                    >
-                                        🗑️
-                                    </button>
-                                </div>
+                                )}
                             </div>
-                        );
-                    })}
+
+                            <div style={{ width: '100px', fontSize: '0.8rem' }}>
+                                {product.type === 'Princeps' ? '💊 Princeps' : '💊 Générique'}
+                            </div>
+
+                           <div style={{ width: '120px', fontSize: '0.75rem' }}>
+                                <div>{getCategoryLabel(product.category)}</div>
+                                {product.subCategory && (
+                                    <div style={{ fontSize: '0.65rem', color: 'var(--gray-500)' }}>
+                                        {product.subCategory}
+                                    </div>
+                                )}
+                                {/* ⭐ Location affichée sous la catégorie */}
+                                <div style={{ fontSize: '0.65rem', color: 'var(--gray-500)', marginTop: '2px' }}>
+                                    📍 {product.location || 'En stock'}
+                                </div>
+                                {product.establishmentId?.name && (
+                                    <div style={{ fontSize: '0.65rem', color: 'var(--primary-500)', marginTop: '2px' }}>
+                                        🏪 {product.establishmentId.name}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={{ width: '80px' }}>
+                                <span className={product.quantity === 0 ? 'badge-danger' : product.quantity <= product.reorderPoint ? 'badge-warning' : 'badge-success'}>
+                                    {formatPrice(product.quantity)} {product.unit}
+                                </span>
+                            </div>
+
+                            <div style={{ width: '100px', fontSize: '0.875rem' }}>
+                                <strong>{formatPrice(product.sellingPrice)} GNF</strong>
+                            </div>
+
+                            <div style={{ width: '80px' }}>
+                                {(() => {
+                                    const purchase = Number(product.purchasePrice);
+                                    const selling = Number(product.sellingPrice);
+                                    if (purchase === 0 || isNaN(purchase)) return <span style={{ color: '#F59E0B' }}>N/A</span>;
+                                    const margin = ((selling - purchase) / purchase * 100).toFixed(1);
+                                    if (selling < purchase) return <span style={{ color: '#EF4444' }}>{margin}%</span>;
+                                    if (selling > purchase) return <span style={{ color: '#10B981' }}>+{margin}%</span>;
+                                    return <span style={{ color: '#F59E0B' }}>{margin}%</span>;
+                                })()}
+                            </div>
+
+                            <div style={{ width: '100px' }}>
+                                <span className={getExpirationStatusClass(product)}>
+                                    {product.expirationDate ? new Date(product.expirationDate).toLocaleDateString('fr-FR') : 'N/A'}
+                                </span>
+                            </div>
+
+                            <div style={{ width: '80px', display: 'flex', gap: 'var(--spacing-2)' }}>
+                                {canManageStock && (
+                                    <>
+                                        <button className="btn btn-sm btn-outline" onClick={() => openEditModal(product)} title={t('edit')}>✏️</button>
+                                        <button className="btn btn-sm btn-outline" onClick={() => handleDelete(product)} style={{ color: '#EF4444' }} title={t('delete')}>🗑️</button>
+                                    </>
+                                )}
+                                {!canManageStock && <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)' }}>Lecture seule</span>}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
 
@@ -569,7 +557,7 @@ const Products = () => {
             <Modal
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
-                title={modalMode === 'create' ? t('add_product') : t('edit') + ' ' + t('product_name')}
+                title={modalMode === 'create' ? t('add_product') : t('edit')}
                 size="lg"
             >
                 <form onSubmit={handleSubmit}>
@@ -583,123 +571,153 @@ const Products = () => {
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label required">{t('product_name')}</label>
+                            <label className="form-label required">DCI</label>
                             <input type="text" name="name" className="form-input" value={formData.name} onChange={handleChange} required />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">{t('generic_name')}</label>
-                            <input type="text" name="genericName" className="form-input" value={formData.genericName} onChange={handleChange} />
+                            <label className="form-label">Type</label>
+                            <select name="type" className="form-select" value={formData.type} onChange={handleChange}>
+                                <option value="Princeps">💊 Princeps</option>
+                                <option value="Générique">💊 Générique</option>
+                            </select>
                         </div>
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label">{t('category')}</label>
+                            <label className="form-label">Catégorie</label>
                             <select name="category" className="form-select" value={formData.category} onChange={handleChange}>
-                                <option value="médicament">💊 {t('medication') || 'Médicament'}</option>
-                                <option value="dispositif_médical">🩺 {t('medical_device') || 'Dispositif médical'}</option>
-                                <option value="consommable">🧻 {t('consumable') || 'Consommable'}</option>
-                                <option value="parapharmacie">🧴 {t('parapharmacy') || 'Parapharmacie'}</option>
-                                <option value="autre">📦 {t('other') || 'Autre'}</option>
+                                <option value="Médicament">💊 Médicament</option>
+                                <option value="Dispositif médical">🩺 Dispositif médical</option>
+                                <option value="Parapharmaceutique">🧴 Parapharmaceutique</option>
+                                <option value="Complément alimentaire">💪 Complément alimentaire</option>
+                                <option value="Vitamine">🌟 Vitamine</option>
+                                <option value="Prestation médicale">🏥 Prestation médicale</option>
                             </select>
                         </div>
+                        {formData.category === 'Prestation médicale' && (
+                            <div className="form-group">
+                                <label className="form-label">Type de prestation</label>
+                                <select name="subCategory" className="form-select" value={formData.subCategory} onChange={handleChange}>
+                                    <option value="">Sélectionner</option>
+                                    <option value="Prise de tension">❤️ Prise de tension</option>
+                                    <option value="Prise de poids">⚖️ Prise de poids</option>
+                                    <option value="Prise de taille">📏 Prise de taille</option>
+                                    <option value="Prise de rythme">💓 Prise de rythme</option>
+                                    <option value="Test de glycémie rapide">🩸 Test de glycémie rapide</option>
+                                    <option value="Vaccination">💉 Vaccination</option>
+                                </select>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label">{t('manufacturer')}</label>
+                            <label className="form-label">Fabricant</label>
                             <input type="text" name="manufacturer" className="form-input" value={formData.manufacturer} onChange={handleChange} />
                         </div>
-                    </div>
-
-                    <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label">{t('batch_number')}</label>
+                            <label className="form-label">N° de lot</label>
                             <input type="text" name="batchNumber" className="form-input" value={formData.batchNumber} onChange={handleChange} />
                         </div>
+                    </div>
+
+                    <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label">{t('barcode')}</label>
+                            <label className="form-label">Code-barres</label>
                             <input type="text" name="barcode" className="form-input" value={formData.barcode} onChange={handleChange} />
                         </div>
-                    </div>
-
-                    <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label">{t('quantity')}</label>
-                            <input type="number" name="quantity" className="form-input" value={formData.quantity} onChange={handleChange} min="0" />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">{t('unit')}</label>
-                            <select name="unit" className="form-select" value={formData.unit} onChange={handleChange}>
-                                <option value="comprimé(s)">{t('tablets') || 'Comprimé(s)'}</option>
-                                <option value="gélule(s)">{t('capsules') || 'Gélule(s)'}</option>
-                                <option value="ml">ml</option>
-                                <option value="mg">mg</option>
-                                <option value="g">g</option>
-                                <option value="boîte(s)">{t('box') || 'Boîte(s)'}</option>
-                                <option value="flacon(s)">{t('bottle') || 'Flacon(s)'}</option>
-                                <option value="ampoule(s)">{t('ampoule') || 'Ampoule(s)'}</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label className="form-label">{t('reorder_point')}</label>
-                            <input type="number" name="reorderPoint" className="form-input" value={formData.reorderPoint} onChange={handleChange} min="0" />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">{t('location')}</label>
+                            <label className="form-label">Emplacement</label>
                             <input type="text" name="location" className="form-input" value={formData.location} onChange={handleChange} />
                         </div>
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label required">{t('purchase_price')} (GNF)</label>
+                            <label className="form-label">Quantité</label>
+                            <input type="number" name="quantity" className="form-input" value={formData.quantity} onChange={handleChange} min="0" />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Unité</label>
+                            <select name="unit" className="form-select" value={formData.unit} onChange={handleChange}>
+                                <option value="Comprimés">💊 Comprimés</option>
+                                <option value="Capsules">💊 Capsules</option>
+                                <option value="Plaquettes">📦 Plaquettes</option>
+                                <option value="Ampoules">🧪 Ampoules</option>
+                                <option value="Boîtes">📦 Boîtes</option>
+                                <option value="Bouteille">🍾 Bouteille</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label className="form-label">Seuil d'alerte</label>
+                            <input type="number" name="reorderPoint" className="form-input" value={formData.reorderPoint} onChange={handleChange} min="0" />
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label className="form-label required">Prix d'achat (GNF)</label>
                             <input type="number" name="purchasePrice" className="form-input" value={formData.purchasePrice} onChange={handleChange} min="0" required />
                         </div>
                         <div className="form-group">
-                            <label className="form-label required">{t('selling_price')} (GNF)</label>
+                            <label className="form-label required">Prix de vente (GNF)</label>
                             <input type="number" name="sellingPrice" className="form-input" value={formData.sellingPrice} onChange={handleChange} min="0" required />
                         </div>
                     </div>
 
-                    {formData.purchasePrice > 0 && formData.sellingPrice > 0 && (
-                        <div className="form-group">
-                            <div style={{ 
-                                padding: 'var(--spacing-2)', 
-                                borderRadius: 'var(--radius-md)', 
-                                backgroundColor: formData.sellingPrice < formData.purchasePrice ? '#FEE2E2' : formData.sellingPrice === formData.purchasePrice ? '#FEF3C7' : '#D1FAE5',
-                                color: formData.sellingPrice < formData.purchasePrice ? '#991B1B' : formData.sellingPrice === formData.purchasePrice ? '#92400E' : '#065F46',
-                                fontSize: '0.875rem',
-                                textAlign: 'center',
-                                fontWeight: 500
-                            }}>
-                                📊 {t('margin_info')} : {calculateMargin()}%
-                                {formData.sellingPrice < formData.purchasePrice && ` ⚠️ ${t('sell_at_loss')}`}
-                                {formData.sellingPrice === formData.purchasePrice && ` ⚠️ ${t('margin_zero')}`}
+                    {(() => {
+                        const purchase = parseFloat(formData.purchasePrice) || 0;
+                        const selling = parseFloat(formData.sellingPrice) || 0;
+                        if (purchase === 0) return null;
+                        
+                        const margin = ((selling - purchase) / purchase * 100).toFixed(1);
+                        const isLoss = selling < purchase;
+                        const isZero = selling === purchase;
+                        
+                        return (
+                            <div className="form-group">
+                                <div style={{ 
+                                    padding: 'var(--spacing-2)', 
+                                    borderRadius: 'var(--radius-md)', 
+                                    backgroundColor: isLoss ? '#FEE2E2' : isZero ? '#FEF3C7' : '#D1FAE5',
+                                    color: isLoss ? '#991B1B' : isZero ? '#92400E' : '#065F46',
+                                    fontSize: '0.875rem',
+                                    textAlign: 'center',
+                                    fontWeight: 500
+                                }}>
+                                    📊 Marge : {margin}%
+                                    {isLoss && ` ⚠️ Vente à perte (${selling} < ${purchase})`}
+                                    {isZero && ` ⚠️ Marge nulle`}
+                                    {!isLoss && !isZero && ` ✅ Bénéfice : ${selling - purchase} GNF`}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        );
+                    })()}
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label required">{t('expiration_date')}</label>
-                            <input type="date" name="expirationDate" className="form-input" value={formData.expirationDate} onChange={handleChange} required />
+                            <label className="form-label">Date de fabrication</label>
+                            <input type="date" name="manufacturingDate" className="form-input" value={formData.manufacturingDate} onChange={handleChange} />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">{t('manufacturing_date')}</label>
-                            <input type="date" name="manufacturingDate" className="form-input" value={formData.manufacturingDate} onChange={handleChange} />
+                            <label className="form-label required">Date d'expiration</label>
+                            <input type="date" name="expirationDate" className="form-input" value={formData.expirationDate} onChange={handleChange} required />
                         </div>
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">{t('description')}</label>
+                        <label className="form-label">Description</label>
                         <textarea name="description" className="form-textarea" rows="3" value={formData.description} onChange={handleChange} />
                     </div>
 
                     <div className="form-group">
                         <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
                             <input type="checkbox" name="prescriptionRequired" checked={formData.prescriptionRequired} onChange={handleChange} />
-                            {t('prescription_required')}
+                            Nécessite une ordonnance
                         </label>
                     </div>
 

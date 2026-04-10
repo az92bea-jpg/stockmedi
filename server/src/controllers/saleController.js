@@ -49,23 +49,28 @@ exports.createSale = async (req, res) => {
             });
         }
 
-        if (!establishmentId) {
+        const userEstablishments = await Establishment.find({ companyId: req.user.companyId });
+        const hasEstablishments = userEstablishments.length > 0;
+
+        if (hasEstablishments && (!establishmentId || establishmentId === '')) {
             return res.status(400).json({
                 success: false,
                 message: 'Établissement requis pour la vente'
             });
         }
 
-        const establishment = await Establishment.findOne({
-            _id: establishmentId,
-            companyId: req.user.companyId
-        });
-
-        if (!establishment) {
-            return res.status(400).json({
-                success: false,
-                message: 'Établissement non trouvé'
+        let establishment = null;
+        if (establishmentId && establishmentId !== '') {
+            establishment = await Establishment.findOne({
+                _id: establishmentId,
+                companyId: req.user.companyId
             });
+            if (!establishment) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Établissement non trouvé'
+                });
+            }
         }
 
         const company = await Company.findById(req.user.companyId);
@@ -88,7 +93,6 @@ exports.createSale = async (req, res) => {
                 });
             }
 
-            // ⭐ Vérifier si le produit peut être vendu (sans establishmentId, car le produit a déjà son propre établissement)
             const canSell = product.canBeSold(item.quantity);
             if (!canSell.can) {
                 return res.status(400).json({
@@ -111,8 +115,6 @@ exports.createSale = async (req, res) => {
 
             subtotal += subtotalItem;
 
-            // ⭐ CORRECTION : product.sell attend (quantity, userId, saleId)
-            // Le sale n'existe pas encore, on passe null pour saleId
             await product.sell(item.quantity, req.user.id, null);
         }
 
@@ -127,7 +129,7 @@ exports.createSale = async (req, res) => {
 
         const sale = await Sale.create({
             companyId: req.user.companyId,
-            establishmentId,
+            establishmentId: establishmentId && establishmentId !== '' ? establishmentId : null,
             saleNumber: saleNumber,
             items: saleItems,
             subtotal,
@@ -141,8 +143,13 @@ exports.createSale = async (req, res) => {
             customerPhone,
             prescriptionNumber,
             userId: req.user.id,
-            notes
+            notes,
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
         });
+
+        // ⭐ Populate pour le reçu
+        await sale.populate('userId', 'firstName lastName email');
+        await sale.populate('establishmentId', 'name address phone');
 
         res.status(201).json({
             success: true,
@@ -157,7 +164,6 @@ exports.createSale = async (req, res) => {
         });
     }
 };
-
 
 /**
  * @desc    Récupérer toutes les ventes
@@ -222,9 +228,9 @@ exports.getSale = async (req, res) => {
         const sale = await Sale.findOne({
             _id: req.params.id,
             companyId: req.user.companyId
-        }).populate('userId', 'firstName lastName')
+        }).populate('userId', 'firstName lastName email')
           .populate('items.productId', 'name barcode')
-          .populate('establishmentId', 'name');
+          .populate('establishmentId', 'name address phone email');
 
         if (!sale) {
             return res.status(404).json({
@@ -291,7 +297,7 @@ exports.cancelSale = async (req, res) => {
 };
 
 /**
- * @desc    Récupérer les statistiques des ventes (IGNORE LES VENTES ARCHIVÉES)
+ * @desc    Récupérer les statistiques des ventes
  */
 exports.getSalesStats = async (req, res) => {
     try {
@@ -308,42 +314,29 @@ exports.getSalesStats = async (req, res) => {
         
         const today = new Date();
         const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay());
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         const startOfYear = new Date(today.getFullYear(), 0, 1);
 
         const stats = {};
 
-        // Ventes du jour
         const dailySales = await Sale.aggregate([
             { $match: { ...matchQuery, createdAt: { $gte: startOfDay } } },
             { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
         ]);
         stats.daily = dailySales[0] || { total: 0, count: 0 };
 
-        // Ventes de la semaine
-        const weeklySales = await Sale.aggregate([
-            { $match: { ...matchQuery, createdAt: { $gte: startOfWeek } } },
-            { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
-        ]);
-        stats.weekly = weeklySales[0] || { total: 0, count: 0 };
-
-        // Ventes du mois
         const monthlySales = await Sale.aggregate([
             { $match: { ...matchQuery, createdAt: { $gte: startOfMonth } } },
             { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
         ]);
         stats.monthly = monthlySales[0] || { total: 0, count: 0 };
 
-        // Ventes de l'année
         const yearlySales = await Sale.aggregate([
             { $match: { ...matchQuery, createdAt: { $gte: startOfYear } } },
             { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
         ]);
         stats.yearly = yearlySales[0] || { total: 0, count: 0 };
 
-        // Top produits
         const topProducts = await Sale.aggregate([
             { $match: matchQuery },
             { $unwind: '$items' },

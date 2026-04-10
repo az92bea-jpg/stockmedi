@@ -13,18 +13,39 @@ const ProductSchema = new mongoose.Schema({
     },
     name: { 
         type: String, 
-        required: [true, 'Le nom du produit est obligatoire'], 
+        required: [true, 'La DCI est obligatoire'], 
         trim: true 
     },
-    genericName: { 
-        type: String, 
-        trim: true, 
-        default: '' 
+    // ⭐ NOUVEAU CHAMP : Type (Princeps ou Générique)
+    type: {
+        type: String,
+        enum: ['Princeps', 'Générique'],
+        default: 'Générique'
     },
     category: { 
         type: String, 
-        enum: ['médicament', 'dispositif_médical', 'consommable', 'parapharmacie', 'autre'], 
-        default: 'médicament' 
+        enum: [
+            'Médicament', 
+            'Dispositif médical', 
+            'Parapharmaceutique', 
+            'Complément alimentaire', 
+            'Vitamine',
+            'Prestation médicale'
+        ], 
+        default: 'Médicament' 
+    },
+    // ⭐ Sous-catégorie pour Prestation médicale
+    subCategory: {
+        type: String,
+        enum: [
+            'Prise de tension',
+            'Prise de poids',
+            'Prise de taille',
+            'Prise de rythme',
+            'Test de glycémie rapide',
+            'Vaccination'
+        ],
+        required: false
     },
     manufacturer: { 
         type: String, 
@@ -42,12 +63,10 @@ const ProductSchema = new mongoose.Schema({
         sparse: true, 
         default: '' 
     },
-    
-    // ⭐ UN SEUL établissement par document
     establishmentId: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Establishment', 
-        required: true,
+        required: false,
         index: true 
     },
     quantity: { 
@@ -55,11 +74,10 @@ const ProductSchema = new mongoose.Schema({
         default: 0, 
         min: 0 
     },
-    
     unit: { 
         type: String, 
-        enum: ['comprimé(s)', 'gélule(s)', 'ml', 'mg', 'g', 'boîte(s)', 'flacon(s)', 'ampoule(s)', 'autre'], 
-        default: 'boîte(s)' 
+        enum: ['Comprimés', 'Capsules', 'Plaquettes', 'Ampoules', 'Boîtes', 'Bouteille'], 
+        default: 'Boîtes' 
     },
     reorderPoint: { 
         type: Number, 
@@ -157,17 +175,23 @@ ProductSchema.methods.sell = async function(quantity, userId, saleId) {
     this.quantity -= quantity;
     
     const StockMovement = mongoose.model('StockMovement');
-    await StockMovement.create({
+    
+    const stockMovementData = {
         companyId: this.companyId,
         productId: this._id,
-        establishmentId: this.establishmentId,
         type: 'out',
         quantity: quantity,
         previousQuantity: previousQuantity,
         newQuantity: this.quantity,
         reference: saleId,
         userId: userId
-    });
+    };
+    
+    if (this.establishmentId) {
+        stockMovementData.establishmentId = this.establishmentId;
+    }
+    
+    await StockMovement.create(stockMovementData);
     
     await this.save();
     return this;
@@ -181,17 +205,23 @@ ProductSchema.methods.increaseStock = async function(quantity, userId, reference
     this.quantity += quantity;
     
     const StockMovement = mongoose.model('StockMovement');
-    await StockMovement.create({
+    
+    const stockMovementData = {
         companyId: this.companyId,
         productId: this._id,
-        establishmentId: this.establishmentId,
         type: 'in',
         quantity: quantity,
         previousQuantity: previousQuantity,
         newQuantity: this.quantity,
         reference: reference,
         userId: userId
-    });
+    };
+    
+    if (this.establishmentId) {
+        stockMovementData.establishmentId = this.establishmentId;
+    }
+    
+    await StockMovement.create(stockMovementData);
     
     await this.save();
     return this;

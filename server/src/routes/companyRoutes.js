@@ -15,11 +15,13 @@ const { protect, authorize } = require('../middleware/auth');
 
 // Toutes ces routes nécessitent d'être authentifié
 router.use(protect);
-router.use(authorize('owner'));
 
+// ⭐ GET /me : accessible à TOUS les utilisateurs authentifiés (owner, employee, super-admin)
 router.get('/me', getMyCompany);
-router.put('/settings', updateSettings);
-router.get('/employees', getEmployees);
-router.put('/employees/:id/toggle', toggleEmployee);
+
+// ⭐ Les routes suivantes sont réservées au propriétaire
+router.put('/settings', authorize('owner'), updateSettings);
+router.get('/employees', authorize('owner'), getEmployees);
+router.put('/employees/:id/toggle', authorize('owner'), toggleEmployee);
 
 module.exports = router;
