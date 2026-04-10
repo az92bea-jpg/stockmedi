@@ -6,9 +6,12 @@ const Sale = require('../models/Sale');
 const Product = require('../models/Product');
 const Company = require('../models/Company');
 const Establishment = require('../models/Establishment');
+const Counter = require('../models/Counter');
 const mongoose = require('mongoose');
 
-// Fonction pour générer le numéro de vente
+// ==================== FONCTIONS UTILITAIRES ====================
+
+// Fonction pour générer le numéro de vente (ATOMIQUE)
 async function generateSaleNumber(companyId) {
     const date = new Date();
     const year = date.getFullYear();
@@ -16,14 +19,48 @@ async function generateSaleNumber(companyId) {
     const day = String(date.getDate()).padStart(2, '0');
     const prefix = `${year}${month}${day}`;
     
-    const count = await Sale.countDocuments({
-        companyId: companyId,
-        saleNumber: new RegExp(`^SALE-${prefix}`)
-    });
+    const counterId = `sale-${prefix}-${companyId}`;
     
-    const sequence = String(count + 1).padStart(4, '0');
+    const counter = await Counter.findOneAndUpdate(
+        { _id: counterId },
+        { $inc: { seq: 1 } },
+        { upsert: true, returnDocument: 'after' }
+    );
+    
+    const sequence = String(counter.seq).padStart(4, '0');
     return `SALE-${prefix}-${sequence}`;
 }
+
+// Créer une vente avec retry automatique en cas de doublon
+async function createSaleWithRetry(saleData, userId, companyId, maxRetries = 5) {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            const saleNumber = await generateSaleNumber(companyId);
+            
+            const sale = await Sale.create({
+                ...saleData,
+                companyId,
+                saleNumber,
+                userId
+            });
+            
+            return { success: true, sale };
+        } catch (error) {
+            // Si c'est une erreur de doublon, on réessaie
+            if (error.code === 11000 && error.keyPattern?.saleNumber) {
+                console.log(`⚠️ Doublon détecté, nouvelle tentative (${attempt + 1}/${maxRetries})...`);
+                continue;
+            }
+            // Sinon, on propage l'erreur
+            throw error;
+        }
+    }
+    
+    // Si on arrive ici, toutes les tentatives ont échoué
+    throw new Error('Impossible de générer un numéro de vente unique après plusieurs tentatives');
+}
+
+// ==================== CONTRÔLEURS ====================
 
 /**
  * @desc    Créer une nouvelle vente
@@ -125,12 +162,10 @@ exports.createSale = async (req, res) => {
 
         const taxAmount = (subtotal - discountAmount) * taxRate;
         const total = subtotal - discountAmount + taxAmount;
-        const saleNumber = await generateSaleNumber(req.user.companyId);
 
-        const sale = await Sale.create({
-            companyId: req.user.companyId,
+        // Données de la vente
+        const saleData = {
             establishmentId: establishmentId && establishmentId !== '' ? establishmentId : null,
-            saleNumber: saleNumber,
             items: saleItems,
             subtotal,
             discount: discountAmount,
@@ -142,14 +177,26 @@ exports.createSale = async (req, res) => {
             customerName,
             customerPhone,
             prescriptionNumber,
-            userId: req.user.id,
             notes,
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-        });
+        };
 
-        // ⭐ Populate pour le reçu
+        // Création avec retry automatique
+        const result = await createSaleWithRetry(saleData, req.user.id, req.user.companyId);
+
+        if (!result.success) {
+            return res.status(500).json({
+                success: false,
+                message: 'Erreur lors de la création de la vente'
+            });
+        }
+
+        const sale = result.sale;
+
+        // Populate pour le reçu
         await sale.populate('userId', 'firstName lastName email');
-        await sale.populate('establishmentId', 'name address phone');
+        await sale.populate('establishmentId', 'name address phone email');
+        await sale.populate('companyId', 'name logo address phone email');
 
         res.status(201).json({
             success: true,
@@ -230,7 +277,8 @@ exports.getSale = async (req, res) => {
             companyId: req.user.companyId
         }).populate('userId', 'firstName lastName email')
           .populate('items.productId', 'name barcode')
-          .populate('establishmentId', 'name address phone email');
+          .populate('establishmentId', 'name address phone email')
+          .populate('companyId', 'name logo address phone email');
 
         if (!sale) {
             return res.status(404).json({
