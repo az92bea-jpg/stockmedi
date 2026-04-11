@@ -694,11 +694,18 @@ const Sales = () => {
                         <div id="receipt-content" style={receiptStyle}>
                             {/* En-tête entreprise */}
                             <div style={{ textAlign: 'center', marginBottom: '8px', borderBottom: '1px dashed #ccc', paddingBottom: '5px' }}>
-                                <strong style={{ fontSize: '13px' }}>{company.name || 'StockMedi'}</strong><br />
+                                {company.logo && <img src={company.logo} alt="Logo" style={{ maxWidth: '50px', maxHeight: '50px', marginBottom: '3px' }} />}
+                                <strong style={{ fontSize: '12px' }}>{company.name || 'StockMedi'}</strong><br />
                                 {establishment.name && <span>{establishment.name}<br /></span>}
-                                {establishment.address && <span>{establishment.address}<br /></span>}
+                                {company.address && (
+                                    <span>
+                                        {company.address.street && `${company.address.street}, `}
+                                        {company.address.city} {company.address.postalCode}<br />
+                                        {company.address.country}<br />
+                                    </span>
+                                )}
                                 <span>Tél: {establishment.phone || company.phone || ''}</span><br />
-                                {company.email && <span>{company.email}</span>}
+                                {company.email && <span>Email: {company.email}</span>}
                             </div>
                             
                             {/* Infos vente */}

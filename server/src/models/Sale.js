@@ -126,11 +126,10 @@ const SaleSchema = new mongoose.Schema(
             default: false,
             index: true
         },
-        // ⭐ NOUVEAU : Date d'expiration pour suppression auto (30 jours)
         expiresAt: {
             type: Date,
             default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-            index: { expires: 0 } // MongoDB TTL : suppression automatique après 30 jours
+            index: { expires: 0 }
         }
     },
     {
@@ -147,6 +146,7 @@ SaleSchema.index({ companyId: 1, archived: 1, createdAt: -1 });
 SaleSchema.index({ companyId: 1, establishmentId: 1 });
 
 // ==================== MÉTHODES ====================
+
 /**
  * Annuler une vente et restaurer le stock
  */
@@ -208,6 +208,32 @@ SaleSchema.methods.cancel = async function(userId, reason) {
     
     await this.save();
     return this;
+};
+
+/**
+ * Générer un numéro de vente unique
+ */
+SaleSchema.statics.generateSaleNumber = async function(companyId) {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const prefix = `SALE-${year}${month}${day}`;
+    
+    const lastSale = await this.findOne({
+        companyId: companyId,
+        saleNumber: new RegExp(`^${prefix}`)
+    }).sort({ saleNumber: -1 });
+    
+    let sequence = 1;
+    if (lastSale && lastSale.saleNumber) {
+        const parts = lastSale.saleNumber.split('-');
+        if (parts.length >= 3) {
+            sequence = parseInt(parts[2]) + 1;
+        }
+    }
+    
+    return `${prefix}-${String(sequence).padStart(4, '0')}`;
 };
 
 module.exports = mongoose.model('Sale', SaleSchema);

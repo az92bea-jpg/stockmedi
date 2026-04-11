@@ -46,6 +46,11 @@ import InstallPrompt from './components/common/InstallPrompt';
 // Layout
 import Layout from './components/layout/Layout';
 
+// Devis
+import Quotes from './pages/quotes/Quotes';
+import NewQuote from './pages/quotes/NewQuote';
+import QuoteDetail from './pages/quotes/QuoteDetail';
+
 // ==================== COMPOSANTS DE PROTECTION ====================
 
 // Protection de base (authentification uniquement)
@@ -109,6 +114,11 @@ function App() {
                         <Route path="sales" element={<Sales />} />
                         <Route path="reports" element={<Reports />} />
                         <Route path="archives" element={<Archives />} />
+                        <Route path="quotes" element={<Quotes />} />
+                        <Route path="quotes/new" element={<NewQuote />} />
+                        <Route path="quotes/:id" element={<QuoteDetail />} />
+
+
                         
                         {/* Routes réservées au propriétaire */}
                         <Route path="employees" element={

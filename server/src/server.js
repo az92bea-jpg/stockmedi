@@ -43,6 +43,8 @@ const logsRoutes = require('./routes/logsRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const archiveRoutes = require('./routes/archiveRoutes');
 const establishmentRoutes = require('./routes/establishmentRoutes');
+const quoteRoutes = require('./routes/quoteRoutes');
+
 
 // ⭐ CRON JOBS (notifications email + nettoyage archives)
 /* require('./utils/cronJobs');  // charger resend */
@@ -73,6 +75,7 @@ app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/logs', logsRoutes);
 app.use('/api/establishments', establishmentRoutes);
+app.use('/api/quotes', quoteRoutes);
 
 
 

@@ -41,6 +41,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { path: '/dashboard', name: t('nav_dashboard'), iconName: 'dashboard', fallback: '📊' },
         { path: '/products', name: t('nav_products'), iconName: 'products', fallback: '📦' },
         { path: '/sales', name: t('nav_sales'), iconName: 'sales', fallback: '💰' },
+        { path: '/quotes', name: 'Devis', iconName: 'document', fallback: '📄' },
         { path: '/reports', name: t('nav_reports'), iconName: 'reports', fallback: '📄' }
     ];
 

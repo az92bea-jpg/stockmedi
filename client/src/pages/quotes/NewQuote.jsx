@@ -1,0 +1,323 @@
+/**
+ * PAGE NOUVEAU DEVIS - Création d'un devis
+ * Réutilise le panier des ventes
+ */
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { quoteService } from '../../services/quoteService';
+import { productService } from '../../services/productService';
+import api from '../../services/api';
+import Loader from '../../components/common/Loader';
+import Alert from '../../components/common/Alert';
+import Icon from '../../components/ui/Icon';
+import EstablishmentSelector from '../../components/establishment/EstablishmentSelector';
+
+const NewQuote = () => {
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [products, setProducts] = useState([]);
+    const [cart, setCart] = useState([]);
+    const [error, setError] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    
+    const [customerName, setCustomerName] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('');
+    const [prescriptionNumber, setPrescriptionNumber] = useState('');
+    const [notes, setNotes] = useState('');
+    const [discount, setDiscount] = useState(0);
+    const [discountType, setDiscountType] = useState('fixed');
+    
+    const [selectedEstablishment, setSelectedEstablishment] = useState('');
+    const [establishments, setEstablishments] = useState([]);
+
+    // Charger les données initiales
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const [estRes, prodRes] = await Promise.all([
+                    api.get('/establishments'),
+                    productService.getProducts({})
+                ]);
+                setEstablishments(estRes.establishments || []);
+                if (estRes.establishments?.length > 0) {
+                    setSelectedEstablishment(estRes.establishments[0]._id);
+                }
+                setProducts(prodRes.products || []);
+            } catch (err) {
+                console.error('Erreur chargement données:', err);
+            }
+        };
+        loadData();
+    }, []);
+
+    // Recherche de produits
+    useEffect(() => {
+        if (searchTerm.length >= 2) {
+            const term = searchTerm.toLowerCase();
+            const results = products.filter(p => 
+                p.isActive && p.quantity > 0 &&
+                (p.name?.toLowerCase().includes(term) ||
+                 p.genericName?.toLowerCase().includes(term) ||
+                 p.barcode?.toLowerCase().includes(term))
+            );
+            setSearchResults(results.slice(0, 10));
+        } else {
+            setSearchResults([]);
+        }
+    }, [searchTerm, products]);
+
+    const addToCart = (product) => {
+        const existingItem = cart.find(item => item.productId === product._id);
+        
+        if (existingItem) {
+            setCart(cart.map(item =>
+                item.productId === product._id
+                    ? { ...item, quantity: item.quantity + 1, subtotal: (item.quantity + 1) * item.unitPrice }
+                    : item
+            ));
+        } else {
+            setCart([...cart, {
+                productId: product._id,
+                name: product.name,
+                unitPrice: product.sellingPrice,
+                quantity: 1,
+                subtotal: product.sellingPrice
+            }]);
+        }
+    };
+
+    const updateQuantity = (productId, newQuantity) => {
+        if (newQuantity < 1) {
+            setCart(cart.filter(item => item.productId !== productId));
+            return;
+        }
+        setCart(cart.map(item =>
+            item.productId === productId
+                ? { ...item, quantity: newQuantity, subtotal: newQuantity * item.unitPrice }
+                : item
+        ));
+    };
+
+    const removeFromCart = (productId) => {
+        setCart(cart.filter(item => item.productId !== productId));
+    };
+
+    const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+    const discountAmount = discountType === 'percentage' ? (subtotal * discount / 100) : discount;
+    const total = Math.max(0, subtotal - discountAmount);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (cart.length === 0) {
+            setError('Le panier est vide');
+            return;
+        }
+        
+        setLoading(true);
+        setError('');
+        
+        try {
+            const quoteData = {
+                items: cart.map(item => ({
+                    productId: item.productId,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice
+                })),
+                discount,
+                discountType,
+                customerName,
+                customerPhone,
+                prescriptionNumber,
+                notes,
+                establishmentId: establishments.length > 0 ? selectedEstablishment : undefined
+            };
+            
+            const response = await quoteService.createQuote(quoteData);
+            
+            if (response.success) {
+                navigate(`/quotes/${response.quote._id}`);
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Erreur lors de la création du devis');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatPrice = (price) => price?.toLocaleString() || 0;
+
+    return (
+        <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
+            <div style={{ marginBottom: 'var(--spacing-6)' }}>
+                <h2>
+                    <Icon name="document" category="actions" fallback="📄" style={{ marginRight: '0.5rem' }} />
+                    Nouveau devis
+                </h2>
+                <p style={{ color: 'var(--gray-500)' }}>Créez un devis pour votre client</p>
+            </div>
+
+            {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: 'var(--spacing-6)' }}>
+                {/* Panneau gauche - Recherche produits */}
+                <div>
+                    {establishments.length > 0 && (
+                        <div className="card" style={{ marginBottom: 'var(--spacing-4)' }}>
+                            <div className="card-body">
+                                <EstablishmentSelector
+                                    selectedId={selectedEstablishment}
+                                    onSelect={setSelectedEstablishment}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="card" style={{ marginBottom: 'var(--spacing-4)' }}>
+                        <div className="card-body">
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Rechercher un produit</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="Nom, code-barres..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {searchResults.length > 0 && (
+                        <div className="card">
+                            <div className="card-header">
+                                <h3>Produits disponibles</h3>
+                            </div>
+                            <div className="card-body" style={{ padding: 0 }}>
+                                {searchResults.map(product => (
+                                    <div
+                                        key={product._id}
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            padding: 'var(--spacing-3) var(--spacing-4)',
+                                            borderBottom: '1px solid var(--gray-100)',
+                                            cursor: 'pointer'
+                                        }}
+                                        onClick={() => addToCart(product)}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    >
+                                        <div>
+                                            <div style={{ fontWeight: 500 }}>{product.name}</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
+                                                Stock: {product.quantity} {product.unit}
+                                            </div>
+                                        </div>
+                                        <div style={{ fontWeight: 600, color: 'var(--primary-500)' }}>
+                                            {formatPrice(product.sellingPrice)} GNF
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Panneau droit - Panier et infos client */}
+                <div>
+                    <div className="card">
+                        <div className="card-header">
+                            <h3>Panier ({cart.length})</h3>
+                        </div>
+                        <div className="card-body" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                            {cart.length === 0 ? (
+                                <div style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 'var(--spacing-4)' }}>
+                                    Panier vide
+                                </div>
+                            ) : (
+                                cart.map(item => (
+                                    <div key={item.productId} style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        padding: 'var(--spacing-2) 0',
+                                        borderBottom: '1px solid var(--gray-100)'
+                                    }}>
+                                        <div style={{ flex: 2 }}>
+                                            <div style={{ fontWeight: 500 }}>{item.name}</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
+                                                {formatPrice(item.unitPrice)} GNF
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+                                            <button className="btn btn-sm btn-outline" onClick={() => updateQuantity(item.productId, item.quantity - 1)}>-</button>
+                                            <span>{item.quantity}</span>
+                                            <button className="btn btn-sm btn-outline" onClick={() => updateQuantity(item.productId, item.quantity + 1)}>+</button>
+                                            <button className="btn btn-sm btn-outline" onClick={() => removeFromCart(item.productId)} style={{ color: 'var(--danger)' }}>✕</button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="card-body" style={{ borderTop: '1px solid var(--gray-200)' }}>
+                            <div className="form-group">
+                                <label className="form-label">Nom du client</label>
+                                <input type="text" className="form-input" placeholder="Nom" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Téléphone</label>
+                                <input type="tel" className="form-input" placeholder="Téléphone" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">N° Ordonnance</label>
+                                <input type="text" className="form-input" placeholder="Optionnel" value={prescriptionNumber} onChange={(e) => setPrescriptionNumber(e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Notes</label>
+                                <textarea className="form-textarea" rows="2" placeholder="Notes..." value={notes} onChange={(e) => setNotes(e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div className="card-body">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-2)' }}>
+                                <span>Sous-total</span>
+                                <span>{formatPrice(subtotal)} GNF</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
+                                <span>Remise</span>
+                                <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+                                    <input type="number" style={{ width: '80px', textAlign: 'right' }} className="form-input" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} min="0" />
+                                    <select className="form-select" style={{ width: '80px' }} value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
+                                        <option value="fixed">GNF</option>
+                                        <option value="percentage">%</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.1rem', marginTop: 'var(--spacing-3)', paddingTop: 'var(--spacing-3)', borderTop: '2px solid var(--gray-200)' }}>
+                                <span>Total</span>
+                                <span style={{ color: 'var(--primary-500)' }}>{formatPrice(total)} GNF</span>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}>
+                                <button className="btn btn-primary" style={{ flex: 2 }} onClick={handleSubmit} disabled={loading || cart.length === 0}>
+                                    {loading ? <Loader size="sm" /> : 'Générer le devis'}
+                                </button>
+                                <button className="btn btn-secondary" onClick={() => navigate('/quotes')}>
+                                    Annuler
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default NewQuote;
