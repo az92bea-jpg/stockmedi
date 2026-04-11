@@ -33,14 +33,35 @@ const UserSchema = new mongoose.Schema({
         enum: ['super-admin', 'owner', 'employee'], 
         default: 'employee' 
     },
-    // ========== NOUVEAU CHAMP DISCIPLINE ==========
-    discipline: {
-        type: String,
-        enum: ['pharmacien', 'médecin', 'infirmier', 'assistant', 'comptable', 'autre'],
+discipline: {
+    type: String,
+        enum: [
+            'pharmacien', 'pharmacist',
+            'médecin', 'doctor',
+            'infirmier', 'nurse',
+            'assistant', 'assistant',
+            'comptable', 'accountant',
+            'gestionnaire', 'manager',
+            'caissier', 'cashier',
+            'autre', 'other'
+        ],
         default: 'autre'
     },
-    permissions: { 
-        type: [String], 
+permissions: { 
+    type: [String], 
+        enum: [
+            'view_dashboard',
+            'make_sales',
+            'view_sales',
+            'cancel_sales',
+            'manage_products',
+            'view_products',
+            'manage_stock',
+            'view_reports',
+            'manage_employees',
+            'manage_establishments',
+            'manage_settings'
+        ],
         default: [] 
     },
     companyId: { 

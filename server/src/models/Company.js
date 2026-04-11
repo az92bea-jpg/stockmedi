@@ -1,48 +1,134 @@
 /**
  * MODÈLE COMPANY - Entreprises
+ * ⭐ Enums bilingues FR + EN
  */
 
 const mongoose = require('mongoose');
 
 const CompanySchema = new mongoose.Schema({
-    name: { type: String, required: true, unique: true },
-    type: { type: String, default: 'pharmacy' },
-    address: { city: { type: String, default: '' } },
-    phone: { type: String, default: '' },
-    email: { type: String, lowercase: true },
-    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    name: { 
+        type: String, 
+        required: true, 
+        unique: true 
+    },
+    type: { 
+        type: String, 
+        enum: [
+            'pharmacy', 'pharmacie',
+            'clinique', 'clinic',
+            'hopital', 'hospital',
+            'laboratoire', 'lab',
+            'autre', 'other'
+        ], 
+        default: 'pharmacy' 
+    },
+    logo: { 
+        type: String, 
+        default: '' 
+    },
+    address: { 
+        street: { type: String, default: '' },
+        city: { type: String, default: '' },
+        postalCode: { type: String, default: '' },
+        country: { type: String, default: 'Guinée' }
+    },
+    phone: { 
+        type: String, 
+        default: '' 
+    },
+    email: { 
+        type: String, 
+        lowercase: true,
+        default: ''
+    },
+    ownerId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User', 
+        default: null 
+    },
     subscription: {
         plan: { 
             type: String, 
-            enum: ['trial', 'basic', 'premium', 'enterprise'], // ⭐ Ajout de 'trial'
-            default: 'trial' // ⭐ Changé de 'basic' à 'trial'
-        },
-        startDate: { type: Date, default: Date.now },
-        endDate: { type: Date, required: true },
-        status: { 
-            type: String, 
-            enum: ['active', 'expired', 'suspended', 'trial'], 
+            enum: ['trial', 'basic', 'premium', 'enterprise'], 
             default: 'trial' 
         },
-        autoRenew: { type: Boolean, default: false }
+        startDate: { 
+            type: Date, 
+            default: Date.now 
+        },
+        endDate: { 
+            type: Date, 
+            required: true 
+        },
+        status: { 
+            type: String, 
+            enum: ['active', 'expired', 'suspended', 'trial', 'cancelled'], 
+            default: 'trial' 
+        },
+        autoRenew: { 
+            type: Boolean, 
+            default: false 
+        }
     },
     settings: {
-        currency: { type: String, enum: ['GNF', 'XOF', 'USD', 'EUR'], default: 'GNF' },
-        language: { type: String, enum: ['fr', 'en'], default: 'fr' },
-        taxRate: { type: Number, default: 18, min: 0, max: 100 },
-        invoicePrefix: { type: String, default: 'INV' },
-        expirationAlertDays: { type: Number, default: 30 },
-        batchTracking: { type: Boolean, default: true },
-        prescriptionRequired: { type: Boolean, default: true }
+        currency: { 
+            type: String, 
+            enum: ['GNF', 'XOF', 'USD', 'EUR'], 
+            default: 'GNF' 
+        },
+        language: { 
+            type: String, 
+            enum: ['fr', 'en'], 
+            default: 'fr' 
+        },
+        taxRate: { 
+            type: Number, 
+            default: 18, 
+            min: 0, 
+            max: 100 
+        },
+        invoicePrefix: { 
+            type: String, 
+            default: 'INV' 
+        },
+        expirationAlertDays: { 
+            type: Number, 
+            default: 30 
+        },
+        batchTracking: { 
+            type: Boolean, 
+            default: true 
+        },
+        prescriptionRequired: { 
+            type: Boolean, 
+            default: true 
+        }
     },
     stats: {
-        totalProducts: { type: Number, default: 0 },
-        totalEmployees: { type: Number, default: 0 },
-        totalSalesThisMonth: { type: Number, default: 0 },
-        totalRevenueThisMonth: { type: Number, default: 0 }
+        totalProducts: { 
+            type: Number, 
+            default: 0 
+        },
+        totalEmployees: { 
+            type: Number, 
+            default: 0 
+        },
+        totalSalesThisMonth: { 
+            type: Number, 
+            default: 0 
+        },
+        totalRevenueThisMonth: { 
+            type: Number, 
+            default: 0 
+        }
     },
-    isActive: { type: Boolean, default: true }
-}, { timestamps: true });
+    isActive: { 
+        type: Boolean, 
+        default: true 
+    }
+}, { 
+    timestamps: true 
+});
 
 // ==================== MÉTHODES ====================
 

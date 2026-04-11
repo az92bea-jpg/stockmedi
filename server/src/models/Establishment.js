@@ -19,8 +19,14 @@ const EstablishmentSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['pharmacy', 'clinic', 'hospital', 'warehouse'],
-        default: 'pharmacy'
+        enum: [
+            'pharmacie', 'pharmacy',
+            'clinique', 'clinic',
+            'hopital', 'hospital',
+            'depot', 'warehouse',
+            'laboratoire', 'lab'
+        ],
+        default: 'pharmacie'
     },
     address: {
         street: { type: String, default: '' },

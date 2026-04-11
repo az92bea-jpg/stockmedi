@@ -19,31 +19,31 @@ const ProductSchema = new mongoose.Schema({
     // ⭐ NOUVEAU CHAMP : Type (Princeps ou Générique)
     type: {
         type: String,
-        enum: ['Princeps', 'Générique'],
+        enum: ['Princeps', 'Générique', 'Generic'],
         default: 'Générique'
     },
-    category: { 
-        type: String, 
+category: { 
+    type: String, 
         enum: [
-            'Médicament', 
-            'Dispositif médical', 
-            'Parapharmaceutique', 
-            'Complément alimentaire', 
-            'Vitamine',
-            'Prestation médicale'
+            'Médicament', 'Medication',
+            'Dispositif médical', 'Medical Device',
+            'Parapharmaceutique', 'Parapharmacy',
+            'Complément alimentaire', 'Food Supplement',
+            'Vitamine', 'Vitamin',
+            'Prestation médicale', 'Medical Service'
         ], 
         default: 'Médicament' 
-    },
-    // ⭐ Sous-catégorie pour Prestation médicale
+},
+    //  Sous-catégorie pour Prestation médicale
     subCategory: {
         type: String,
         enum: [
-            'Prise de tension',
-            'Prise de poids',
-            'Prise de taille',
-            'Prise de rythme',
-            'Test de glycémie rapide',
-            'Vaccination'
+            'Prise de tension', 'Blood pressure',
+            'Prise de poids', 'Weight',
+            'Prise de taille', 'Height',
+            'Prise de rythme', 'Heart rate',
+            'Test de glycémie rapide', 'Blood glucose test',
+            'Vaccination', 'Vaccination'
         ],
         required: false
     },
@@ -75,8 +75,16 @@ const ProductSchema = new mongoose.Schema({
         min: 0 
     },
     unit: { 
-        type: String, 
-        enum: ['Comprimés', 'Capsules', 'Plaquettes', 'Ampoules', 'Boîtes', 'Boîte(s)', 'Bouteille'], // ⭐ Ajout de 'Boîte(s)'
+    type: String, 
+        enum: [
+            'Comprimés', 'Tablets',
+            'Capsules', 'Capsules',
+            'Plaquettes', 'Blisters',
+            'Ampoules', 'Ampoules',
+            'Boîtes', 'Boxes',
+            'Boîte(s)', 'Box(es)',
+            'Bouteille', 'Bottle'
+        ], 
         default: 'Boîtes' 
     },
     reorderPoint: { 
