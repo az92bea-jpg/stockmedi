@@ -1,15 +1,17 @@
 /**
  * COMPOSANT TRANSFERT DE STOCK
+ * ⭐ Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { getEstablishments } from '../../services/establishmentService';
+import { getEstablishments, transferStock } from '../../services/establishmentService';
 import { productService } from '../../services/productService';
-import { transferStock } from '../../services/establishmentService';
 import Loader from '../common/Loader';
 import Alert from '../common/Alert';
+import { useLanguage } from '../../context/LanguageContext';
 
 const StockTransfer = ({ onSuccess, onCancel }) => {
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState('');
@@ -41,12 +43,12 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
             setProducts(productsRes.products || []);
             
         } catch (err) {
-            setError('Erreur chargement des données');
+            setError(t('error_loading_data'));
             console.error(err);
         } finally {
             setLoadingData(false);
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
         loadData();
@@ -54,7 +56,6 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
 
     const getAvailableStock = () => {
         if (!selectedProduct) return 0;
-        // ⭐ Le stock est directement dans product.quantity
         return selectedProduct.quantity || 0;
     };
 
@@ -79,7 +80,7 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
             const quantity = parseInt(value) || 0;
             const maxStock = getAvailableStock();
             if (quantity > maxStock) {
-                setError(`Quantité maximale disponible: ${maxStock}`);
+                setError(`${t('max_quantity_available')}: ${maxStock}`);
                 return;
             }
             setError('');
@@ -94,23 +95,23 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
         e.preventDefault();
         
         if (!formData.productId || !formData.fromEstablishmentId || !formData.toEstablishmentId) {
-            setError('Veuillez remplir tous les champs');
+            setError(t('fill_all_fields'));
             return;
         }
         
         if (formData.fromEstablishmentId === formData.toEstablishmentId) {
-            setError('Les établissements source et destination doivent être différents');
+            setError(t('different_establishments_required'));
             return;
         }
         
         const availableStock = getAvailableStock();
         if (formData.quantity <= 0) {
-            setError('La quantité doit être supérieure à 0');
+            setError(t('quantity_greater_than_zero'));
             return;
         }
         
         if (formData.quantity > availableStock) {
-            setError(`Stock insuffisant (disponible: ${availableStock})`);
+            setError(`${t('stock_insufficient')} (${t('available')}: ${availableStock})`);
             return;
         }
         
@@ -126,13 +127,13 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
                 reason: formData.reason
             });
             
-            setSuccess(response.message || 'Transfert effectué avec succès');
+            setSuccess(response.message || t('transfer_success'));
             await loadData();
             setTimeout(() => {
                 if (onSuccess) onSuccess();
             }, 1500);
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors du transfert');
+            setError(err.response?.data?.message || t('error_transfer'));
         } finally {
             setLoading(false);
         }
@@ -143,7 +144,7 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
     return (
         <div className="card">
             <div className="card-header">
-                <h3>📦 Transfert de stock</h3>
+                <h3>📦 {t('transfer_stock')}</h3>
             </div>
             <div className="card-body">
                 {error && <Alert type="error" message={error} onClose={() => setError('')} />}
@@ -151,7 +152,7 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
                 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Produit</label>
+                        <label className="form-label">{t('product')}</label>
                         <select
                             name="productId"
                             className="form-select"
@@ -159,10 +160,10 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
                             onChange={handleChange}
                             required
                         >
-                            <option value="">Sélectionner un produit</option>
+                            <option value="">{t('select_product')}</option>
                             {products.map(p => (
                                 <option key={p._id} value={p._id}>
-                                    {p.name} - {p.establishmentId?.name || 'Établissement inconnu'} (Stock: {p.quantity || 0} {p.unit})
+                                    {p.name} - {p.establishmentId?.name || t('unknown_establishment')} ({t('stock')}: {p.quantity || 0} {p.unit})
                                 </option>
                             ))}
                         </select>
@@ -170,11 +171,11 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label">Établissement source</label>
+                            <label className="form-label">{t('source_establishment')}</label>
                             <input
                                 type="text"
                                 className="form-input"
-                                value={selectedProduct?.establishmentId?.name || 'Sélectionnez un produit'}
+                                value={selectedProduct?.establishmentId?.name || t('select_product_first')}
                                 disabled
                             />
                             <input
@@ -185,7 +186,7 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Établissement destination</label>
+                            <label className="form-label">{t('destination_establishment')}</label>
                             <select
                                 name="toEstablishmentId"
                                 className="form-select"
@@ -193,7 +194,7 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
                                 onChange={handleChange}
                                 required
                             >
-                                <option value="">Sélectionner</option>
+                                <option value="">{t('select')}</option>
                                 {establishments
                                     .filter(est => est._id !== formData.fromEstablishmentId)
                                     .map(est => (
@@ -207,7 +208,7 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label">Quantité à transférer</label>
+                            <label className="form-label">{t('quantity_to_transfer')}</label>
                             <input
                                 type="number"
                                 name="quantity"
@@ -221,20 +222,20 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
                             />
                             {selectedProduct && (
                                 <div className="form-hint">
-                                    Stock disponible: {getAvailableStock()} {selectedProduct.unit}
+                                    {t('available_stock')}: {getAvailableStock()} {selectedProduct.unit}
                                 </div>
                             )}
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Motif (optionnel)</label>
+                            <label className="form-label">{t('reason_optional')}</label>
                             <input
                                 type="text"
                                 name="reason"
                                 className="form-input"
                                 value={formData.reason}
                                 onChange={handleChange}
-                                placeholder="Réapprovisionnement, mutation, etc."
+                                placeholder={t('restock_transfer_etc')}
                             />
                         </div>
                     </div>
@@ -245,10 +246,10 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
                             className="btn btn-primary" 
                             disabled={loading || !selectedProduct || getAvailableStock() === 0}
                         >
-                            {loading ? <Loader size="sm" /> : '📦 Transférer'}
+                            {loading ? <Loader size="sm" /> : `📦 ${t('transfer')}`}
                         </button>
                         <button type="button" className="btn btn-secondary" onClick={onCancel}>
-                            Annuler
+                            {t('cancel_btn')}
                         </button>
                     </div>
                 </form>

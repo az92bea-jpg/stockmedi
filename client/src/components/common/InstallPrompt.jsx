@@ -1,6 +1,13 @@
+/**
+ * COMPOSANT INSTALL PROMPT - Bannière d'installation PWA
+ * ⭐ Traductions FR/EN complètes
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const InstallPrompt = () => {
+    const { t } = useLanguage();
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [showPrompt, setShowPrompt] = useState(false);
     const [isInstalled, setIsInstalled] = useState(false);
@@ -8,7 +15,6 @@ const InstallPrompt = () => {
     const hasChecked = useRef(false);
 
     useEffect(() => {
-        // Vérifier si déjà installé (une seule fois)
         if (!hasChecked.current) {
             hasChecked.current = true;
             if (window.matchMedia('(display-mode: standalone)').matches) {
@@ -35,10 +41,10 @@ const InstallPrompt = () => {
             deferredPrompt.prompt();
             deferredPrompt.userChoice.then((choiceResult) => {
                 if (choiceResult.outcome === 'accepted') {
-                    console.log('✅ Utilisateur a accepté l\'installation');
+                    console.log('✅ ' + t('pwa_accepted'));
                     setShowPrompt(false);
                 } else {
-                    console.log('❌ Utilisateur a refusé l\'installation');
+                    console.log('❌ ' + t('pwa_declined'));
                     setDismissed(true);
                     setShowPrompt(false);
                 }
@@ -73,10 +79,10 @@ const InstallPrompt = () => {
                 <span style={{ fontSize: '2rem' }}>💊</span>
                 <div style={{ flex: 1 }}>
                     <h4 style={{ margin: 0, fontSize: '1rem', color: '#111827' }}>
-                        Installer StockMedi
+                        {t('install_app_title')}
                     </h4>
                     <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#6B7280' }}>
-                        Installez l'application pour un accès rapide
+                        {t('install_app_subtitle')}
                     </p>
                 </div>
                 <button
@@ -91,7 +97,7 @@ const InstallPrompt = () => {
                         fontSize: '0.875rem'
                     }}
                 >
-                    Installer
+                    {t('install')}
                 </button>
                 <button
                     onClick={handleDismiss}

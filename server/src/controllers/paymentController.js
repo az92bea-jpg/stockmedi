@@ -1,33 +1,38 @@
 /**
- * CONTRÔLEUR PAIEMENT - Stripe etat test
+ * CONTRÔLEUR PAIEMENT - Stripe (paiements en EUR)
+ * ⭐ Conforme à Stripe : devise EUR, prix en centimes
  */
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Subscription = require('../models/Subscription');
 const Company = require('../models/Company');
 
-// Plans d'abonnement
+// ⭐ Plans d'abonnement - Prix en EUR (centimes)
+// Conversion indicative basée sur un taux approximatif (1 EUR ≈ 9000 GNF)
 const PLANS = {
     basic: {
         name: 'Basic',
-        price: 50000,
-        currency: 'GNF',
+        price: 500, // 5,00 EUR (≈ 45 000 GNF)
+        currency: 'eur',
         duration: 30,
-        description: '500 produits, 10 employés, rapports PDF'
+        description: '500 produits, 10 employés, rapports PDF',
+        features: ['stock_basic', 'sales_basic', 'reports_basic', 'pdf_exports', 'employees']
     },
     premium: {
         name: 'Premium',
-        price: 100000,
-        currency: 'GNF',
+        price: 1000, // 10,00 EUR (≈ 90 000 GNF)
+        currency: 'eur',
         duration: 30,
-        description: '2000 produits, 30 employés, statistiques avancées'
+        description: '2000 produits, 30 employés, statistiques avancées',
+        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees', 'advanced_stats']
     },
     enterprise: {
         name: 'Enterprise',
-        price: 250000,
-        currency: 'GNF',
+        price: 2500, // 25,00 EUR (≈ 225 000 GNF)
+        currency: 'eur',
         duration: 30,
-        description: 'Illimité, API, support prioritaire'
+        description: 'Illimité, API, support prioritaire',
+        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees', 'advanced_stats', 'multiple_locations', 'api_access', 'priority_support']
     }
 };
 
@@ -54,7 +59,7 @@ exports.createCheckoutSession = async (req, res) => {
             line_items: [
                 {
                     price_data: {
-                        currency: planData.currency.toLowerCase(),
+                        currency: planData.currency,
                         product_data: {
                             name: `StockMedi - ${planData.name}`,
                             description: planData.description
@@ -74,7 +79,6 @@ exports.createCheckoutSession = async (req, res) => {
             }
         });
 
-        // ✅ CORRECTION : Ajout de l'URL dans la réponse
         res.json({
             success: true,
             sessionId: session.id,
@@ -111,11 +115,9 @@ exports.stripeWebhook = async (req, res) => {
     const sig = req.headers['stripe-signature'];
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
     
-    // Si pas de webhook secret, on simule
     if (!endpointSecret) {
         console.log('⚠️ Webhook secret non configuré, paiement simulé');
         
-        // Pour le webhook simulé, le body est déjà parsé
         const session = req.body;
         if (session.type === 'checkout.session.completed') {
             const { companyId, plan } = session.data.object.metadata;
@@ -167,7 +169,6 @@ async function activateSubscription(companyId, plan) {
             });
         }
 
-        // Mettre à jour l'entreprise
         const company = await Company.findById(companyId);
         if (company) {
             company.subscription.plan = plan;

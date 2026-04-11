@@ -1,5 +1,6 @@
 /**
  * PAGE PARAMÈTRES - Configuration de l'entreprise et profil
+ * ⭐ Synchronisation langue Settings → LanguageContext
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -9,7 +10,8 @@ import Alert from '../../components/common/Alert';
 import { useLanguage } from '../../context/LanguageContext';
 
 const Settings = () => {
-    const { t } = useLanguage();
+    // ⭐ Récupérer changeLanguage depuis le contexte
+    const { t, changeLanguage } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -154,6 +156,9 @@ const Settings = () => {
             });
             
             if (response.success) {
+                // ⭐ Synchroniser la langue avec le contexte
+                changeLanguage(companySettings.preferences.language);
+                
                 setSuccess(t('save_success') || 'Paramètres enregistrés avec succès');
                 setTimeout(() => setSuccess(''), 3000);
             }

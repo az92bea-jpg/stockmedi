@@ -1,9 +1,11 @@
 /**
  * PAGE NOUVEAU DEVIS - Création d'un devis
  * Réutilise le panier des ventes
+ * ⭐ Support multi-devises dynamique
+ * ⭐ Traductions FR/EN complètes
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { quoteService } from '../../services/quoteService';
 import { productService } from '../../services/productService';
@@ -12,9 +14,14 @@ import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import Icon from '../../components/ui/Icon';
 import EstablishmentSelector from '../../components/establishment/EstablishmentSelector';
+import { useLanguage } from '../../context/LanguageContext';
 
 const NewQuote = () => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
+    
+    // ⭐ État pour la devise configurée
+    const [currency, setCurrency] = useState('GNF');
     const [loading, setLoading] = useState(false);
     const [products, setProducts] = useState([]);
     const [cart, setCart] = useState([]);
@@ -32,7 +39,18 @@ const NewQuote = () => {
     const [selectedEstablishment, setSelectedEstablishment] = useState('');
     const [establishments, setEstablishments] = useState([]);
 
-    // Charger les données initiales
+    // ⭐ Charger la devise configurée
+    const loadCompanySettings = useCallback(async () => {
+        try {
+            const response = await api.get('/companies/me');
+            if (response.success && response.company?.settings?.currency) {
+                setCurrency(response.company.settings.currency);
+            }
+        } catch (err) {
+            console.error('Erreur chargement devise:', err);
+        }
+    }, []);
+
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -49,10 +67,10 @@ const NewQuote = () => {
                 console.error('Erreur chargement données:', err);
             }
         };
+        loadCompanySettings();
         loadData();
-    }, []);
+    }, [loadCompanySettings]);
 
-    // Recherche de produits
     useEffect(() => {
         if (searchTerm.length >= 2) {
             const term = searchTerm.toLowerCase();
@@ -112,7 +130,7 @@ const NewQuote = () => {
         e.preventDefault();
         
         if (cart.length === 0) {
-            setError('Le panier est vide');
+            setError(t('empty_cart'));
             return;
         }
         
@@ -141,28 +159,30 @@ const NewQuote = () => {
                 navigate(`/quotes/${response.quote._id}`);
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de la création du devis');
+            setError(err.response?.data?.message || t('error_creating_quote'));
         } finally {
             setLoading(false);
         }
     };
 
-    const formatPrice = (price) => price?.toLocaleString() || 0;
+    const formatPrice = (price) => {
+        if (price === undefined || price === null) return '0';
+        return Math.round(price).toLocaleString('fr-FR');
+    };
 
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
             <div style={{ marginBottom: 'var(--spacing-6)' }}>
                 <h2>
                     <Icon name="document" category="actions" fallback="📄" style={{ marginRight: '0.5rem' }} />
-                    Nouveau devis
+                    {t('new_quote')}
                 </h2>
-                <p style={{ color: 'var(--gray-500)' }}>Créez un devis pour votre client</p>
+                <p style={{ color: 'var(--gray-500)' }}>{t('create_quote')}</p>
             </div>
 
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: 'var(--spacing-6)' }}>
-                {/* Panneau gauche - Recherche produits */}
                 <div>
                     {establishments.length > 0 && (
                         <div className="card" style={{ marginBottom: 'var(--spacing-4)' }}>
@@ -178,11 +198,11 @@ const NewQuote = () => {
                     <div className="card" style={{ marginBottom: 'var(--spacing-4)' }}>
                         <div className="card-body">
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Rechercher un produit</label>
+                                <label className="form-label">{t('search_product')}</label>
                                 <input
                                     type="text"
                                     className="form-input"
-                                    placeholder="Nom, code-barres..."
+                                    placeholder={t('search_placeholder_sales')}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     autoFocus
@@ -194,7 +214,7 @@ const NewQuote = () => {
                     {searchResults.length > 0 && (
                         <div className="card">
                             <div className="card-header">
-                                <h3>Produits disponibles</h3>
+                                <h3>{t('available_products')}</h3>
                             </div>
                             <div className="card-body" style={{ padding: 0 }}>
                                 {searchResults.map(product => (
@@ -215,11 +235,11 @@ const NewQuote = () => {
                                         <div>
                                             <div style={{ fontWeight: 500 }}>{product.name}</div>
                                             <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
-                                                Stock: {product.quantity} {product.unit}
+                                                {t('stock')}: {product.quantity} {product.unit}
                                             </div>
                                         </div>
                                         <div style={{ fontWeight: 600, color: 'var(--primary-500)' }}>
-                                            {formatPrice(product.sellingPrice)} GNF
+                                            {formatPrice(product.sellingPrice)} {currency}
                                         </div>
                                     </div>
                                 ))}
@@ -228,16 +248,15 @@ const NewQuote = () => {
                     )}
                 </div>
 
-                {/* Panneau droit - Panier et infos client */}
                 <div>
                     <div className="card">
                         <div className="card-header">
-                            <h3>Panier ({cart.length})</h3>
+                            <h3>{t('cart')} ({cart.length})</h3>
                         </div>
                         <div className="card-body" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                             {cart.length === 0 ? (
                                 <div style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 'var(--spacing-4)' }}>
-                                    Panier vide
+                                    {t('empty_cart')}
                                 </div>
                             ) : (
                                 cart.map(item => (
@@ -251,7 +270,7 @@ const NewQuote = () => {
                                         <div style={{ flex: 2 }}>
                                             <div style={{ fontWeight: 500 }}>{item.name}</div>
                                             <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
-                                                {formatPrice(item.unitPrice)} GNF
+                                                {formatPrice(item.unitPrice)} {currency}
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
@@ -267,49 +286,49 @@ const NewQuote = () => {
 
                         <div className="card-body" style={{ borderTop: '1px solid var(--gray-200)' }}>
                             <div className="form-group">
-                                <label className="form-label">Nom du client</label>
-                                <input type="text" className="form-input" placeholder="Nom" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+                                <label className="form-label">{t('customer_name')}</label>
+                                <input type="text" className="form-input" placeholder={t('customer_name_placeholder')} value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Téléphone</label>
-                                <input type="tel" className="form-input" placeholder="Téléphone" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
+                                <label className="form-label">{t('customer_phone')}</label>
+                                <input type="tel" className="form-input" placeholder={t('customer_phone_placeholder')} value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">N° Ordonnance</label>
-                                <input type="text" className="form-input" placeholder="Optionnel" value={prescriptionNumber} onChange={(e) => setPrescriptionNumber(e.target.value)} />
+                                <label className="form-label">{t('prescription_number')}</label>
+                                <input type="text" className="form-input" placeholder={t('prescription_placeholder')} value={prescriptionNumber} onChange={(e) => setPrescriptionNumber(e.target.value)} />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Notes</label>
-                                <textarea className="form-textarea" rows="2" placeholder="Notes..." value={notes} onChange={(e) => setNotes(e.target.value)} />
+                                <label className="form-label">{t('notes')}</label>
+                                <textarea className="form-textarea" rows="2" placeholder={t('notes_placeholder')} value={notes} onChange={(e) => setNotes(e.target.value)} />
                             </div>
                         </div>
 
                         <div className="card-body">
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-2)' }}>
-                                <span>Sous-total</span>
-                                <span>{formatPrice(subtotal)} GNF</span>
+                                <span>{t('subtotal')}</span>
+                                <span>{formatPrice(subtotal)} {currency}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
-                                <span>Remise</span>
+                                <span>{t('discount')}</span>
                                 <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
                                     <input type="number" style={{ width: '80px', textAlign: 'right' }} className="form-input" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} min="0" />
                                     <select className="form-select" style={{ width: '80px' }} value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
-                                        <option value="fixed">GNF</option>
+                                        <option value="fixed">{currency}</option>
                                         <option value="percentage">%</option>
                                     </select>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.1rem', marginTop: 'var(--spacing-3)', paddingTop: 'var(--spacing-3)', borderTop: '2px solid var(--gray-200)' }}>
-                                <span>Total</span>
-                                <span style={{ color: 'var(--primary-500)' }}>{formatPrice(total)} GNF</span>
+                                <span>{t('total')}</span>
+                                <span style={{ color: 'var(--primary-500)' }}>{formatPrice(total)} {currency}</span>
                             </div>
 
                             <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}>
                                 <button className="btn btn-primary" style={{ flex: 2 }} onClick={handleSubmit} disabled={loading || cart.length === 0}>
-                                    {loading ? <Loader size="sm" /> : 'Générer le devis'}
+                                    {loading ? <Loader size="sm" /> : t('generate_quote')}
                                 </button>
                                 <button className="btn btn-secondary" onClick={() => navigate('/quotes')}>
-                                    Annuler
+                                    {t('cancel_btn')}
                                 </button>
                             </div>
                         </div>

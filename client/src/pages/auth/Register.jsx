@@ -1,5 +1,6 @@
 /**
  * PAGE D'INSCRIPTION - Création d'un espace entreprise
+ * ⭐ Traductions FR/EN complètes
  */
 
 import React, { useState } from 'react';
@@ -7,26 +8,25 @@ import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Register = () => {
+    const { t } = useLanguage();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     
-    // États pour afficher/masquer les mots de passe
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     
     const [formData, setFormData] = useState({
-        // Informations personnelles
         email: '',
         password: '',
         confirmPassword: '',
         firstName: '',
         lastName: '',
         phone: '',
-        // Informations entreprise
         companyName: '',
         companyType: 'pharmacy',
         companyAddress: { city: '' },
@@ -56,19 +56,18 @@ const Register = () => {
         setError('');
         setSuccess('');
 
-        // Validation
         if (!formData.email || !formData.password || !formData.firstName || !formData.lastName || !formData.companyName) {
-            setError('Veuillez remplir tous les champs obligatoires');
+            setError(t('fill_required_fields'));
             return;
         }
 
         if (formData.password !== formData.confirmPassword) {
-            setError('Les mots de passe ne correspondent pas');
+            setError(t('password_mismatch'));
             return;
         }
 
         if (formData.password.length < 6) {
-            setError('Le mot de passe doit contenir au moins 6 caractères');
+            setError(t('password_too_short'));
             return;
         }
 
@@ -86,22 +85,22 @@ const Register = () => {
             companyPhone: formData.companyPhone || ''
         };
         
-        console.log('📤 Envoi des données:', dataToSend);
+        console.log('📤 ' + t('sending_data') + ':', dataToSend);
 
         try {
             const response = await authService.register(dataToSend);
 
             if (response.success) {
-                setSuccess('Inscription réussie ! Redirection vers la connexion...');
+                setSuccess(t('registration_success'));
                 setTimeout(() => {
                     navigate('/login');
                 }, 2000);
             } else {
-                setError(response.message || 'Erreur lors de l\'inscription');
+                setError(response.message || t('registration_error'));
             }
         } catch (err) {
-            console.error('❌ Erreur inscription:', err);
-            setError(err.response?.data?.message || 'Erreur de connexion au serveur');
+            console.error('❌ ' + t('registration_error_log'), err);
+            setError(err.response?.data?.message || t('error_server_connection'));
         } finally {
             setLoading(false);
         }
@@ -127,33 +126,30 @@ const Register = () => {
                 maxHeight: '90vh',
                 overflowY: 'auto'
             }}>
-                {/* Logo et titre */}
                 <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-6)' }}>
                     <div style={{ fontSize: '2.5rem', marginBottom: 'var(--spacing-2)' }}>💊</div>
                     <h1 style={{ color: 'var(--primary-500)', marginBottom: 'var(--spacing-2)' }}>StockMedi</h1>
                     <p style={{ color: 'var(--gray-500)', fontSize: '0.875rem' }}>
-                        Créez votre espace entreprise
+                        {t('create_company_space')}
                     </p>
                 </div>
 
-                {/* Messages */}
                 {error && <Alert type="error" message={error} onClose={() => setError('')} />}
                 {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
-                {/* Formulaire */}
                 <form onSubmit={handleSubmit}>
                     <h3 style={{ fontSize: '1rem', marginBottom: 'var(--spacing-3)', color: 'var(--gray-700)' }}>
-                        Informations personnelles
+                        {t('personal_info')}
                     </h3>
                     
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label required">Prénom</label>
+                            <label className="form-label required">{t('first_name')}</label>
                             <input
                                 type="text"
                                 name="firstName"
                                 className="form-input"
-                                placeholder="Jean"
+                                placeholder={t('first_name_placeholder')}
                                 value={formData.firstName}
                                 onChange={handleChange}
                                 disabled={loading}
@@ -161,12 +157,12 @@ const Register = () => {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label required">Nom</label>
+                            <label className="form-label required">{t('last_name')}</label>
                             <input
                                 type="text"
                                 name="lastName"
                                 className="form-input"
-                                placeholder="Dupont"
+                                placeholder={t('last_name_placeholder')}
                                 value={formData.lastName}
                                 onChange={handleChange}
                                 disabled={loading}
@@ -175,22 +171,21 @@ const Register = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label required">Email</label>
+                        <label className="form-label required">{t('email')}</label>
                         <input
                             type="email"
                             name="email"
                             className="form-input"
-                            placeholder="contact@pharmacie.com"
+                            placeholder={t('email_placeholder')}
                             value={formData.email}
                             onChange={handleChange}
                             disabled={loading}
                         />
                     </div>
 
-                    {/* Champs mot de passe avec afficher/masquer */}
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label required">Mot de passe</label>
+                            <label className="form-label required">{t('password')}</label>
                             <div style={{ position: 'relative' }}>
                                 <input
                                     type={showPassword ? 'text' : 'password'}
@@ -224,7 +219,7 @@ const Register = () => {
                             </div>
                         </div>
                         <div className="form-group">
-                            <label className="form-label required">Confirmer</label>
+                            <label className="form-label required">{t('confirm_password')}</label>
                             <div style={{ position: 'relative' }}>
                                 <input
                                     type={showConfirmPassword ? 'text' : 'password'}
@@ -259,12 +254,12 @@ const Register = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Téléphone</label>
+                        <label className="form-label">{t('phone')}</label>
                         <input
                             type="tel"
                             name="phone"
                             className="form-input"
-                            placeholder="620000000"
+                            placeholder={t('phone_placeholder')}
                             value={formData.phone}
                             onChange={handleChange}
                             disabled={loading}
@@ -272,16 +267,16 @@ const Register = () => {
                     </div>
 
                     <h3 style={{ fontSize: '1rem', margin: 'var(--spacing-4) 0 var(--spacing-3)', color: 'var(--gray-700)' }}>
-                        Informations entreprise
+                        {t('company_info')}
                     </h3>
 
                     <div className="form-group">
-                        <label className="form-label required">Nom de l'entreprise</label>
+                        <label className="form-label required">{t('company_name')}</label>
                         <input
                             type="text"
                             name="companyName"
                             className="form-input"
-                            placeholder="Pharmacie Centrale"
+                            placeholder={t('company_name_placeholder')}
                             value={formData.companyName}
                             onChange={handleChange}
                             disabled={loading}
@@ -290,7 +285,7 @@ const Register = () => {
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label required">Type d'établissement</label>
+                            <label className="form-label required">{t('establishment_type')}</label>
                             <select
                                 name="companyType"
                                 className="form-select"
@@ -298,21 +293,21 @@ const Register = () => {
                                 onChange={handleChange}
                                 disabled={loading}
                             >
-                                <option value="pharmacy">Pharmacie</option>
-                                <option value="clinic">Clinique</option>
-                                <option value="hospital">Hôpital</option>
-                                <option value="lab">Laboratoire</option>
-                                <option value="other">Autre</option>
+                                <option value="pharmacy">{t('pharmacy')}</option>
+                                <option value="clinic">{t('clinic')}</option>
+                                <option value="hospital">{t('hospital')}</option>
+                                <option value="lab">{t('lab')}</option>
+                                <option value="other">{t('other')}</option>
                             </select>
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label required">Ville</label>
+                            <label className="form-label required">{t('city')}</label>
                             <input
                                 type="text"
                                 name="city"
                                 className="form-input"
-                                placeholder="Conakry"
+                                placeholder={t('city_placeholder')}
                                 value={formData.companyAddress.city}
                                 onChange={handleChange}
                                 disabled={loading}
@@ -321,12 +316,12 @@ const Register = () => {
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Téléphone entreprise</label>
+                        <label className="form-label">{t('company_phone')}</label>
                         <input
                             type="tel"
                             name="companyPhone"
                             className="form-input"
-                            placeholder="620000000"
+                            placeholder={t('company_phone_placeholder')}
                             value={formData.companyPhone}
                             onChange={handleChange}
                             disabled={loading}
@@ -339,16 +334,15 @@ const Register = () => {
                         style={{ width: '100%', padding: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}
                         disabled={loading}
                     >
-                        {loading ? <Loader size="sm" /> : 'Créer mon espace entreprise'}
+                        {loading ? <Loader size="sm" /> : t('create_my_company_space')}
                     </button>
                 </form>
 
-                {/* Lien connexion */}
                 <div style={{ textAlign: 'center', marginTop: 'var(--spacing-4)' }}>
                     <p style={{ fontSize: '0.875rem', color: 'var(--gray-500)' }}>
-                        Déjà un compte ?{' '}
+                        {t('already_have_account')}{' '}
                         <Link to="/login" style={{ color: 'var(--primary-500)' }}>
-                            Se connecter
+                            {t('login')}
                         </Link>
                     </p>
                 </div>

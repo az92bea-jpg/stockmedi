@@ -1,5 +1,6 @@
 /**
  * CONTRÔLEUR ABONNEMENT
+ * ⭐ Prix convertis en EUR pour Stripe
  */
 
 const Subscription = require('../models/Subscription');
@@ -7,7 +8,10 @@ const Company = require('../models/Company');
 const User = require('../models/User');
 const { notifySubscriptionChanged } = require('./rnnotificationController');
 
-// Plans d'abonnement
+// ⭐ Taux de conversion GNF → EUR (approximatif)
+const GNF_TO_EUR_RATE = 10000;
+
+// ⭐ Plans d'abonnement - Prix en GNF convertis en EUR (centimes)
 const PLANS = {
     trial: {
         name: 'Essai gratuit',
@@ -19,7 +23,8 @@ const PLANS = {
     },
     basic: {
         name: 'Basic',
-        price: 50000,
+        priceGNF: 50000,
+        price: 500, // ⭐ 5,00 EUR en centimes (50000 GNF / 10000 * 100)
         duration: 30,
         maxProducts: 500,
         maxEmployees: 10,
@@ -27,7 +32,8 @@ const PLANS = {
     },
     premium: {
         name: 'Premium',
-        price: 100000,
+        priceGNF: 100000,
+        price: 1000, // ⭐ 10,00 EUR en centimes
         duration: 30,
         maxProducts: 2000,
         maxEmployees: 30,
@@ -35,7 +41,8 @@ const PLANS = {
     },
     enterprise: {
         name: 'Enterprise',
-        price: 250000,
+        priceGNF: 250000,
+        price: 2500, // ⭐ 25,00 EUR en centimes
         duration: 30,
         maxProducts: 10000,
         maxEmployees: 100,
@@ -65,6 +72,7 @@ exports.getSubscription = async (req, res) => {
 
         const planDetails = subscription.getPlanDetails();
 
+        // ⭐ Envoyer les prix en centimes d'euros pour le frontend
         res.json({
             success: true,
             subscription: {
@@ -83,7 +91,7 @@ exports.getSubscription = async (req, res) => {
             plans: Object.keys(PLANS).map(key => ({
                 id: key,
                 name: PLANS[key].name,
-                price: PLANS[key].price,
+                price: PLANS[key].price, // ⭐ Déjà en centimes d'euros
                 duration: PLANS[key].duration,
                 maxProducts: PLANS[key].maxProducts,
                 maxEmployees: PLANS[key].maxEmployees,
@@ -98,6 +106,8 @@ exports.getSubscription = async (req, res) => {
         });
     }
 };
+
+// ... reste du fichier inchangé ...
 
 /**
  * @desc    Changer de plan

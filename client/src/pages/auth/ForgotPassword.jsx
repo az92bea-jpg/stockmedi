@@ -1,5 +1,6 @@
 /**
  * PAGE MOT DE PASSE OUBLIÉ - Demande de réinitialisation
+ * ⭐ Traductions FR/EN complètes
  */
 
 import React, { useState } from 'react';
@@ -7,8 +8,10 @@ import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
+import { useLanguage } from '../../context/LanguageContext';
 
 const ForgotPassword = () => {
+    const { t } = useLanguage();
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -18,7 +21,7 @@ const ForgotPassword = () => {
         e.preventDefault();
         
         if (!email) {
-            setError('Veuillez saisir votre email');
+            setError(t('email_required'));
             return;
         }
 
@@ -29,13 +32,13 @@ const ForgotPassword = () => {
         try {
             const response = await api.post('/auth/forgot-password', { email });
             if (response.success) {
-                setSuccess('Un email de réinitialisation a été envoyé');
+                setSuccess(t('reset_email_sent'));
                 setEmail('');
             } else {
-                setError(response.message || 'Erreur lors de la demande');
+                setError(response.message || t('error_request'));
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur de connexion au serveur');
+            setError(err.response?.data?.message || t('error_server_connection'));
         } finally {
             setLoading(false);
         }
@@ -63,7 +66,7 @@ const ForgotPassword = () => {
                     <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-2)' }}>💊</div>
                     <h1 style={{ color: 'var(--primary-500)', marginBottom: 'var(--spacing-2)' }}>StockMedi</h1>
                     <p style={{ color: 'var(--gray-500)', fontSize: '0.875rem' }}>
-                        Réinitialisation du mot de passe
+                        {t('reset_password_title')}
                     </p>
                 </div>
 
@@ -72,18 +75,18 @@ const ForgotPassword = () => {
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label">Email</label>
+                        <label className="form-label">{t('email')}</label>
                         <input
                             type="email"
                             className="form-input"
-                            placeholder="exemple@email.com"
+                            placeholder={t('email_placeholder')}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             disabled={loading}
                             required
                         />
                         <div className="form-hint">
-                            Un lien de réinitialisation vous sera envoyé par email
+                            {t('reset_link_hint')}
                         </div>
                     </div>
 
@@ -93,13 +96,13 @@ const ForgotPassword = () => {
                         style={{ width: '100%', padding: 'var(--spacing-3)' }}
                         disabled={loading}
                     >
-                        {loading ? <Loader size="sm" /> : 'Envoyer'}
+                        {loading ? <Loader size="sm" /> : t('send')}
                     </button>
                 </form>
 
                 <div style={{ textAlign: 'center', marginTop: 'var(--spacing-4)' }}>
                     <Link to="/login" style={{ color: 'var(--primary-500)', textDecoration: 'none' }}>
-                        ← Retour à la connexion
+                        ← {t('back_to_login')}
                     </Link>
                 </div>
             </div>

@@ -1,5 +1,7 @@
 /**
  * PAGE ARCHIVES - Consultation des historiques
+ * ⭐ Support multi-devises dynamique
+ * ⭐ Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -7,8 +9,12 @@ import { getArchives, deleteArchive } from '../../services/archiveService';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import ConfirmModal from '../../components/common/ConfirmModal';
+import api from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Archives = () => {
+    const { t } = useLanguage();
+    const [currency, setCurrency] = useState('GNF');
     const [loading, setLoading] = useState(true);
     const [archives, setArchives] = useState([]);
     const [years, setYears] = useState([]);
@@ -18,7 +24,18 @@ const Archives = () => {
     const [filters, setFilters] = useState({ year: '', month: '' });
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, archiveId: null, archivePeriod: '' });
 
-    // Correction 2: useCallback pour stabiliser fetchArchives
+    // Charger la devise configurée
+    const loadCompanySettings = useCallback(async () => {
+        try {
+            const response = await api.get('/companies/me');
+            if (response.success && response.company?.settings?.currency) {
+                setCurrency(response.company.settings.currency);
+            }
+        } catch (err) {
+            console.error('Erreur chargement devise:', err);
+        }
+    }, []);
+
     const fetchArchives = useCallback(async () => {
         try {
             setLoading(true);
@@ -33,34 +50,36 @@ const Archives = () => {
             setYears(response.years || []);
             setPagination(response.pagination);
         } catch (err) {
-            setError('Erreur lors du chargement des archives');
+            setError(t('error_loading_archives'));
             console.error(err);
         } finally {
             setLoading(false);
         }
-    }, [filters.year, filters.month, pagination.page]);
+    }, [filters.year, filters.month, pagination.page, t]);
 
     useEffect(() => {
+        loadCompanySettings();
         fetchArchives();
-    }, [fetchArchives]);
+    }, [loadCompanySettings, fetchArchives]);
 
     const handleDelete = async () => {
         if (!deleteModal.archiveId) return;
 
         try {
             await deleteArchive(deleteModal.archiveId);
-            setSuccess('Archive supprimée définitivement');
+            setSuccess(t('archive_deleted_success'));
             fetchArchives();
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de la suppression');
+            setError(err.response?.data?.message || t('error_deleting_archive'));
         } finally {
             setDeleteModal({ isOpen: false, archiveId: null, archivePeriod: '' });
         }
     };
 
     const formatDate = (date) => {
-        return new Date(date).toLocaleDateString('fr-FR', {
+        const locale = t('locale') === 'fr' ? 'fr-FR' : 'en-GB';
+        return new Date(date).toLocaleDateString(locale, {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
@@ -71,7 +90,12 @@ const Archives = () => {
 
     const formatNumber = (num) => {
         if (!num) return '0';
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    };
+
+    const getMonthName = (month) => {
+        const locale = t('locale') === 'fr' ? 'fr-FR' : 'en-GB';
+        return new Date(2000, month - 1, 1).toLocaleString(locale, { month: 'long' });
     };
 
     if (loading) return <Loader />;
@@ -87,9 +111,9 @@ const Archives = () => {
                 marginBottom: 'var(--spacing-6)'
             }}>
                 <div>
-                    <h2>📋 Archives du tableau de bord</h2>
+                    <h2>📋 {t('dashboard_archives')}</h2>
                     <p style={{ color: 'var(--gray-500)' }}>
-                        Consultez l'historique des réinitialisations
+                        {t('archives_subtitle')}
                     </p>
                 </div>
             </div>
@@ -102,36 +126,34 @@ const Archives = () => {
                 <div className="card-body">
                     <div style={{ display: 'flex', gap: 'var(--spacing-4)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                         <div style={{ minWidth: '150px' }}>
-                            <label className="form-label">Année</label>
+                            <label className="form-label">{t('year')}</label>
                             <select
                                 className="form-select"
                                 value={filters.year}
                                 onChange={(e) => setFilters({ ...filters, year: e.target.value, page: 1 })}
                             >
-                                <option value="">Toutes les années</option>
+                                <option value="">{t('all_years')}</option>
                                 {years.map(year => (
                                     <option key={year} value={year}>{year}</option>
                                 ))}
                             </select>
                         </div>
                         <div style={{ minWidth: '150px' }}>
-                            <label className="form-label">Mois</label>
+                            <label className="form-label">{t('month')}</label>
                             <select
                                 className="form-select"
                                 value={filters.month}
                                 onChange={(e) => setFilters({ ...filters, month: e.target.value, page: 1 })}
                                 disabled={!filters.year}
                             >
-                                <option value="">Tous les mois</option>
+                                <option value="">{t('all_months')}</option>
                                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(month => (
-                                    <option key={month} value={month}>
-                                        {new Date(2000, month - 1, 1).toLocaleString('fr-FR', { month: 'long' })}
-                                    </option>
+                                    <option key={month} value={month}>{getMonthName(month)}</option>
                                 ))}
                             </select>
                         </div>
                         <button className="btn btn-secondary" onClick={() => setFilters({ year: '', month: '' })}>
-                            Réinitialiser
+                            {t('reset')}
                         </button>
                     </div>
                 </div>
@@ -141,7 +163,7 @@ const Archives = () => {
             <div className="card">
                 {archives.length === 0 ? (
                     <div className="card-body" style={{ textAlign: 'center', padding: 'var(--spacing-8)' }}>
-                        <p style={{ color: 'var(--gray-500)' }}>Aucune archive trouvée</p>
+                        <p style={{ color: 'var(--gray-500)' }}>{t('no_archives_found')}</p>
                     </div>
                 ) : (
                     <>
@@ -149,29 +171,27 @@ const Archives = () => {
                             <table className="table">
                                 <thead>
                                     <tr>
-                                        <th>Période</th>
-                                        <th>Date d'archivage</th>
-                                        <th>Type</th>
-                                        <th>Ventes (période)</th>
-                                        <th>Chiffre d'affaires</th>
-                                        <th>Actions</th>
+                                        <th>{t('period')}</th>
+                                        <th>{t('archive_date')}</th>
+                                        <th>{t('type')}</th>
+                                        <th>{t('sales_period')}</th>
+                                        <th>{t('revenue')}</th>
+                                        <th>{t('actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {archives.map(archive => (
                                         <tr key={archive._id}>
-                                            <td>
-                                                <strong>{archive.periodLabel}</strong>
-                                            </td>
+                                            <td><strong>{archive.periodLabel}</strong></td>
                                             <td>{formatDate(archive.archivedAt)}</td>
                                             <td>
                                                 <span className="badge-info">
-                                                    {archive.archiveType === 'manual_reset' ? 'Manuel' : 'Auto'}
+                                                    {archive.archiveType === 'manual_reset' ? t('manual') : t('auto')}
                                                 </span>
                                             </td>
                                             <td>{formatNumber(archive.snapshot.stats.monthly.count)}</td>
                                             <td>
-                                                <strong>{formatNumber(archive.snapshot.stats.monthly.total)} GNF</strong>
+                                                <strong>{formatNumber(archive.snapshot.stats.monthly.total)} {currency}</strong>
                                             </td>
                                             <td>
                                                 <button
@@ -182,7 +202,7 @@ const Archives = () => {
                                                         archivePeriod: archive.periodLabel
                                                     })}
                                                     style={{ color: 'var(--danger)' }}
-                                                    title="Supprimer définitivement"
+                                                    title={t('delete_permanently')}
                                                 >
                                                     🗑️
                                                 </button>
@@ -201,15 +221,15 @@ const Archives = () => {
                                     disabled={pagination.page === 1}
                                     onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                                 >
-                                    ◀ Précédent
+                                    ◀ {t('previous')}
                                 </button>
-                                <span>Page {pagination.page} / {pagination.pages}</span>
+                                <span>{t('page')} {pagination.page} / {pagination.pages}</span>
                                 <button
                                     className="btn btn-sm btn-outline"
                                     disabled={pagination.page === pagination.pages}
                                     onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
                                 >
-                                    Suivant ▶
+                                    {t('next')} ▶
                                 </button>
                             </div>
                         )}
@@ -222,9 +242,9 @@ const Archives = () => {
                 isOpen={deleteModal.isOpen}
                 onClose={() => setDeleteModal({ isOpen: false, archiveId: null, archivePeriod: '' })}
                 onConfirm={handleDelete}
-                title="Supprimer définitivement"
-                message={`Êtes-vous sûr de vouloir supprimer définitivement l'archive "${deleteModal.archivePeriod}" ? Cette action est irréversible.`}
-                confirmText="Oui, supprimer"
+                title={t('delete_permanently')}
+                message={`${t('confirm_delete_archive')} "${deleteModal.archivePeriod}" ? ${t('action_irreversible')}`}
+                confirmText={t('yes_delete')}
                 isDanger={true}
             />
         </div>

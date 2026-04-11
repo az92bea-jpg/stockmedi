@@ -1,5 +1,6 @@
 /**
  * PAGE ÉTABLISSEMENTS - Gestion multi-sites (Plan Enterprise)
+ * ⭐ Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect } from 'react';
@@ -16,8 +17,10 @@ import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import StockTransfer from '../../components/establishment/StockTransfer';
+import { useLanguage } from '../../context/LanguageContext';
 
 const Establishments = () => {
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [establishments, setEstablishments] = useState([]);
     const [error, setError] = useState('');
@@ -39,25 +42,22 @@ const Establishments = () => {
         isActive: true
     });
 
-    // Vérifier le plan et charger les établissements
     useEffect(() => {
         const checkPlanAndLoad = async () => {
             try {
-                // Vérifier le plan
                 const subResponse = await api.get('/subscription');
                 setSubscription(subResponse.subscription);
                 
                 if (subResponse.subscription?.plan !== 'enterprise') {
-                    setError('Cette fonctionnalité est disponible uniquement avec le plan Enterprise.');
+                    setError(t('enterprise_only_feature'));
                     setLoading(false);
                     return;
                 }
                 
-                // Charger les établissements
                 const estResponse = await getEstablishments();
                 setEstablishments(estResponse.establishments || []);
             } catch (err) {
-                setError('Erreur lors du chargement des données');
+                setError(t('error_loading_data'));
                 console.error(err);
             } finally {
                 setLoading(false);
@@ -65,7 +65,7 @@ const Establishments = () => {
         };
         
         checkPlanAndLoad();
-    }, []);
+    }, [t]);
 
     const resetForm = () => {
         setFormData({
@@ -103,32 +103,30 @@ const Establishments = () => {
         e.preventDefault();
         setError('');
 
-        // Vérifier à nouveau le plan avant création
         if (modalMode === 'create' && subscription?.plan !== 'enterprise') {
-            setError('La création d\'établissements est réservée au plan Enterprise.');
+            setError(t('enterprise_only_create'));
             return;
         }
 
         if (!formData.name) {
-            setError('Le nom de l\'établissement est requis');
+            setError(t('establishment_name_required'));
             return;
         }
 
         try {
             if (modalMode === 'create') {
                 await createEstablishment(formData);
-                setSuccess('Établissement créé avec succès');
+                setSuccess(t('establishment_created'));
             } else {
                 await updateEstablishment(selectedEstablishment._id, formData);
-                setSuccess('Établissement modifié avec succès');
+                setSuccess(t('establishment_updated'));
             }
             setModalOpen(false);
-            // Recharger les établissements
             const estResponse = await getEstablishments();
             setEstablishments(estResponse.establishments || []);
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de l\'enregistrement');
+            setError(err.response?.data?.message || t('error_saving'));
         }
     };
 
@@ -137,12 +135,12 @@ const Establishments = () => {
 
         try {
             await deleteEstablishment(deleteModal.id);
-            setSuccess('Établissement supprimé avec succès');
+            setSuccess(t('establishment_deleted'));
             const estResponse = await getEstablishments();
             setEstablishments(estResponse.establishments || []);
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de la suppression');
+            setError(err.response?.data?.message || t('error_deleting'));
         } finally {
             setDeleteModal({ isOpen: false, id: null, name: '' });
         }
@@ -163,10 +161,10 @@ const Establishments = () => {
 
     const getTypeLabel = (type) => {
         const labels = {
-            pharmacy: '🏪 Pharmacie',
-            clinic: '🏥 Clinique',
-            hospital: '🏨 Hôpital',
-            warehouse: '📦 Entrepôt'
+            pharmacy: `🏪 ${t('pharmacy')}`,
+            clinic: `🏥 ${t('clinic')}`,
+            hospital: `🏨 ${t('hospital')}`,
+            warehouse: `📦 ${t('warehouse')}`
         };
         return labels[type] || type;
     };
@@ -184,17 +182,17 @@ const Establishments = () => {
                 gap: 'var(--spacing-4)'
             }}>
                 <div>
-                    <h2>🏢 Établissements</h2>
+                    <h2>🏢 {t('establishments_title')}</h2>
                     <p style={{ color: 'var(--gray-500)' }}>
-                        Gérez vos pharmacies, cliniques et points de vente
+                        {t('establishments_subtitle')}
                     </p>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--spacing-3)' }}>
                     <button className="btn btn-secondary" onClick={() => setShowTransferModal(true)}>
-                        📦 Transférer du stock
+                        📦 {t('transfer_stock')}
                     </button>
                     <button className="btn btn-primary" onClick={openCreateModal}>
-                        + Nouvel établissement
+                        + {t('new_establishment')}
                     </button>
                 </div>
             </div>
@@ -205,16 +203,16 @@ const Establishments = () => {
             {subscription?.plan !== 'enterprise' ? (
                 <div className="card">
                     <div className="card-body" style={{ textAlign: 'center', padding: 'var(--spacing-8)' }}>
-                        <p>⛔ Les établissements sont disponibles uniquement avec le plan <strong>Enterprise</strong>.</p>
+                        <p>⛔ {t('enterprise_only_message')}</p>
                         <Link to="/subscription" className="btn btn-primary" style={{ marginTop: 'var(--spacing-3)' }}>
-                            💎 Passer au plan Enterprise
+                            💎 {t('upgrade_to_enterprise')}
                         </Link>
                     </div>
                 </div>
             ) : establishments.length === 0 ? (
                 <div className="card">
                     <div className="card-body" style={{ textAlign: 'center', padding: 'var(--spacing-8)' }}>
-                        <p>Aucun établissement. Créez votre premier établissement.</p>
+                        <p>{t('no_establishments_create_one')}</p>
                     </div>
                 </div>
             ) : (
@@ -223,20 +221,18 @@ const Establishments = () => {
                         <table className="table">
                             <thead>
                                 <tr>
-                                    <th>Nom</th>
-                                    <th>Type</th>
-                                    <th>Adresse</th>
-                                    <th>Contact</th>
-                                    <th>Statut</th>
-                                    <th>Actions</th>
+                                    <th>{t('name')}</th>
+                                    <th>{t('type')}</th>
+                                    <th>{t('address')}</th>
+                                    <th>{t('contact')}</th>
+                                    <th>{t('status')}</th>
+                                    <th>{t('actions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {establishments.map(est => (
                                     <tr key={est._id}>
-                                        <td>
-                                            <strong>{est.name}</strong>
-                                        </td>
+                                        <td><strong>{est.name}</strong></td>
                                         <td>{getTypeLabel(est.type)}</td>
                                         <td>
                                             {est.address?.city || ''}
@@ -249,7 +245,7 @@ const Establishments = () => {
                                         </td>
                                         <td>
                                             <span className={est.isActive ? 'badge-success' : 'badge-danger'}>
-                                                {est.isActive ? 'Actif' : 'Inactif'}
+                                                {est.isActive ? t('active') : t('inactive')}
                                             </span>
                                         </td>
                                         <td>
@@ -257,7 +253,7 @@ const Establishments = () => {
                                                 <button
                                                     className="btn btn-sm btn-outline"
                                                     onClick={() => openEditModal(est)}
-                                                    title="Modifier"
+                                                    title={t('edit')}
                                                 >
                                                     ✏️
                                                 </button>
@@ -269,7 +265,7 @@ const Establishments = () => {
                                                         name: est.name
                                                     })}
                                                     style={{ color: 'var(--danger)' }}
-                                                    title="Supprimer"
+                                                    title={t('delete')}
                                                 >
                                                     🗑️
                                                 </button>
@@ -287,12 +283,12 @@ const Establishments = () => {
             <Modal
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
-                title={modalMode === 'create' ? 'Nouvel établissement' : 'Modifier l\'établissement'}
+                title={modalMode === 'create' ? t('new_establishment') : t('edit_establishment')}
                 size="lg"
             >
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label className="form-label required">Nom</label>
+                        <label className="form-label required">{t('name')}</label>
                         <input
                             type="text"
                             name="name"
@@ -300,66 +296,66 @@ const Establishments = () => {
                             value={formData.name}
                             onChange={handleChange}
                             required
-                            placeholder="Pharmacie du Centre"
+                            placeholder={t('establishment_name_placeholder')}
                         />
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Type</label>
+                        <label className="form-label">{t('type')}</label>
                         <select name="type" className="form-select" value={formData.type} onChange={handleChange}>
-                            <option value="pharmacy">🏪 Pharmacie</option>
-                            <option value="clinic">🏥 Clinique</option>
-                            <option value="hospital">🏨 Hôpital</option>
-                            <option value="warehouse">📦 Entrepôt</option>
+                            <option value="pharmacy">🏪 {t('pharmacy')}</option>
+                            <option value="clinic">🏥 {t('clinic')}</option>
+                            <option value="hospital">🏨 {t('hospital')}</option>
+                            <option value="warehouse">📦 {t('warehouse')}</option>
                         </select>
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label">Ville</label>
+                            <label className="form-label">{t('city')}</label>
                             <input
                                 type="text"
                                 name="address.city"
                                 className="form-input"
                                 value={formData.address.city}
                                 onChange={handleChange}
-                                placeholder="Conakry"
+                                placeholder={t('city_placeholder')}
                             />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Rue</label>
+                            <label className="form-label">{t('street')}</label>
                             <input
                                 type="text"
                                 name="address.street"
                                 className="form-input"
                                 value={formData.address.street}
                                 onChange={handleChange}
-                                placeholder="Kaloum, Rue KA001"
+                                placeholder={t('street_placeholder')}
                             />
                         </div>
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label className="form-label">Téléphone</label>
+                            <label className="form-label">{t('phone')}</label>
                             <input
                                 type="tel"
                                 name="phone"
                                 className="form-input"
                                 value={formData.phone}
                                 onChange={handleChange}
-                                placeholder="+224 600 00 00 00"
+                                placeholder={t('phone_placeholder')}
                             />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Email</label>
+                            <label className="form-label">{t('email')}</label>
                             <input
                                 type="email"
                                 name="email"
                                 className="form-input"
                                 value={formData.email}
                                 onChange={handleChange}
-                                placeholder="contact@pharmacie.centrale"
+                                placeholder={t('email_placeholder')}
                             />
                         </div>
                     </div>
@@ -372,27 +368,26 @@ const Establishments = () => {
                                 checked={formData.isActive}
                                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                             />
-                            Actif
+                            {t('active')}
                         </label>
                     </div>
 
                     <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-6)' }}>
                         <button type="submit" className="btn btn-primary">
-                            {modalMode === 'create' ? 'Créer' : 'Enregistrer'}
+                            {modalMode === 'create' ? t('create') : t('save')}
                         </button>
                         <button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>
-                            Annuler
+                            {t('cancel_btn')}
                         </button>
                     </div>
                 </form>
             </Modal>
 
             {/* Modal transfert de stock */}
-            <Modal isOpen={showTransferModal} onClose={() => setShowTransferModal(false)} title="Transfert de stock" size="lg">
+            <Modal isOpen={showTransferModal} onClose={() => setShowTransferModal(false)} title={t('transfer_stock')} size="lg">
                 <StockTransfer 
                     onSuccess={() => {
                         setShowTransferModal(false);
-                        // Recharger les établissements après transfert
                         getEstablishments().then(res => setEstablishments(res.establishments || []));
                     }} 
                     onCancel={() => setShowTransferModal(false)} 
@@ -404,9 +399,9 @@ const Establishments = () => {
                 isOpen={deleteModal.isOpen}
                 onClose={() => setDeleteModal({ isOpen: false, id: null, name: '' })}
                 onConfirm={handleDelete}
-                title="Supprimer l'établissement"
-                message={`Êtes-vous sûr de vouloir supprimer "${deleteModal.name}" ? Cette action est irréversible.`}
-                confirmText="Oui, supprimer"
+                title={t('delete_establishment')}
+                message={`${t('confirm_delete_establishment')} "${deleteModal.name}" ? ${t('action_irreversible')}`}
+                confirmText={t('yes_delete')}
                 isDanger={true}
             />
         </div>

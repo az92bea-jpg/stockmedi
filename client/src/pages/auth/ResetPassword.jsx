@@ -1,5 +1,6 @@
 /**
  * PAGE RÉINITIALISATION MOT DE PASSE
+ * ⭐ Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect } from 'react';
@@ -7,8 +8,10 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../../services/api';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
+import { useLanguage } from '../../context/LanguageContext';
 
 const ResetPassword = () => {
+    const { t } = useLanguage();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
@@ -30,7 +33,7 @@ const ResetPassword = () => {
 
     useEffect(() => {
         if (!token) {
-            setError('Token manquant');
+            setError(t('missing_token'));
             setLoading(false);
             return;
         }
@@ -42,17 +45,17 @@ const ResetPassword = () => {
                     setValidToken(true);
                     setEmail(response.email);
                 } else {
-                    setError(response.message || 'Token invalide');
+                    setError(response.message || t('invalid_token'));
                 }
             } catch (err) {
-                setError(err.response?.data?.message || 'Token invalide ou expiré');
+                setError(err.response?.data?.message || t('invalid_or_expired_token'));
             } finally {
                 setLoading(false);
             }
         };
 
         verifyToken();
-    }, [token]);
+    }, [token, t]);
 
     const handleChange = (e) => {
         setFormData({
@@ -65,12 +68,12 @@ const ResetPassword = () => {
         e.preventDefault();
         
         if (formData.password !== formData.confirmPassword) {
-            setError('Les mots de passe ne correspondent pas');
+            setError(t('password_mismatch'));
             return;
         }
         
         if (formData.password.length < 6) {
-            setError('Le mot de passe doit contenir au moins 6 caractères');
+            setError(t('password_too_short'));
             return;
         }
 
@@ -85,15 +88,15 @@ const ResetPassword = () => {
             });
             
             if (response.success) {
-                setSuccess('Mot de passe réinitialisé avec succès !');
+                setSuccess(t('password_reset_success'));
                 setTimeout(() => {
                     navigate('/login');
                 }, 3000);
             } else {
-                setError(response.message || 'Erreur lors de la réinitialisation');
+                setError(response.message || t('reset_error'));
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur de connexion au serveur');
+            setError(err.response?.data?.message || t('error_server_connection'));
         } finally {
             setSaving(false);
         }
@@ -122,7 +125,7 @@ const ResetPassword = () => {
                     <div style={{ fontSize: '3rem' }}>💊</div>
                     <h1 style={{ color: '#0F6B3A', marginBottom: '8px' }}>StockMedi</h1>
                     <p style={{ color: '#6B7280', fontSize: '0.875rem' }}>
-                        {validToken ? 'Nouveau mot de passe' : 'Réinitialisation'}
+                        {validToken ? t('new_password_title') : t('reset_title')}
                     </p>
                 </div>
 
@@ -132,7 +135,7 @@ const ResetPassword = () => {
                 {validToken ? (
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <label className="form-label">Email</label>
+                            <label className="form-label">{t('email')}</label>
                             <input
                                 type="email"
                                 className="form-input"
@@ -142,7 +145,7 @@ const ResetPassword = () => {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Nouveau mot de passe</label>
+                            <label className="form-label">{t('new_password')}</label>
                             <div style={{ position: 'relative' }}>
                                 <input
                                     type={showPassword ? 'text' : 'password'}
@@ -177,7 +180,7 @@ const ResetPassword = () => {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Confirmer</label>
+                            <label className="form-label">{t('confirm_password')}</label>
                             <div style={{ position: 'relative' }}>
                                 <input
                                     type={showConfirmPassword ? 'text' : 'password'}
@@ -216,15 +219,15 @@ const ResetPassword = () => {
                             style={{ width: '100%', padding: '12px' }}
                             disabled={saving}
                         >
-                            {saving ? <Loader size="sm" /> : 'Réinitialiser'}
+                            {saving ? <Loader size="sm" /> : t('reset')}
                         </button>
                     </form>
                 ) : (
                     !loading && (
                         <div style={{ textAlign: 'center' }}>
-                            <p style={{ color: '#EF4444' }}>Lien invalide ou expiré</p>
+                            <p style={{ color: '#EF4444' }}>{t('invalid_or_expired_link')}</p>
                             <Link to="/forgot-password" style={{ color: '#0F6B3A' }}>
-                                Demander un nouveau lien
+                                {t('request_new_link')}
                             </Link>
                         </div>
                     )
@@ -232,7 +235,7 @@ const ResetPassword = () => {
 
                 <div style={{ textAlign: 'center', marginTop: '16px' }}>
                     <Link to="/login" style={{ color: '#6B7280', textDecoration: 'none', fontSize: '0.875rem' }}>
-                        ← Retour à la connexion
+                        ← {t('back_to_login')}
                     </Link>
                 </div>
             </div>

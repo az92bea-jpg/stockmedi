@@ -2,6 +2,8 @@
  * PAGE TABLEAU DE BORD - Vue d'ensemble de l'activité
  * - Owner : contrôle total, archive manuelle
  * - Employé : dashboard journalier (réinitialisation auto toutes les 24h)
+ * ⭐ Support multi-devises dynamique
+ * ⭐ Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -25,6 +27,8 @@ const Dashboard = () => {
     const isOwner = user?.role === 'owner' || user?.role === 'super-admin';
     const isEmployee = user?.role === 'employee';
     
+    // ⭐ État pour la devise configurée
+    const [currency, setCurrency] = useState('GNF');
     const [loading, setLoading] = useState(true);
     const [archiving, setArchiving] = useState(false);
     const [stats, setStats] = useState(null);
@@ -40,11 +44,24 @@ const Dashboard = () => {
     const [establishments, setEstablishments] = useState([]);
     const [subscription, setSubscription] = useState(null);
 
-    // Vérifier les permissions de l'employé (correction : sans authService.hasPermission)
+    // Vérifier les permissions de l'employé
     const userPermissions = user?.permissions || [];
     const canManageStock = isOwner || userPermissions.includes('manage_stock');
     const canMakeSales = isOwner || userPermissions.includes('make_sales');
     const canViewSales = canMakeSales || userPermissions.includes('view_sales');
+
+    // ⭐ Charger la devise configurée
+    const loadCompanySettings = useCallback(async () => {
+        try {
+            const response = await api.get('/companies/me');
+            if (response.success && response.company?.settings?.currency) {
+                setCurrency(response.company.settings.currency);
+            }
+        } catch (err) {
+            console.error('Erreur chargement devise:', err);
+            // Garde GNF par défaut
+        }
+    }, []);
 
     // Vérifier et réinitialiser le dashboard employé si nécessaire (toutes les 24h)
     const checkAndResetEmployeeDashboard = useCallback(() => {
@@ -133,16 +150,17 @@ const Dashboard = () => {
                 }
             }
         } catch (err) {
-            setError('Erreur lors du chargement des données');
+            setError(t('error'));
             console.error(err);
         } finally {
             setLoading(false);
         }
-    }, [selectedEstablishment, subscription?.plan, isEmployee, canViewSales]);
+    }, [selectedEstablishment, subscription?.plan, isEmployee, canViewSales, t]);
 
     // Chargement initial
     useEffect(() => {
         const init = async () => {
+            await loadCompanySettings();
             await loadSubscription();
             
             if (isEmployee) {
@@ -157,7 +175,7 @@ const Dashboard = () => {
         };
         
         init();
-    }, [isOwner, isEmployee, loadSubscription, loadEstablishments, subscription?.plan, fetchDashboardData, checkAndResetEmployeeDashboard]);
+    }, [isOwner, isEmployee, loadCompanySettings, loadSubscription, loadEstablishments, subscription?.plan, fetchDashboardData, checkAndResetEmployeeDashboard]);
 
     // Recharger les stats quand l'établissement change (uniquement pour owner Enterprise)
     useEffect(() => {
@@ -172,11 +190,11 @@ const Dashboard = () => {
         
         try {
             const response = await resetAndArchiveDashboard();
-            setSuccess(response.message || 'Tableau de bord archivé et réinitialisé avec succès');
+            setSuccess(response.message || t('archive_and_reset_success') || 'Tableau de bord archivé et réinitialisé avec succès');
             await fetchDashboardData();
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de l\'archivage');
+            setError(err.response?.data?.message || t('error'));
             console.error(err);
         } finally {
             setArchiving(false);
@@ -206,7 +224,7 @@ const Dashboard = () => {
                     <h2>{t('dashboard_title')}</h2>
                     <p style={{ color: 'var(--gray-500)' }}>
                         {isEmployee 
-                            ? `Bonjour ${user?.firstName}, voici votre tableau de bord du jour.`
+                            ? `${t('hello') || 'Bonjour'} ${user?.firstName}, ${t('daily_dashboard') || 'voici votre tableau de bord du jour'}.`
                             : t('dashboard_welcome')
                         }
                     </p>
@@ -215,7 +233,7 @@ const Dashboard = () => {
                 {isOwner && (
                     <div style={{ display: 'flex', gap: 'var(--spacing-3)' }}>
                         <Link to="/archives" className="btn btn-secondary">
-                            📋 Voir les archives
+                            📋 {t('view_archives')}
                         </Link>
                         <button 
                             className="btn btn-warning" 
@@ -223,7 +241,7 @@ const Dashboard = () => {
                             disabled={archiving}
                             style={{ backgroundColor: '#F59E0B', color: 'white' }}
                         >
-                            {archiving ? <Loader size="sm" /> : '📦 Archiver et réinitialiser'}
+                            {archiving ? <Loader size="sm" /> : `📦 ${t('archive_and_reset')}`}
                         </button>
                     </div>
                 )}
@@ -253,7 +271,7 @@ const Dashboard = () => {
                     <div className="card" style={{ background: 'linear-gradient(135deg, var(--primary-500), var(--primary-600))', color: 'white' }}>
                         <div className="card-body">
                             <div style={{ fontSize: '2rem', fontWeight: 700 }}>
-                                {formatNumber(stats?.daily?.total || 0)} GNF
+                                {formatNumber(stats?.daily?.total || 0)} {currency}
                             </div>
                             <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>{t('sales_today')}</div>
                             <small>{stats?.daily?.count || 0} {t('transactions')}</small>
@@ -263,7 +281,7 @@ const Dashboard = () => {
                     <div className="card" style={{ background: 'linear-gradient(135deg, var(--secondary-500), var(--secondary-600))', color: 'white' }}>
                         <div className="card-body">
                             <div style={{ fontSize: '2rem', fontWeight: 700 }}>
-                                {formatNumber(stats?.monthly?.total || 0)} GNF
+                                {formatNumber(stats?.monthly?.total || 0)} {currency}
                             </div>
                             <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>{t('sales_month')}</div>
                             <small>{stats?.monthly?.count || 0} {t('transactions')}</small>
@@ -283,10 +301,10 @@ const Dashboard = () => {
                     <div className="card" style={{ background: 'linear-gradient(135deg, var(--primary-500), var(--primary-600))', color: 'white' }}>
                         <div className="card-body">
                             <div style={{ fontSize: '2rem', fontWeight: 700 }}>
-                                {formatNumber(employeeDailySales.total || 0)} GNF
+                                {formatNumber(employeeDailySales.total || 0)} {currency}
                             </div>
-                            <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>Mes ventes aujourd'hui</div>
-                            <small>{employeeDailySales.count || 0} transactions</small>
+                            <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>{t('my_sales_today') || 'Mes ventes aujourd\'hui'}</div>
+                            <small>{employeeDailySales.count || 0} {t('transactions')}</small>
                         </div>
                     </div>
                 </div>
@@ -298,28 +316,28 @@ const Dashboard = () => {
                     <div className="card-header">
                         <h3>
                             <Icon name="warning" category="status" fallback="⚠️" style={{ marginRight: '0.5rem' }} />
-                            Alertes importantes
+                            {t('alerts')}
                         </h3>
                     </div>
                     <div className="card-body">
                         {alerts?.outOfStock?.count > 0 && (
                             <Link to="/products?stockStatus=out_of_stock" style={{ textDecoration: 'none' }}>
-                                <Alert type="danger" message={`${alerts.outOfStock.count} produit(s) en rupture de stock`} />
+                                <Alert type="danger" message={`${alerts.outOfStock.count} ${t('out_of_stock_products')}`} />
                             </Link>
                         )}
                         {alerts?.lowStock?.count > 0 && (
                             <Link to="/products?stockStatus=low_stock" style={{ textDecoration: 'none' }}>
-                                <Alert type="warning" message={`${alerts.lowStock.count} produit(s) en stock faible (à réapprovisionner)`} />
+                                <Alert type="warning" message={`${alerts.lowStock.count} ${t('low_stock_products')}`} />
                             </Link>
                         )}
                         {alerts?.expiringSoon?.count > 0 && (
                             <Link to="/products" style={{ textDecoration: 'none' }}>
-                                <Alert type="warning" message={`${alerts.expiringSoon.count} produit(s) expirent dans les 30 jours`} />
+                                <Alert type="warning" message={`${alerts.expiringSoon.count} ${t('expiring_soon_products')}`} />
                             </Link>
                         )}
                         {alerts?.expired?.count > 0 && (
                             <Link to="/products" style={{ textDecoration: 'none' }}>
-                                <Alert type="danger" message={`${alerts.expired.count} produit(s) sont expirés`} />
+                                <Alert type="danger" message={`${alerts.expired.count} ${t('expired_products')}`} />
                             </Link>
                         )}
                     </div>
@@ -332,7 +350,7 @@ const Dashboard = () => {
                     <div className="card-header">
                         <h3>
                             <Icon name="success" category="status" fallback="🏆" style={{ marginRight: '0.5rem' }} />
-                            Top produits
+                            {t('top_products')}
                         </h3>
                     </div>
                     <div className="card-body">
@@ -341,9 +359,9 @@ const Dashboard = () => {
                                 <thead>
                                     <tr>
                                         <th>#</th>
-                                        <th>Produit</th>
-                                        <th>Quantité vendue</th>
-                                        <th>Chiffre d'affaires</th>
+                                        <th>{t('product')}</th>
+                                        <th>{t('quantity_sold')}</th>
+                                        <th>{t('revenue')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -352,7 +370,7 @@ const Dashboard = () => {
                                             <td style={{ textAlign: 'center' }}>{index + 1}</td>
                                             <td>{product.name}</td>
                                             <td style={{ textAlign: 'center' }}>{formatNumber(product.totalQuantity)}</td>
-                                            <td style={{ textAlign: 'right' }}><strong>{formatNumber(product.totalRevenue)} GNF</strong></td>
+                                            <td style={{ textAlign: 'right' }}><strong>{formatNumber(product.totalRevenue)} {currency}</strong></td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -367,24 +385,24 @@ const Dashboard = () => {
                 <div className="card-header">
                     <h3>
                         <Icon name="success" category="status" fallback="⚡" style={{ marginRight: '0.5rem' }} />
-                        Actions rapides
+                        {t('quick_actions')}
                     </h3>
                 </div>
                 <div className="card-body">
                     <div style={{ display: 'flex', gap: 'var(--spacing-3)', flexWrap: 'wrap' }}>
                         {isEmployee && canMakeSales && (
                             <Link to="/sales" className="btn btn-primary">
-                                💰 Nouvelle vente
+                                💰 {t('new_sale')}
                             </Link>
                         )}
                         
                         {isEmployee && canManageStock && (
                             <>
                                 <Link to="/products" className="btn btn-primary">
-                                    📦 Gérer les produits
+                                    📦 {t('manage_products') || 'Gérer les produits'}
                                 </Link>
                                 <Link to="/stock/in" className="btn btn-secondary">
-                                    ⬆️ Entrée de stock
+                                    ⬆️ {t('stock_entry') || 'Entrée de stock'}
                                 </Link>
                             </>
                         )}
@@ -392,19 +410,19 @@ const Dashboard = () => {
                         {isOwner && (
                             <>
                                 <Link to="/products" className="btn btn-primary">
-                                    + Ajouter un produit
+                                    + {t('add_product')}
                                 </Link>
                                 <Link to="/sales" className="btn btn-primary">
-                                    💰 Nouvelle vente
+                                    💰 {t('new_sale')}
                                 </Link>
                                 <Link to="/reports" className="btn btn-secondary">
-                                    📊 Exporter un rapport
+                                    📊 {t('export_report')}
                                 </Link>
                             </>
                         )}
                         
                         {isEmployee && !canMakeSales && !canManageStock && (
-                            <p style={{ color: 'var(--gray-500)' }}>Aucune action rapide disponible. Contactez votre administrateur.</p>
+                            <p style={{ color: 'var(--gray-500)' }}>{t('no_quick_actions') || 'Aucune action rapide disponible. Contactez votre administrateur.'}</p>
                         )}
                     </div>
                 </div>
@@ -415,9 +433,9 @@ const Dashboard = () => {
                 isOpen={showArchiveConfirm}
                 onClose={() => setShowArchiveConfirm(false)}
                 onConfirm={handleArchiveAndReset}
-                title="Archiver et réinitialiser"
-                message="Cette action va archiver les données actuelles du tableau de bord et réinitialiser les compteurs. Les données archivées restent consultables. Confirmez-vous ?"
-                confirmText="Oui, archiver"
+                title={t('archive_and_reset')}
+                message={t('archive_confirm_message') || 'Cette action va archiver les données actuelles du tableau de bord et réinitialiser les compteurs. Les données archivées restent consultables. Confirmez-vous ?'}
+                confirmText={t('yes_archive') || 'Oui, archiver'}
                 isDanger={false}
             />
         </div>

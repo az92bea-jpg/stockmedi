@@ -1,5 +1,6 @@
 /**
  * COMPOSANT HEADER - Barre de navigation supérieure
+ * ⭐ Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -24,7 +25,6 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Récupérer l'entreprise UNE SEULE FOIS
     useEffect(() => {
         const fetchCompany = async () => {
             if (user?.companyId && !hasFetchedCompany.current) {
@@ -46,8 +46,21 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
     };
 
     const getDisciplineLabel = (discipline) => {
-        const labels = { pharmacien: 'Pharmacien', médecin: 'Médecin', infirmier: 'Infirmier', assistant: 'Assistant', comptable: 'Comptable', autre: 'Employé' };
-        return labels[discipline] || 'Employé';
+        const labels = { 
+            pharmacien: t('pharmacist'), 
+            médecin: t('doctor'), 
+            infirmier: t('nurse'), 
+            assistant: t('assistant'), 
+            comptable: t('accountant'), 
+            autre: t('employee')
+        };
+        return labels[discipline] || t('employee');
+    };
+
+    const getRoleLabel = (role) => {
+        if (role === 'owner') return t('owner');
+        if (role === 'super-admin') return t('super_admin');
+        return getDisciplineLabel(user?.discipline);
     };
 
     const isMobile = windowWidth <= 768;
@@ -66,7 +79,6 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
             flexWrap: 'wrap',
             gap: '12px'
         }}>
-            {/* Bouton pour fermer/ouvrir la sidebar (visible sur desktop) */}
             {!isMobile && (
                 <button
                     onClick={onMenuClick}
@@ -87,13 +99,12 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F3F4F6'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                    title={isSidebarOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+                    title={isSidebarOpen ? t('close_menu') : t('open_menu')}
                 >
                     {isSidebarOpen ? '◀' : '☰'}
                 </button>
             )}
 
-            {/* Bouton menu burger pour mobile */}
             {isMobile && (
                 <button
                     onClick={onMenuClick}
@@ -110,19 +121,17 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
                         width: '32px',
                         height: '32px'
                     }}
+                    title={t('menu')}
                 >
                     ☰
                 </button>
             )}
 
-            {/* Titre et infos entreprise */}
             <div style={{ flex: 1 }}>
-                {/* <img src="/assets/icons/nav/logo.svg" alt="Logo" style={{ width: '28px', height: '28px' }} /> remplacer h1 avec pour que le logo se presente a la place de StockMedi */}
                 <h1 style={{ fontSize: '1.25rem', margin: 0, color: '#111827' }}>StockMedi</h1>
                 {company && <div style={{ fontSize: '0.7rem', color: '#6B7280' }}>{company.name}</div>}
             </div>
 
-            {/* Navigation horizontale (visible sur desktop) - AVEC ICÔNES SVG */}
             {!isMobile && (
                 <nav className="desktop-nav" style={{ display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <a href="/dashboard" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -162,11 +171,9 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
                 </nav>
             )}
 
-            {/* Actions utilisateur */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
                 <NotificationBell />
                 
-                {/* Sélecteur de langue */}
                 <select
                     value={language}
                     onChange={(e) => changeLanguage(e.target.value)}
@@ -187,7 +194,7 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: '8px' }}>
                         <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#111827' }}>{user.firstName} {user.lastName}</div>
                         <div style={{ fontSize: '0.7rem', color: '#0F6B3A', fontWeight: 500 }}>
-                            {user.role === 'owner' ? 'Propriétaire' : user.role === 'super-admin' ? 'Super Admin' : getDisciplineLabel(user.discipline)}
+                            {getRoleLabel(user.role)}
                         </div>
                     </div>
                 )}

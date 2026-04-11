@@ -1,8 +1,10 @@
 /**
  * PAGE RAPPORTS - Export PDF/Excel
+ * ⭐ Support multi-devises dynamique
+ * ⭐ Traductions FR/EN complètes
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import Loader from '../../components/common/Loader';
@@ -14,6 +16,9 @@ import EstablishmentSelector from '../../components/establishment/EstablishmentS
 const Reports = () => {
     const { t } = useLanguage();
     const user = authService.getCurrentUser();
+    
+    // ⭐ État pour la devise configurée
+    const [currency, setCurrency] = useState('GNF');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -22,12 +27,22 @@ const Reports = () => {
         endDate: ''
     });
     
-    // ⭐ État pour le sélecteur d'établissement
     const [selectedEstablishment, setSelectedEstablishment] = useState('');
     const [establishments, setEstablishments] = useState([]);
     const [subscription, setSubscription] = useState(null);
 
-    // Charger les établissements et l'abonnement
+    // ⭐ Charger la devise configurée
+    const loadCompanySettings = useCallback(async () => {
+        try {
+            const response = await api.get('/companies/me');
+            if (response.success && response.company?.settings?.currency) {
+                setCurrency(response.company.settings.currency);
+            }
+        } catch (err) {
+            console.error('Erreur chargement devise:', err);
+        }
+    }, []);
+
     useEffect(() => {
         const loadData = async () => {
             try {
@@ -45,10 +60,11 @@ const Reports = () => {
             }
         };
         
+        loadCompanySettings();
         if (user?.role === 'owner') {
             loadData();
         }
-    }, [user?.role]);
+    }, [user?.role, loadCompanySettings]);
 
     const handleDateChange = (e) => {
         const { name, value } = e.target;
@@ -63,7 +79,6 @@ const Reports = () => {
         setError('');
         
         try {
-            // ⭐ Ajouter l'établissement à l'URL si sélectionné
             let finalUrl = url;
             if (selectedEstablishment && subscription?.plan === 'enterprise') {
                 const separator = url.includes('?') ? '&' : '?';
@@ -83,10 +98,10 @@ const Reports = () => {
             link.click();
             URL.revokeObjectURL(link.href);
             
-            setSuccess(t('download_success') || 'Fichier téléchargé avec succès');
+            setSuccess(t('download_success'));
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError(t('download_error') || 'Erreur lors du téléchargement');
+            setError(t('download_error'));
             console.error(err);
         } finally {
             setLoading(false);
@@ -127,7 +142,6 @@ const Reports = () => {
                 </div>
             </div>
 
-            {/* ⭐ Sélecteur d'établissement (visible uniquement pour Enterprise) */}
             {user?.role === 'owner' && isEnterprise && establishments.length > 0 && (
                 <div className="card" style={{ marginBottom: 'var(--spacing-4)' }}>
                     <div className="card-body">
@@ -136,7 +150,7 @@ const Reports = () => {
                             onSelect={setSelectedEstablishment}
                         />
                         <div className="form-hint" style={{ marginTop: '8px' }}>
-                            ℹ️ Les rapports seront générés pour l'établissement sélectionné.
+                            ℹ️ {t('reports_filtered_by_establishment')}
                         </div>
                     </div>
                 </div>
@@ -148,7 +162,6 @@ const Reports = () => {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 'var(--spacing-6)' }}>
                 
-                {/* Rapport inventaire */}
                 <div className="card">
                     <div className="card-header">
                         <h3>{t('inventory')}</h3>
@@ -168,29 +181,20 @@ const Reports = () => {
                             <ul style={{ margin: 'var(--spacing-2) 0 0 var(--spacing-4)', color: 'var(--gray-600)' }}>
                                 <li>{t('info_pdf')}</li>
                                 <li>{t('info_excel')}</li>
-                                {isEnterprise && <li>🏢 Filtrable par établissement</li>}
+                                {isEnterprise && <li>🏢 {t('filterable_by_establishment')}</li>}
                             </ul>
                         </div>
                         <div style={{ display: 'flex', gap: 'var(--spacing-3)', flexWrap: 'wrap' }}>
-                            <button 
-                                className="btn btn-primary" 
-                                onClick={downloadInventoryPDF}
-                                disabled={loading}
-                            >
+                            <button className="btn btn-primary" onClick={downloadInventoryPDF} disabled={loading}>
                                 📄 {t('download_pdf')}
                             </button>
-                            <button 
-                                className="btn btn-secondary" 
-                                onClick={downloadInventoryExcel}
-                                disabled={loading}
-                            >
+                            <button className="btn btn-secondary" onClick={downloadInventoryExcel} disabled={loading}>
                                 📊 {t('download_excel')}
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Rapport des ventes */}
                 <div className="card">
                     <div className="card-header">
                         <h3>{t('sales_report')}</h3>
@@ -209,40 +213,23 @@ const Reports = () => {
                             <strong>{t('info_title')}</strong>
                             <ul style={{ margin: 'var(--spacing-2) 0 0 var(--spacing-4)', color: 'var(--gray-600)' }}>
                                 <li>{t('info_filter')}</li>
-                                <li>{t('info_currency')}</li>
-                                {isEnterprise && <li>🏢 Filtrable par établissement</li>}
+                                <li>💵 {t('info_currency').replace('GNF', currency)}</li>
+                                {isEnterprise && <li>🏢 {t('filterable_by_establishment')}</li>}
                             </ul>
                         </div>
                         
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-3)', marginBottom: 'var(--spacing-4)' }}>
                             <div className="form-group" style={{ marginBottom: 0 }}>
                                 <label className="form-label">{t('start_date')}</label>
-                                <input
-                                    type="date"
-                                    name="startDate"
-                                    className="form-input"
-                                    value={dateRange.startDate}
-                                    onChange={handleDateChange}
-                                />
+                                <input type="date" name="startDate" className="form-input" value={dateRange.startDate} onChange={handleDateChange} />
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
                                 <label className="form-label">{t('end_date')}</label>
-                                <input
-                                    type="date"
-                                    name="endDate"
-                                    className="form-input"
-                                    value={dateRange.endDate}
-                                    onChange={handleDateChange}
-                                />
+                                <input type="date" name="endDate" className="form-input" value={dateRange.endDate} onChange={handleDateChange} />
                             </div>
                         </div>
                         
-                        <button 
-                            className="btn btn-primary" 
-                            onClick={downloadSalesExcel}
-                            disabled={loading}
-                            style={{ width: '100%' }}
-                        >
+                        <button className="btn btn-primary" onClick={downloadSalesExcel} disabled={loading} style={{ width: '100%' }}>
                             📊 {t('download_excel')}
                         </button>
                         <div className="form-hint" style={{ marginTop: 'var(--spacing-2)', textAlign: 'center' }}>
@@ -252,7 +239,6 @@ const Reports = () => {
                 </div>
             </div>
 
-            {/* Informations supplémentaires */}
             <div className="card" style={{ marginTop: 'var(--spacing-6)' }}>
                 <div className="card-header">
                     <h3>ℹ️ {t('info_title')}</h3>
@@ -262,13 +248,12 @@ const Reports = () => {
                         <li>📄 <strong>{t('info_pdf')}</strong></li>
                         <li>📊 <strong>{t('info_excel')}</strong></li>
                         <li>📅 <strong>{t('info_filter')}</strong></li>
-                        <li>💵 <strong>{t('info_currency')}</strong></li>
-                        {isEnterprise && <li>🏢 <strong>Rapports filtrables par établissement</strong> (plan Enterprise)</li>}
+                        <li>💵 <strong>{t('info_currency').replace('(GNF)', `(${currency})`)}</strong></li>
+                        {isEnterprise && <li>🏢 <strong>{t('reports_filterable_by_establishment')}</strong> (plan Enterprise)</li>}
                     </ul>
                 </div>
             </div>
 
-            {/* Bouton retour */}
             <div style={{ marginTop: 'var(--spacing-6)', textAlign: 'center' }}>
                 <Link to="/dashboard" className="btn btn-secondary">
                     ← {t('back')}

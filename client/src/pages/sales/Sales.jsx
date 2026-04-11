@@ -1,8 +1,10 @@
 /**
  * PAGE VENTES - Point de vente et historique
+ * ⭐ Support multi-devises dynamique
+ * ⭐ Traductions FR/EN complètes
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import html2pdf from 'html2pdf.js';
 import { saleService } from '../../services/saleService';
@@ -19,6 +21,9 @@ const Sales = () => {
     const { t } = useLanguage();
     const user = authService.getCurrentUser();
     const canMakeSales = user?.role === 'owner' || user?.role === 'super-admin' || (user?.permissions && user.permissions.includes('make_sales'));
+    
+    // ⭐ État pour la devise configurée
+    const [currency, setCurrency] = useState('GNF');
     const [products, setProducts] = useState([]);
     const [cart, setCart] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -46,9 +51,16 @@ const Sales = () => {
     const [selectedEstablishment, setSelectedEstablishment] = useState('');
     const [establishments, setEstablishments] = useState([]);
 
-    // Charger les établissements
-    useEffect(() => {
-        loadEstablishments();
+    // ⭐ Charger la devise configurée
+    const loadCompanySettings = useCallback(async () => {
+        try {
+            const response = await api.get('/companies/me');
+            if (response.success && response.company?.settings?.currency) {
+                setCurrency(response.company.settings.currency);
+            }
+        } catch (err) {
+            console.error('Erreur chargement devise:', err);
+        }
     }, []);
 
     const loadEstablishments = async () => {
@@ -63,7 +75,6 @@ const Sales = () => {
         }
     };
 
-    // Charger tous les produits
     const loadProducts = async () => {
         try {
             const response = await productService.getProducts({});
@@ -74,8 +85,10 @@ const Sales = () => {
     };
 
     useEffect(() => {
+        loadCompanySettings();
+        loadEstablishments();
         loadProducts();
-    }, []);
+    }, [loadCompanySettings]);
 
     // Recherche des produits
     useEffect(() => {
@@ -106,17 +119,16 @@ const Sales = () => {
         }
     }, [searchTerm, products, selectedEstablishment, establishments]);
 
-    // Ajout au panier
     const addToCart = (product) => {
         const stockInEstablishment = product.quantity || 0;
 
         if (stockInEstablishment === 0) {
-            setError('Stock insuffisant');
+            setError(t('stock_insufficient'));
             return;
         }
 
         if (product.prescriptionRequired && !prescriptionNumber) {
-            setError(t('prescription_required_error') || 'Ce produit nécessite une ordonnance.');
+            setError(t('prescription_required_error'));
             return;
         }
 
@@ -124,7 +136,7 @@ const Sales = () => {
         
         if (existingItem) {
             if (existingItem.quantity + 1 > stockInEstablishment) {
-                setError(`Stock insuffisant. Maximum: ${stockInEstablishment}`);
+                setError(`${t('stock_insufficient')}. ${t('max_available')}: ${stockInEstablishment}`);
                 return;
             }
             setCart(cart.map(item =>
@@ -153,7 +165,7 @@ const Sales = () => {
             return;
         }
         if (newQuantity > item.maxStock) {
-            setError(`Stock insuffisant. Maximum: ${item.maxStock}`);
+            setError(`${t('stock_insufficient')}. ${t('max_available')}: ${item.maxStock}`);
             return;
         }
         setCart(cart.map(item =>
@@ -179,7 +191,7 @@ const Sales = () => {
 
     const validateSale = () => {
         if (cart.length === 0) {
-            setError('Le panier est vide');
+            setError(t('empty_cart'));
             return false;
         }
         return true;
@@ -212,7 +224,7 @@ const Sales = () => {
             if (response.success) {
                 setLastSaleData(response.sale);
                 setShowReceiptModal(true);
-                setSuccess('Vente enregistrée avec succès !');
+                setSuccess(t('sale_success'));
                 clearCart();
                 setCustomerName('');
                 setCustomerPhone('');
@@ -222,7 +234,7 @@ const Sales = () => {
                 setTimeout(() => setSuccess(''), 3000);
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de la vente');
+            setError(err.response?.data?.message || t('error'));
             console.error(err);
         } finally {
             setLoading(false);
@@ -256,7 +268,10 @@ const Sales = () => {
         }
     }, [showHistory]);
 
-    const formatPrice = (price) => price?.toLocaleString() || 0;
+    const formatPrice = (price) => {
+        if (price === undefined || price === null) return '0';
+        return Math.round(price).toLocaleString('fr-FR');
+    };
 
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
@@ -282,7 +297,6 @@ const Sales = () => {
 
             {!showHistory ? (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 450px', gap: 'var(--spacing-6)' }}>
-                    {/* Panneau gauche */}
                     <div>
                         {establishments.length > 0 && (
                             <div className="card" style={{ marginBottom: 'var(--spacing-4)' }}>
@@ -297,7 +311,7 @@ const Sales = () => {
 
                         {establishments.length === 0 && user?.role === 'owner' && (
                             <div className="alert alert-info" style={{ marginBottom: 'var(--spacing-4)' }}>
-                                💡 Pour gérer plusieurs établissements, passez au plan <Link to="/subscription">Enterprise</Link>.
+                                💡 {t('enterprise_plan_promo')} <Link to="/subscription">Enterprise</Link>.
                             </div>
                         )}
 
@@ -308,12 +322,12 @@ const Sales = () => {
                                     <input
                                         type="text"
                                         className="form-input"
-                                        placeholder={t('search_placeholder')}
+                                        placeholder={t('search_placeholder_sales')}
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         autoFocus
                                     />
-                                    <div className="form-hint">{t('search_hint') || 'Saisissez au moins 2 caractères'}</div>
+                                    <div className="form-hint">{t('search_hint')}</div>
                                 </div>
                             </div>
                         </div>
@@ -350,15 +364,15 @@ const Sales = () => {
                                                         </div>
                                                     )}
                                                     <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>
-                                                        Stock: {stockInEstablishment} {product.unit}
+                                                        {t('stock')}: {stockInEstablishment} {product.unit}
                                                     </div>
                                                 </div>
                                                 <div style={{ textAlign: 'right' }}>
                                                     <div style={{ fontWeight: 600, color: 'var(--primary-500)' }}>
-                                                        {formatPrice(product.sellingPrice)} GNF
+                                                        {formatPrice(product.sellingPrice)} {currency}
                                                     </div>
                                                     {product.prescriptionRequired && (
-                                                        <div style={{ fontSize: '0.7rem', color: 'var(--warning)' }}>📋 Ordonnance requise</div>
+                                                        <div style={{ fontSize: '0.7rem', color: 'var(--warning)' }}>📋 {t('prescription_required')}</div>
                                                     )}
                                                 </div>
                                             </div>
@@ -371,13 +385,12 @@ const Sales = () => {
                         {searchTerm.length >= 2 && searchResults.length === 0 && (
                             <div className="card">
                                 <div className="card-body" style={{ textAlign: 'center', color: 'var(--gray-500)' }}>
-                                    {establishments.length > 0 ? 'Aucun produit trouvé dans cet établissement' : 'Aucun produit trouvé'}
+                                    {establishments.length > 0 ? t('no_products_in_establishment') : t('no_products')}
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    {/* Panneau droit - Panier */}
                     <div>
                         <div className="card">
                             <div className="card-header">
@@ -400,32 +413,14 @@ const Sales = () => {
                                             <div style={{ flex: 2 }}>
                                                 <div style={{ fontWeight: 500 }}>{item.name}</div>
                                                 <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
-                                                    {formatPrice(item.unitPrice)} GNF
+                                                    {formatPrice(item.unitPrice)} {currency}
                                                 </div>
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
-                                                <button
-                                                    className="btn btn-sm btn-outline"
-                                                    onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                                                    style={{ padding: '2px 8px' }}
-                                                >
-                                                    -
-                                                </button>
+                                                <button className="btn btn-sm btn-outline" onClick={() => updateQuantity(item.productId, item.quantity - 1)}>-</button>
                                                 <span style={{ minWidth: '40px', textAlign: 'center' }}>{item.quantity}</span>
-                                                <button
-                                                    className="btn btn-sm btn-outline"
-                                                    onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                                                    style={{ padding: '2px 8px' }}
-                                                >
-                                                    +
-                                                </button>
-                                                <button
-                                                    className="btn btn-sm btn-outline"
-                                                    onClick={() => removeFromCart(item.productId)}
-                                                    style={{ color: 'var(--danger)', marginLeft: 'var(--spacing-2)' }}
-                                                >
-                                                    ✕
-                                                </button>
+                                                <button className="btn btn-sm btn-outline" onClick={() => updateQuantity(item.productId, item.quantity + 1)}>+</button>
+                                                <button className="btn btn-sm btn-outline" onClick={() => removeFromCart(item.productId)} style={{ color: 'var(--danger)', marginLeft: 'var(--spacing-2)' }}>✕</button>
                                             </div>
                                         </div>
                                     ))
@@ -435,79 +430,45 @@ const Sales = () => {
                             <div className="card-body" style={{ borderTop: '1px solid var(--gray-200)', borderBottom: '1px solid var(--gray-200)' }}>
                                 <div className="form-group">
                                     <label className="form-label">{t('customer_name')}</label>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        placeholder="Nom du client (optionnel)"
-                                        value={customerName}
-                                        onChange={(e) => setCustomerName(e.target.value)}
-                                    />
+                                    <input type="text" className="form-input" placeholder={t('customer_name_placeholder')} value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">{t('customer_phone')}</label>
-                                    <input
-                                        type="tel"
-                                        className="form-input"
-                                        placeholder="Téléphone (optionnel)"
-                                        value={customerPhone}
-                                        onChange={(e) => setCustomerPhone(e.target.value)}
-                                    />
+                                    <input type="tel" className="form-input" placeholder={t('customer_phone_placeholder')} value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">{t('prescription_number')}</label>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        placeholder="Si applicable"
-                                        value={prescriptionNumber}
-                                        onChange={(e) => setPrescriptionNumber(e.target.value)}
-                                    />
+                                    <input type="text" className="form-input" placeholder={t('prescription_placeholder')} value={prescriptionNumber} onChange={(e) => setPrescriptionNumber(e.target.value)} />
                                 </div>
                             </div>
 
                             <div className="card-body">
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-2)' }}>
                                     <span>{t('subtotal')}</span>
-                                    <span>{formatPrice(subtotal)} GNF</span>
+                                    <span>{formatPrice(subtotal)} {currency}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
                                     <span>{t('discount')}</span>
                                     <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
-                                        <input
-                                            type="number"
-                                            style={{ width: '80px', textAlign: 'right' }}
-                                            className="form-input"
-                                            value={discount}
-                                            onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-                                            min="0"
-                                        />
-                                        <select
-                                            className="form-select"
-                                            style={{ width: '80px' }}
-                                            value={discountType}
-                                            onChange={(e) => setDiscountType(e.target.value)}
-                                        >
-                                            <option value="fixed">GNF</option>
+                                        <input type="number" style={{ width: '80px', textAlign: 'right' }} className="form-input" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} min="0" />
+                                        <select className="form-select" style={{ width: '80px' }} value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
+                                            <option value="fixed">{currency}</option>
                                             <option value="percentage">%</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-2)' }}>
                                     <span>{t('tax')}</span>
-                                    <span>{formatPrice(taxAmount)} GNF</span>
+                                    <span>{formatPrice(taxAmount)} {currency}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.1rem', marginTop: 'var(--spacing-3)', paddingTop: 'var(--spacing-3)', borderTop: '2px solid var(--gray-200)' }}>
                                     <span>{t('total')}</span>
-                                    <span style={{ color: 'var(--primary-500)' }}>{formatPrice(total)} GNF</span>
+                                    <span style={{ color: 'var(--primary-500)' }}>{formatPrice(total)} {currency}</span>
                                 </div>
 
                                 <div className="form-group" style={{ marginTop: 'var(--spacing-4)' }}>
                                     <label className="form-label">{t('payment_method')}</label>
-                                    <select
-                                        className="form-select"
-                                        value={paymentMethod}
-                                        onChange={(e) => setPaymentMethod(e.target.value)}
-                                    >
+                                    <select className="form-select" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                                         <option value="cash">💰 {t('cash')}</option>
                                         <option value="card">💳 {t('card')}</option>
                                         <option value="mobile_money">📱 {t('mobile_money')}</option>
@@ -516,20 +477,10 @@ const Sales = () => {
                                 </div>
 
                                 <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}>
-                                    <button
-                                        className="btn btn-primary"
-                                        style={{ flex: 2 }}
-                                        onClick={() => setConfirmModalOpen(true)}
-                                        disabled={cart.length === 0 || loading || !canMakeSales}
-                                        title={!canMakeSales ? "Vous n'avez pas la permission de créer des ventes" : ""}
-                                    >
+                                    <button className="btn btn-primary" style={{ flex: 2 }} onClick={() => setConfirmModalOpen(true)} disabled={cart.length === 0 || loading || !canMakeSales} title={!canMakeSales ? t('no_permission_sales') : ""}>
                                         {loading ? <Loader size="sm" /> : t('validate')}
                                     </button>
-                                    <button
-                                        className="btn btn-secondary"
-                                        onClick={clearCart}
-                                        disabled={cart.length === 0}
-                                    >
+                                    <button className="btn btn-secondary" onClick={clearCart} disabled={cart.length === 0}>
                                         {t('clear')}
                                     </button>
                                 </div>
@@ -538,7 +489,6 @@ const Sales = () => {
                     </div>
                 </div>
             ) : (
-                // MODE HISTORIQUE
                 <div className="card">
                     <div className="card-header">
                         <h3>{t('history')}</h3>
@@ -548,7 +498,7 @@ const Sales = () => {
                             <Loader />
                         ) : salesHistory.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--gray-500)' }}>
-                                Aucune vente enregistrée
+                                {t('no_sales')}
                             </div>
                         ) : (
                             <div>
@@ -563,50 +513,27 @@ const Sales = () => {
                                     color: 'var(--gray-600)',
                                     flexWrap: 'wrap'
                                 }}>
-                                    <div style={{ width: '120px' }}>N° vente</div>
-                                    <div style={{ width: '150px' }}>Date</div>
-                                    <div style={{ width: '150px' }}>Client</div>
-                                    <div style={{ width: '80px' }}>Articles</div>
-                                    <div style={{ width: '120px' }}>Total</div>
-                                    <div style={{ width: '120px' }}>Paiement</div>
-                                    <div style={{ width: '80px' }}>Statut</div>
-                                    <div style={{ width: '60px' }}>Reçu</div>
+                                    <div style={{ width: '120px' }}>{t('sale_number')}</div>
+                                    <div style={{ width: '150px' }}>{t('date')}</div>
+                                    <div style={{ width: '150px' }}>{t('customer')}</div>
+                                    <div style={{ width: '80px' }}>{t('items')}</div>
+                                    <div style={{ width: '120px' }}>{t('total')}</div>
+                                    <div style={{ width: '120px' }}>{t('payment')}</div>
+                                    <div style={{ width: '80px' }}>{t('status')}</div>
+                                    <div style={{ width: '60px' }}>{t('receipt')}</div>
                                 </div>
 
                                 {salesHistory.map(sale => (
-                                    <div
-                                        key={sale._id}
-                                        style={{
-                                            display: 'flex',
-                                            gap: 'var(--spacing-4)',
-                                            padding: 'var(--spacing-3) var(--spacing-4)',
-                                            borderBottom: '1px solid var(--gray-100)',
-                                            alignItems: 'center',
-                                            flexWrap: 'wrap',
-                                            transition: 'background-color 0.2s'
-                                        }}
+                                    <div key={sale._id} style={{ display: 'flex', gap: 'var(--spacing-4)', padding: 'var(--spacing-3) var(--spacing-4)', borderBottom: '1px solid var(--gray-100)', alignItems: 'center', flexWrap: 'wrap', transition: 'background-color 0.2s' }}
                                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                    >
-                                        <div style={{ width: '120px', fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                                            {sale.saleNumber}
-                                        </div>
-                                        <div style={{ width: '150px', fontSize: '0.875rem' }}>
-                                            {new Date(sale.createdAt).toLocaleString('fr-FR')}
-                                        </div>
-                                        <div style={{ width: '150px', fontSize: '0.875rem' }}>
-                                            {sale.customerName || '-'}
-                                        </div>
-                                        <div style={{ width: '80px', fontSize: '0.875rem' }}>
-                                            {sale.items.reduce((sum, i) => sum + i.quantity, 0)}
-                                        </div>
-                                        <div style={{ width: '120px', fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary-500)' }}>
-                                            {formatPrice(sale.total)} GNF
-                                        </div>
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                        <div style={{ width: '120px', fontFamily: 'monospace', fontSize: '0.875rem' }}>{sale.saleNumber}</div>
+                                        <div style={{ width: '150px', fontSize: '0.875rem' }}>{new Date(sale.createdAt).toLocaleString('fr-FR')}</div>
+                                        <div style={{ width: '150px', fontSize: '0.875rem' }}>{sale.customerName || '-'}</div>
+                                        <div style={{ width: '80px', fontSize: '0.875rem' }}>{sale.items.reduce((sum, i) => sum + i.quantity, 0)}</div>
+                                        <div style={{ width: '120px', fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary-500)' }}>{formatPrice(sale.total)} {currency}</div>
                                         <div style={{ width: '120px', fontSize: '0.875rem' }}>
-                                            {sale.paymentMethod === 'cash' ? `💰 ${t('cash')}` :
-                                             sale.paymentMethod === 'card' ? `💳 ${t('card')}` :
-                                             sale.paymentMethod === 'mobile_money' ? `📱 ${t('mobile_money')}` : sale.paymentMethod}
+                                            {sale.paymentMethod === 'cash' ? `💰 ${t('cash')}` : sale.paymentMethod === 'card' ? `💳 ${t('card')}` : sale.paymentMethod === 'mobile_money' ? `📱 ${t('mobile_money')}` : sale.paymentMethod}
                                         </div>
                                         <div style={{ width: '80px' }}>
                                             <span className={sale.isCancelled ? 'badge-danger' : 'badge-success'}>
@@ -614,13 +541,7 @@ const Sales = () => {
                                             </span>
                                         </div>
                                         <div style={{ width: '60px' }}>
-                                            <button
-                                                className="btn btn-sm btn-outline"
-                                                onClick={() => handleViewReceipt(sale)}
-                                                title="Voir le reçu"
-                                            >
-                                                🧾
-                                            </button>
+                                            <button className="btn btn-sm btn-outline" onClick={() => handleViewReceipt(sale)} title={t('view_receipt')}>🧾</button>
                                         </div>
                                     </div>
                                 ))}
@@ -631,47 +552,23 @@ const Sales = () => {
             )}
 
             {/* Modal de confirmation */}
-            <Modal
-                isOpen={confirmModalOpen}
-                onClose={() => setConfirmModalOpen(false)}
-                title="Confirmer la vente"
-            >
+            <Modal isOpen={confirmModalOpen} onClose={() => setConfirmModalOpen(false)} title={t('confirm_sale')}>
                 <div style={{ marginBottom: 'var(--spacing-4)' }}>
-                    <p>Confirmez-vous cette vente ?</p>
-                    <div style={{ 
-                        backgroundColor: 'var(--gray-50)', 
-                        padding: 'var(--spacing-3)', 
-                        borderRadius: 'var(--radius-md)',
-                        marginTop: 'var(--spacing-3)'
-                    }}>
-                        <div><strong>Total :</strong> {formatPrice(total)} GNF</div>
-                        <div><strong>Articles :</strong> {cart.reduce((sum, i) => sum + i.quantity, 0)}</div>
-                        <div><strong>Paiement :</strong> {paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : 'Mobile Money'}</div>
+                    <p>{t('confirm_message')}</p>
+                    <div style={{ backgroundColor: 'var(--gray-50)', padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)', marginTop: 'var(--spacing-3)' }}>
+                        <div><strong>{t('total')} :</strong> {formatPrice(total)} {currency}</div>
+                        <div><strong>{t('items')} :</strong> {cart.reduce((sum, i) => sum + i.quantity, 0)}</div>
+                        <div><strong>{t('payment')} :</strong> {paymentMethod === 'cash' ? t('cash') : paymentMethod === 'card' ? t('card') : t('mobile_money')}</div>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--spacing-3)' }}>
-                    <button className="btn btn-primary" onClick={handleConfirmSale} disabled={loading}>
-                        {loading ? <Loader size="sm" /> : 'Confirmer'}
-                    </button>
-                    <button className="btn btn-secondary" onClick={() => setConfirmModalOpen(false)}>
-                        Annuler
-                    </button>
+                    <button className="btn btn-primary" onClick={handleConfirmSale} disabled={loading}>{loading ? <Loader size="sm" /> : t('confirm')}</button>
+                    <button className="btn btn-secondary" onClick={() => setConfirmModalOpen(false)}>{t('cancel_btn')}</button>
                 </div>
             </Modal>
 
-
-
-                    {/* Modale de reçu optimisée */}
-            <Modal
-                isOpen={showReceiptModal}
-                onClose={() => {
-                    setShowReceiptModal(false);
-                    setLastSaleData(null);
-                    setSelectedHistorySale(null);
-                }}
-                title="Reçu de vente"
-                size="md"
-            >
+            {/* Modale de reçu optimisée */}
+            <Modal isOpen={showReceiptModal} onClose={() => { setShowReceiptModal(false); setLastSaleData(null); setSelectedHistorySale(null); }} title={t('receipt')} size="md">
                 {(() => {
                     const sale = lastSaleData || selectedHistorySale;
                     if (!sale) return null;
@@ -679,132 +576,66 @@ const Sales = () => {
                     const company = sale.companyId || {};
                     const establishment = sale.establishmentId || {};
                     
-                    // Style compact pour impression PDF
-                    const receiptStyle = {
-                        fontFamily: "'Courier New', monospace",
-                        fontSize: '11px',
-                        lineHeight: '1.3',
-                        color: '#000',
-                        maxWidth: '300px',
-                        margin: '0 auto',
-                        padding: '8px'
-                    };
+                    const receiptStyle = { fontFamily: "'Courier New', monospace", fontSize: '9px', lineHeight: '1.2', color: '#000', maxWidth: '280px', margin: '0 auto', padding: '4px' };
                     
                     return (
                         <div id="receipt-content" style={receiptStyle}>
-                            {/* En-tête entreprise */}
-                            <div style={{ textAlign: 'center', marginBottom: '8px', borderBottom: '1px dashed #ccc', paddingBottom: '5px' }}>
-                                {company.logo && <img src={company.logo} alt="Logo" style={{ maxWidth: '50px', maxHeight: '50px', marginBottom: '3px' }} />}
-                                <strong style={{ fontSize: '12px' }}>{company.name || 'StockMedi'}</strong><br />
+                            <div style={{ textAlign: 'center', marginBottom: '4px', borderBottom: '1px dashed #ccc', paddingBottom: '3px' }}>
+                                {company.logo && <img src={company.logo} alt="Logo" style={{ maxWidth: '40px', maxHeight: '40px', marginBottom: '2px' }} />}
+                                <strong style={{ fontSize: '11px' }}>{company.name || 'StockMedi'}</strong><br />
                                 {establishment.name && <span>{establishment.name}<br /></span>}
-                                {company.address && (
-                                    <span>
-                                        {company.address.street && `${company.address.street}, `}
-                                        {company.address.city} {company.address.postalCode}<br />
-                                        {company.address.country}<br />
-                                    </span>
-                                )}
-                                <span>Tél: {establishment.phone || company.phone || ''}</span><br />
+                                {company.address && (<span>{company.address.street && `${company.address.street}, `}{company.address.city} {company.address.postalCode}<br />{company.address.country}<br /></span>)}
+                                <span>{t('phone')}: {establishment.phone || company.phone || ''}</span><br />
                                 {company.email && <span>Email: {company.email}</span>}
                             </div>
-                            
-                            {/* Infos vente */}
-                            <div style={{ marginBottom: '8px' }}>
-                                <div><strong>Reçu N°:</strong> {sale.saleNumber}</div>
-                                <div><strong>Date:</strong> {new Date(sale.createdAt).toLocaleString('fr-FR')}</div>
-                                <div><strong>Client:</strong> {sale.customerName || 'Client comptant'}</div>
-                                {sale.customerPhone && <div><strong>Tél:</strong> {sale.customerPhone}</div>}
-                                {sale.prescriptionNumber && <div><strong>Ordo:</strong> {sale.prescriptionNumber}</div>}
+                            <div style={{ marginBottom: '4px' }}>
+                                <div><strong>{t('receipt')} N°:</strong> {sale.saleNumber}</div>
+                                <div><strong>{t('date')}:</strong> {new Date(sale.createdAt).toLocaleString('fr-FR')}</div>
+                                <div><strong>{t('customer')}:</strong> {sale.customerName || t('client_comptant')}</div>
+                                {sale.customerPhone && <div><strong>{t('phone')}:</strong> {sale.customerPhone}</div>}
+                                {sale.prescriptionNumber && <div><strong>{t('prescription_number')}:</strong> {sale.prescriptionNumber}</div>}
                             </div>
-                            
-                            {/* Tableau produits */}
-                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8px' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px' }}>
                                 <thead>
                                     <tr style={{ borderTop: '1px dashed #ccc', borderBottom: '1px dashed #ccc' }}>
-                                        <th style={{ textAlign: 'left', padding: '3px 0' }}>Produit</th>
-                                        <th style={{ textAlign: 'center', padding: '3px 0' }}>Qté</th>
-                                        <th style={{ textAlign: 'right', padding: '3px 0' }}>Prix</th>
-                                        <th style={{ textAlign: 'right', padding: '3px 0' }}>Total</th>
+                                        <th style={{ textAlign: 'left', padding: '2px 0' }}>{t('product')}</th>
+                                        <th style={{ textAlign: 'center', padding: '2px 0' }}>{t('quantity_short')}</th>
+                                        <th style={{ textAlign: 'right', padding: '2px 0' }}>{t('price_short')}</th>
+                                        <th style={{ textAlign: 'right', padding: '2px 0' }}>{t('total_short')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {sale.items.map((item, idx) => (
                                         <tr key={idx}>
-                                            <td style={{ padding: '2px 0' }}>{item.name.length > 15 ? item.name.substring(0, 15) + '.' : item.name}</td>
-                                            <td style={{ textAlign: 'center', padding: '2px 0' }}>{item.quantity}</td>
-                                            <td style={{ textAlign: 'right', padding: '2px 0' }}>{formatPrice(item.unitPrice)}</td>
-                                            <td style={{ textAlign: 'right', padding: '2px 0' }}>{formatPrice(item.subtotal)}</td>
+                                            <td style={{ padding: '1px 0' }}>{item.name.length > 12 ? item.name.substring(0, 12) + '.' : item.name}</td>
+                                            <td style={{ textAlign: 'center', padding: '1px 0' }}>{item.quantity}</td>
+                                            <td style={{ textAlign: 'right', padding: '1px 0' }}>{formatPrice(item.unitPrice)}</td>
+                                            <td style={{ textAlign: 'right', padding: '1px 0' }}>{formatPrice(item.subtotal)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
-                            
-                            {/* Totaux */}
-                            <div style={{ textAlign: 'right', borderTop: '1px dashed #ccc', paddingTop: '5px', marginBottom: '5px' }}>
-                                <div>Sous-total: {formatPrice(sale.subtotal)} GNF</div>
-                                {sale.discount > 0 && <div>Remise: -{formatPrice(sale.discount)} GNF</div>}
-                                {sale.tax > 0 && <div>TVA: {formatPrice(sale.tax)} GNF</div>}
-                                <div style={{ fontWeight: 'bold', fontSize: '12px', marginTop: '3px' }}>
-                                    TOTAL: {formatPrice(sale.total)} GNF
-                                </div>
+                            <div style={{ textAlign: 'right', borderTop: '1px dashed #ccc', paddingTop: '3px', marginBottom: '3px' }}>
+                                <div>{t('subtotal')}: {formatPrice(sale.subtotal)} {currency}</div>
+                                {sale.discount > 0 && <div>{t('discount')}: -{formatPrice(sale.discount)} {currency}</div>}
+                                {sale.tax > 0 && <div>{t('tax')}: {formatPrice(sale.tax)} {currency}</div>}
+                                <div style={{ fontWeight: 'bold', fontSize: '11px', marginTop: '2px' }}>{t('total')}: {formatPrice(sale.total)} {currency}</div>
                             </div>
-                            
-                            {/* Paiement et vendeur */}
-                            <div style={{ marginBottom: '5px' }}>
-                                <div><strong>Paiement:</strong> {
-                                    sale.paymentMethod === 'cash' ? 'Espèces' :
-                                    sale.paymentMethod === 'card' ? 'Carte' : 'Mobile Money'
-                                }</div>
-                                <div><strong>Vendeur:</strong> {sale.userId?.firstName} {sale.userId?.lastName}</div>
+                            <div style={{ marginBottom: '3px' }}>
+                                <div><strong>{t('payment_method')}:</strong> {sale.paymentMethod === 'cash' ? t('cash') : sale.paymentMethod === 'card' ? t('card') : t('mobile_money')}</div>
+                                <div><strong>{t('seller')}:</strong> {sale.userId?.firstName} {sale.userId?.lastName}</div>
                             </div>
-                            
-                            {/* Pied de page */}
-                            <div style={{ textAlign: 'center', borderTop: '1px dashed #ccc', paddingTop: '5px', fontSize: '10px' }}>
-                                Merci de votre visite !<br />
-                                {new Date().toLocaleDateString('fr-FR')}
+                            <div style={{ textAlign: 'center', borderTop: '1px dashed #ccc', paddingTop: '3px', fontSize: '8px' }}>
+                                {t('thank_you')}<br />{new Date().toLocaleDateString('fr-FR')}
                             </div>
                         </div>
                     );
                 })()}
-                
                 <div style={{ display: 'flex', gap: '8px', marginTop: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <button className="btn btn-primary btn-sm" onClick={() => {
-                        const element = document.getElementById('receipt-content');
-                        const opt = {
-                            margin: [0.2, 0.2, 0.2, 0.2],
-                            filename: `recu_${(lastSaleData || selectedHistorySale)?.saleNumber || 'vente'}.pdf`,
-                            image: { type: 'jpeg', quality: 0.98 },
-                            html2canvas: { scale: 2 },
-                            jsPDF: { unit: 'in', format: 'a6', orientation: 'portrait' }
-                        };
-                        html2pdf().set(opt).from(element).save();
-                    }}>
-                        🖨️ PDF
-                    </button>
-                    <button className="btn btn-secondary btn-sm" onClick={() => {
-                        const content = document.getElementById('receipt-content').innerHTML;
-                        const style = '<style>body{font-family:monospace;font-size:11px;margin:5mm;}</style>';
-                        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reçu</title>${style}</head><body>${content}</body></html>`;
-                        const blob = new Blob([html], { type: 'text/html' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `recu_${(lastSaleData || selectedHistorySale)?.saleNumber || 'vente'}.html`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                    }}>
-                        📥 HTML
-                    </button>
-                    <button className="btn btn-secondary btn-sm" onClick={handlePrintReceipt}>
-                        🖨️ Imprimer
-                    </button>
-                    <button className="btn btn-outline btn-sm" onClick={() => {
-                        setShowReceiptModal(false);
-                        setLastSaleData(null);
-                        setSelectedHistorySale(null);
-                    }}>
-                        Fermer
-                    </button>
+                    <button className="btn btn-primary btn-sm" onClick={() => { const element = document.getElementById('receipt-content'); const opt = { margin: [0.1, 0.1, 0.1, 0.1], filename: `recu_${(lastSaleData || selectedHistorySale)?.saleNumber || 'vente'}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, letterRendering: true }, jsPDF: { unit: 'in', format: 'a6', orientation: 'portrait' } }; html2pdf().set(opt).from(element).save(); }}>🖨️ PDF</button>
+                    <button className="btn btn-secondary btn-sm" onClick={() => { const content = document.getElementById('receipt-content').innerHTML; const style = '<style>body{font-family:monospace;font-size:9px;margin:2mm;}</style>'; const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${t('receipt')}</title>${style}</head><body>${content}</body></html>`; const blob = new Blob([html], { type: 'text/html' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `recu_${(lastSaleData || selectedHistorySale)?.saleNumber || 'vente'}.html`; a.click(); URL.revokeObjectURL(url); }}>📥 HTML</button>
+                    <button className="btn btn-secondary btn-sm" onClick={handlePrintReceipt}>🖨️ {t('print')}</button>
+                    <button className="btn btn-outline btn-sm" onClick={() => { setShowReceiptModal(false); setLastSaleData(null); setSelectedHistorySale(null); }}>{t('close')}</button>
                 </div>
             </Modal>
         </div>

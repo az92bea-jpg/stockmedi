@@ -1,5 +1,6 @@
 /**
  * COMPOSANT SIDEBAR - Menu de navigation latéral
+ * ⭐ Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -15,7 +16,6 @@ const Sidebar = ({ isOpen, onClose }) => {
     const user = authService.getCurrentUser();
     const [subscription, setSubscription] = useState(null);
 
-    // Charger l'abonnement
     const fetchSubscription = useCallback(async () => {
         try {
             const response = await api.get('/subscription');
@@ -41,7 +41,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { path: '/dashboard', name: t('nav_dashboard'), iconName: 'dashboard', fallback: '📊' },
         { path: '/products', name: t('nav_products'), iconName: 'products', fallback: '📦' },
         { path: '/sales', name: t('nav_sales'), iconName: 'sales', fallback: '💰' },
-        { path: '/quotes', name: 'Devis', iconName: 'document', fallback: '📄' },
+        { path: '/quotes', name: t('nav_quotes'), iconName: 'document', fallback: '📄' },
         { path: '/reports', name: t('nav_reports'), iconName: 'reports', fallback: '📄' }
     ];
 
@@ -79,7 +79,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     if (subscription?.plan === 'enterprise') {
         navItems.push({
             path: '/settings/establishments',
-            name: 'Établissements',
+            name: t('establishments_title'),
             iconName: 'settings',
             fallback: '🏢'
         });
@@ -89,7 +89,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     if (user?.role === 'super-admin') {
         navItems.push({ 
             path: '/admin', 
-            name: 'Admin', 
+            name: t('nav_admin'), 
             iconName: 'settings', 
             fallback: '👑' 
         });
@@ -97,7 +97,6 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     return (
         <>
-            {/* Overlay pour mobile */}
             {isOpen && (
                 <div
                     className="sidebar-overlay"
@@ -134,7 +133,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                     boxShadow: '2px 0 10px rgba(0,0,0,0.1)'
                 }}
             >
-                {/* En-tête */}
                 <div style={{ 
                     padding: '24px 20px', 
                     borderBottom: '1px solid #374151',
@@ -151,14 +149,13 @@ const Sidebar = ({ isOpen, onClose }) => {
                             {user && (
                                 <div style={{ fontSize: '0.7rem', color: '#6B7280', marginTop: '4px' }}>
                                     {user.firstName} {user.lastName}
-                                    {user.role === 'employee' && <span style={{ color: '#F59E0B' }}> (Employé)</span>}
+                                    {user.role === 'employee' && <span style={{ color: '#F59E0B' }}> ({t('employee')})</span>}
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
 
-                {/* Navigation */}
                 <nav style={{ flex: 1, padding: '0 12px' }}>
                     {navItems.map((item) => (
                         <NavLink
@@ -191,7 +188,6 @@ const Sidebar = ({ isOpen, onClose }) => {
 
                 <div style={{ height: '1px', backgroundColor: '#374151', margin: '16px 20px' }} />
 
-                {/* Déconnexion */}
                 <div style={{ padding: '12px 20px', marginBottom: '24px' }}>
                     <button
                         onClick={handleLogout}
@@ -226,7 +222,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             </aside>
 
             <style>{`
-                /* Overlay pour mobile */
                 @media (max-width: 768px) {
                     .sidebar-overlay {
                         display: block !important;

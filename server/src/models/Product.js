@@ -76,7 +76,7 @@ const ProductSchema = new mongoose.Schema({
     },
     unit: { 
         type: String, 
-        enum: ['Comprimés', 'Capsules', 'Plaquettes', 'Ampoules', 'Boîtes', 'Bouteille'], 
+        enum: ['Comprimés', 'Capsules', 'Plaquettes', 'Ampoules', 'Boîtes', 'Boîte(s)', 'Bouteille'], // ⭐ Ajout de 'Boîte(s)'
         default: 'Boîtes' 
     },
     reorderPoint: { 

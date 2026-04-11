@@ -1,5 +1,6 @@
 /**
  * PAGE ABONNEMENT - Gestion des plans
+ * ⭐ Prix affichés en EUR (conformité Stripe)
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -17,6 +18,16 @@ const Subscription = () => {
     const [success, setSuccess] = useState('');
     const [subscription, setSubscription] = useState(null);
     const [plans, setPlans] = useState([]);
+
+    // ⭐ Formatage du prix en EUR (divise par 100 car Stripe stocke en centimes)
+    const formatPriceEUR = (priceInCents) => {
+        if (!priceInCents && priceInCents !== 0) return '0,00 €';
+        const euros = priceInCents / 100;
+        return euros.toLocaleString('fr-FR', { 
+            minimumFractionDigits: 2, 
+            maximumFractionDigits: 2 
+        }) + ' €';
+    };
 
     const fetchSubscription = useCallback(async () => {
         try {
@@ -74,10 +85,6 @@ const Subscription = () => {
         } finally {
             setLoadingPayment(false);
         }
-    };
-
-    const formatPrice = (price) => {
-        return price?.toLocaleString() || 0;
     };
 
     if (loading) return <Loader />;
@@ -168,7 +175,7 @@ const Subscription = () => {
                         <div className="card-header" style={{ textAlign: 'center' }}>
                             <h3>{plan.name}</h3>
                             <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--primary-500)' }}>
-                                {plan.price === 0 ? t('free') : `${formatPrice(plan.price)} GNF`}
+                                {plan.price === 0 ? t('free') : formatPriceEUR(plan.price)}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
                                 / {plan.duration} {t('days') || 'jours'}
@@ -212,7 +219,7 @@ const Subscription = () => {
                                     disabled={saving || loadingPayment}
                                 >
                                     {loadingPayment ? '⏳ ' + (t('redirecting') || 'Redirection...') : 
-                                     plan.price === 0 ? t('trial') : `${t('subscribe')} ${formatPrice(plan.price)} GNF`}
+                                     plan.price === 0 ? t('trial') : `${t('subscribe')} - ${formatPriceEUR(plan.price)}`}
                                 </button>
                             )}
                             {subscription?.plan === plan.id && (
