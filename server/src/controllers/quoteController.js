@@ -7,7 +7,55 @@ const Quote = require('../models/Quote');
 const Product = require('../models/Product');
 const Company = require('../models/Company');
 const Establishment = require('../models/Establishment');
+const Counter = require('../models/Counter');
 const mongoose = require('mongoose');
+
+// ==================== FONCTIONS UTILITAIRES ====================
+
+// Fonction pour générer le numéro de devis (ATOMIQUE avec Counter)
+async function generateQuoteNumber(companyId) {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const prefix = `DEV-${year}${month}${day}`;
+    
+    const counterId = `quote-${prefix}-${companyId}`;
+    
+    const counter = await Counter.findOneAndUpdate(
+        { _id: counterId },
+        { $inc: { seq: 1 } },
+        { upsert: true, returnDocument: 'after' }
+    );
+    
+    const sequence = String(counter.seq).padStart(4, '0');
+    return `${prefix}-${sequence}`;
+}
+
+// Créer un devis avec retry automatique
+async function createQuoteWithRetry(quoteData, userId, companyId, maxRetries = 5) {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            const quoteNumber = await generateQuoteNumber(companyId);
+            
+            const quote = await Quote.create({
+                ...quoteData,
+                companyId,
+                quoteNumber,
+                userId
+            });
+            
+            return { success: true, quote };
+        } catch (error) {
+            if (error.code === 11000 && error.keyPattern?.quoteNumber) {
+                console.log(`⚠️ Doublon devis détecté, nouvelle tentative (${attempt + 1}/${maxRetries})...`);
+                continue;
+            }
+            throw error;
+        }
+    }
+    throw new Error('Impossible de générer un numéro de devis unique après plusieurs tentatives');
+}
 
 // ==================== CRUD DEVIS ====================
 
@@ -36,7 +84,6 @@ exports.createQuote = async (req, res) => {
             });
         }
 
-        // Vérifier l'établissement si nécessaire
         const userEstablishments = await Establishment.find({ companyId: req.user.companyId });
         const hasEstablishments = userEstablishments.length > 0;
 
@@ -98,12 +145,9 @@ exports.createQuote = async (req, res) => {
         }
 
         const total = Math.max(0, subtotal - discountAmount);
-        const quoteNumber = await Quote.generateQuoteNumber(req.user.companyId);
 
-        const quote = await Quote.create({
-            companyId: req.user.companyId,
+        const quoteData = {
             establishmentId: establishmentId && establishmentId !== '' ? establishmentId : null,
-            quoteNumber,
             items: quoteItems,
             subtotal,
             discount: discountAmount,
@@ -113,9 +157,19 @@ exports.createQuote = async (req, res) => {
             customerPhone: customerPhone || '',
             prescriptionNumber: prescriptionNumber || '',
             notes: notes || '',
-            userId: req.user.id,
-            status: 'sent' // ⭐ Créé directement en statut 'sent'
-        });
+            status: 'sent'
+        };
+
+        const result = await createQuoteWithRetry(quoteData, req.user.id, req.user.companyId);
+
+        if (!result.success) {
+            return res.status(500).json({
+                success: false,
+                message: 'Erreur lors de la création du devis'
+            });
+        }
+
+        const quote = result.quote;
 
         await quote.populate('userId', 'firstName lastName');
         await quote.populate('establishmentId', 'name');
@@ -154,7 +208,6 @@ exports.getQuotes = async (req, res) => {
             .skip((parseInt(page) - 1) * parseInt(limit))
             .lean({ virtuals: true });
 
-        // Ajouter manuellement canBeConverted et isExpired
         const quotesWithVirtuals = quotes.map(quote => {
             const isExpired = new Date(quote.validUntil) < new Date();
             const isValidStatus = quote.status === 'sent' || quote.status === 'draft';
@@ -210,7 +263,6 @@ exports.getQuote = async (req, res) => {
             });
         }
 
-        // Ajouter manuellement les virtuels
         const isExpired = new Date(quote.validUntil) < new Date();
         const isValidStatus = quote.status === 'sent' || quote.status === 'draft';
         const canBeConverted = isValidStatus && !quote.convertedToSaleId && !isExpired;
@@ -338,7 +390,6 @@ exports.convertQuoteToSale = async (req, res) => {
             });
         }
 
-        // Vérifier si convertible
         const isExpired = new Date(quote.validUntil) < new Date();
         const isValidStatus = quote.status === 'sent' || quote.status === 'draft';
         const canBeConverted = isValidStatus && !quote.convertedToSaleId && !isExpired;
