@@ -2,6 +2,7 @@
  * PAGE VENTES - Point de vente et historique
  * ⭐ Support multi-devises dynamique
  * ⭐ Traductions FR/EN complètes
+ * ⭐ Correction saisie remise + TVA sans arrondi
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -40,7 +41,7 @@ const Sales = () => {
     const [customerPhone, setCustomerPhone] = useState('');
     const [prescriptionNumber, setPrescriptionNumber] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('cash');
-    const [discount, setDiscount] = useState(0);
+    const [discount, setDiscount] = useState('');
     const [discountType, setDiscountType] = useState('fixed');
     
     const [showHistory, setShowHistory] = useState(false);
@@ -180,13 +181,14 @@ const Sales = () => {
     };
 
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
-    const discountAmount = discountType === 'percentage' ? (subtotal * discount / 100) : discount;
+    const discountAmount = discountType === 'percentage' ? (subtotal * (parseFloat(discount) || 0) / 100) : (parseFloat(discount) || 0);
+    // ⭐ Correction TVA : pas d'arrondi pour afficher les centimes
     const taxAmount = (subtotal - discountAmount) * 0.18;
     const total = subtotal - discountAmount + taxAmount;
 
     const clearCart = () => {
         setCart([]);
-        setDiscount(0);
+        setDiscount('');
     };
 
     const validateSale = () => {
@@ -195,6 +197,14 @@ const Sales = () => {
             return false;
         }
         return true;
+    };
+
+    // ⭐ Gestionnaire de saisie pour la remise (accepte , et .)
+    const handleDiscountChange = (e) => {
+        let value = e.target.value.replace(',', '.');
+        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+            setDiscount(value);
+        }
     };
 
     const handleConfirmSale = async () => {
@@ -210,7 +220,7 @@ const Sales = () => {
                     quantity: item.quantity,
                     unitPrice: item.unitPrice
                 })),
-                discount,
+                discount: parseFloat(discount) || 0,
                 discountType,
                 paymentMethod,
                 customerName: customerName || undefined,
@@ -268,9 +278,10 @@ const Sales = () => {
         }
     }, [showHistory]);
 
+    // ⭐ Formatage du prix avec 2 décimales
     const formatPrice = (price) => {
         if (price === undefined || price === null) return '0';
-        return Math.round(price).toLocaleString('fr-FR');
+        return price.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     };
 
     return (
@@ -450,7 +461,14 @@ const Sales = () => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
                                     <span>{t('discount')}</span>
                                     <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
-                                        <input type="number" style={{ width: '80px', textAlign: 'right' }} className="form-input" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} min="0" />
+                                        <input 
+                                            type="text" 
+                                            style={{ width: '80px', textAlign: 'right' }} 
+                                            className="form-input" 
+                                            value={discount} 
+                                            onChange={handleDiscountChange} 
+                                            placeholder="0"
+                                        />
                                         <select className="form-select" style={{ width: '80px' }} value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
                                             <option value="fixed">{currency}</option>
                                             <option value="percentage">%</option>

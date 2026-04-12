@@ -2,6 +2,7 @@
  * PAGE PRODUITS - Gestion complète du stock
  * ⭐ Support multi-devises dynamique
  * ⭐ Traductions FR/EN complètes
+ * ⭐ Correction saisie prix (accepte , et .)
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -54,8 +55,8 @@ const Products = () => {
         unit: 'Boîtes',
         reorderPoint: 10,
         location: '',
-        purchasePrice: 0,
-        sellingPrice: 0,
+        purchasePrice: '',
+        sellingPrice: '',
         manufacturingDate: '',
         expirationDate: '',
         prescriptionRequired: false,
@@ -71,7 +72,6 @@ const Products = () => {
             }
         } catch (err) {
             console.error('Erreur chargement devise:', err);
-            // Garde GNF par défaut
         }
     }, []);
 
@@ -139,6 +139,18 @@ const Products = () => {
         setFilteredProducts(results);
     }, [products, filters]);
 
+    // ⭐ Gestionnaire de saisie pour les prix (accepte , et .)
+    const handlePriceChange = (e) => {
+        const { name, value } = e.target;
+        // Remplacer la virgule par un point
+        let cleanValue = value.replace(',', '.');
+        
+        // Autoriser uniquement les nombres et un point décimal
+        if (cleanValue === '' || /^\d*\.?\d*$/.test(cleanValue)) {
+            setFormData({ ...formData, [name]: cleanValue });
+        }
+    };
+
     // ⭐ Validation des prix avec devise dynamique
     const validatePrices = () => {
         const purchase = parseFloat(formData.purchasePrice) || 0;
@@ -197,8 +209,8 @@ const Products = () => {
             unit: 'Boîtes',
             reorderPoint: 10,
             location: '',
-            purchasePrice: 0,
-            sellingPrice: 0,
+            purchasePrice: '',
+            sellingPrice: '',
             manufacturingDate: '',
             expirationDate: '',
             prescriptionRequired: false,
@@ -226,8 +238,8 @@ const Products = () => {
             unit: product.unit || 'Boîtes',
             reorderPoint: product.reorderPoint || 10,
             location: product.location || '',
-            purchasePrice: product.purchasePrice || 0,
-            sellingPrice: product.sellingPrice || 0,
+            purchasePrice: product.purchasePrice?.toString() || '',
+            sellingPrice: product.sellingPrice?.toString() || '',
             manufacturingDate: product.manufacturingDate ? product.manufacturingDate.split('T')[0] : '',
             expirationDate: product.expirationDate ? product.expirationDate.split('T')[0] : '',
             prescriptionRequired: product.prescriptionRequired || false,
@@ -257,11 +269,15 @@ const Products = () => {
         try {
             const shouldSendEstablishment = establishments.length > 0 && selectedEstablishment;
             
+            // Convertir les prix en nombres
+            const productData = {
+                ...formData,
+                purchasePrice: parseFloat(formData.purchasePrice) || 0,
+                sellingPrice: parseFloat(formData.sellingPrice) || 0,
+                establishmentId: shouldSendEstablishment ? selectedEstablishment : undefined
+            };
+            
             if (modalMode === 'create') {
-                const productData = {
-                    ...formData,
-                    establishmentId: shouldSendEstablishment ? selectedEstablishment : undefined
-                };
                 await productService.createProduct(productData);
                 setSuccess(t('product_created'));
             } else {
@@ -277,8 +293,8 @@ const Products = () => {
                     unit: formData.unit,
                     reorderPoint: formData.reorderPoint,
                     location: formData.location,
-                    purchasePrice: formData.purchasePrice,
-                    sellingPrice: formData.sellingPrice,
+                    purchasePrice: parseFloat(formData.purchasePrice) || 0,
+                    sellingPrice: parseFloat(formData.sellingPrice) || 0,
                     manufacturingDate: formData.manufacturingDate || null,
                     expirationDate: formData.expirationDate,
                     prescriptionRequired: formData.prescriptionRequired,
@@ -672,11 +688,27 @@ const Products = () => {
                     <div className="form-row">
                         <div className="form-group">
                             <label className="form-label required">{t('purchase_price_label')} ({currency})</label>
-                            <input type="number" name="purchasePrice" className="form-input" value={formData.purchasePrice} onChange={handleChange} min="0" required />
+                            <input 
+                                type="text" 
+                                name="purchasePrice" 
+                                className="form-input" 
+                                value={formData.purchasePrice} 
+                                onChange={handlePriceChange} 
+                                placeholder="0.00"
+                                required 
+                            />
                         </div>
                         <div className="form-group">
                             <label className="form-label required">{t('selling_price_label')} ({currency})</label>
-                            <input type="number" name="sellingPrice" className="form-input" value={formData.sellingPrice} onChange={handleChange} min="0" required />
+                            <input 
+                                type="text" 
+                                name="sellingPrice" 
+                                className="form-input" 
+                                value={formData.sellingPrice} 
+                                onChange={handlePriceChange} 
+                                placeholder="0.00"
+                                required 
+                            />
                         </div>
                     </div>
 
