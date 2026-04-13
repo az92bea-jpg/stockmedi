@@ -48,3 +48,12 @@ export const transferStock = async (data) => {
     const response = await api.post('/establishments/transfer', data);
     return response;
 };
+
+/**
+ * Migrer les produits sans établissement vers un établissement
+ * @param {string} id - ID de l'établissement
+ */
+export const migrateProductsToEstablishment = async (id) => {
+    const response = await api.post(`/establishments/${id}/migrate-products`);
+    return response;
+};

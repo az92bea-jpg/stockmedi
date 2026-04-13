@@ -58,4 +58,30 @@ const hasPermission = (permission) => {
     };
 };
 
-module.exports = { protect, authorize, hasPermission };
+// ⭐ Vérifier l'accès à un établissement spécifique
+const hasEstablishmentAccess = (req, res, next) => {
+    // Owner et super-admin ont accès à tout
+    if (req.user.role === 'owner' || req.user.role === 'super-admin') {
+        return next();
+    }
+    
+    // Récupérer l'ID de l'établissement depuis les paramètres ou le body
+    const establishmentId = req.params.establishmentId || req.body.establishmentId || req.query.establishmentId;
+    
+    // Si pas d'établissement spécifié, on laisse passer (sera filtré plus tard)
+    if (!establishmentId) {
+        return next();
+    }
+    
+    // Vérifier si l'employé a accès à cet établissement
+    if (!req.user.hasAccessToEstablishment(establishmentId)) {
+        return res.status(403).json({
+            success: false,
+            message: 'Accès refusé à cet établissement'
+        });
+    }
+    
+    next();
+};
+
+module.exports = { protect, authorize, hasPermission, hasEstablishmentAccess };

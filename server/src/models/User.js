@@ -33,8 +33,8 @@ const UserSchema = new mongoose.Schema({
         enum: ['super-admin', 'owner', 'employee'], 
         default: 'employee' 
     },
-discipline: {
-    type: String,
+    discipline: {
+        type: String,
         enum: [
             'pharmacien', 'pharmacist',
             'médecin', 'doctor',
@@ -47,8 +47,8 @@ discipline: {
         ],
         default: 'autre'
     },
-permissions: { 
-    type: [String], 
+    permissions: { 
+        type: [String], 
         enum: [
             'view_dashboard',
             'make_sales',
@@ -64,6 +64,11 @@ permissions: {
         ],
         default: [] 
     },
+    // ⭐ Établissements auxquels l'employé a accès (plan Enterprise uniquement)
+    establishments: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Establishment'
+    }],
     companyId: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Company', 
@@ -81,9 +86,67 @@ permissions: {
     timestamps: true 
 });
 
-// Méthode pour comparer les mots de passe
+// ==================== MÉTHODES ====================
+
+/**
+ * Comparer le mot de passe fourni avec le hash stocké
+ */
 UserSchema.methods.matchPassword = function(enteredPassword) {
     return hashPassword(enteredPassword) === this.password;
+};
+
+/**
+ * Vérifier si l'utilisateur a une permission spécifique
+ */
+UserSchema.methods.hasPermission = function(permission) {
+    if (this.role === 'owner' || this.role === 'super-admin') {
+        return true;
+    }
+    return this.permissions && this.permissions.includes(permission);
+};
+
+/**
+ * Vérifier si l'utilisateur a accès à un établissement
+ */
+UserSchema.methods.hasAccessToEstablishment = function(establishmentId) {
+    // Owner et super-admin ont accès à tout
+    if (this.role === 'owner' || this.role === 'super-admin') {
+        return true;
+    }
+    
+    // Si l'employé n'a pas de restriction, accès à tout
+    if (!this.establishments || this.establishments.length === 0) {
+        return true;
+    }
+    
+    // Vérifier si l'établissement est dans la liste
+    return this.establishments.some(id => id.toString() === establishmentId.toString());
+};
+
+/**
+ * Récupérer les IDs des établissements accessibles
+ * @returns {Array|null} - null = tous les établissements, [] = aucun, [id1, id2] = liste
+ */
+UserSchema.methods.getAccessibleEstablishmentIds = function() {
+    // Owner et super-admin : tous les établissements
+    if (this.role === 'owner' || this.role === 'super-admin') {
+        return null; // null signifie "tous"
+    }
+    
+    // Employé avec restrictions : retourner la liste
+    if (this.establishments && this.establishments.length > 0) {
+        return this.establishments;
+    }
+    
+    // Employé sans restriction : tous les établissements
+    return null;
+};
+
+/**
+ * Vérifier si l'utilisateur est admin (owner ou super-admin)
+ */
+UserSchema.methods.isAdmin = function() {
+    return this.role === 'owner' || this.role === 'super-admin';
 };
 
 module.exports = mongoose.model('User', UserSchema);

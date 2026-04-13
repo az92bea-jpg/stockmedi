@@ -29,6 +29,7 @@ import Employees from './pages/settings/Employees';
 import Subscription from './pages/settings/Subscription';
 import Archives from './pages/archives/Archives';
 import Establishments from './pages/settings/Establishments';
+import LocalPayment from './pages/payment/LocalPayment'; // ⭐ Ajout
 
 // Pages Admin
 import AdminDashboard from './components/admin/AdminDashboard';
@@ -102,6 +103,13 @@ function App() {
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/contact" element={<Contact />} />
                     
+                    {/* ⭐ Route de paiement local (accessible sans Layout) */}
+                    <Route path="/local-payment" element={
+                        <ProtectedRoute>
+                            <LocalPayment />
+                        </ProtectedRoute>
+                    } />
+                    
                     {/* Routes protégées (avec Layout) */}
                     <Route path="/" element={
                         <ProtectedRoute>
@@ -117,8 +125,6 @@ function App() {
                         <Route path="quotes" element={<Quotes />} />
                         <Route path="quotes/new" element={<NewQuote />} />
                         <Route path="quotes/:id" element={<QuoteDetail />} />
-
-
                         
                         {/* Routes réservées au propriétaire */}
                         <Route path="employees" element={

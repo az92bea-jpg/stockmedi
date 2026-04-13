@@ -8,6 +8,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../../services/api';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
+import Icon from '../../components/ui/Icon';
 import { useLanguage } from '../../context/LanguageContext';
 
 const ResetPassword = () => {
@@ -122,8 +123,9 @@ const ResetPassword = () => {
                 padding: '32px'
             }}>
                 <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                    <div style={{ fontSize: '3rem' }}>💊</div>
-                    <h1 style={{ color: '#0F6B3A', marginBottom: '8px' }}>StockMedi</h1>
+                    <div style={{ marginBottom: '8px' }}>
+                        <Icon name="logo" category="nav" fallback="💊 StockMedi" style={{ width: 'auto', height: '60px' }} />
+                    </div>
                     <p style={{ color: '#6B7280', fontSize: '0.875rem' }}>
                         {validToken ? t('new_password_title') : t('reset_title')}
                     </p>
@@ -174,7 +176,7 @@ const ResetPassword = () => {
                                         color: '#6B7280'
                                     }}
                                 >
-                                    {showPassword ? '🙈' : '👁️'}
+                                    <Icon name={showPassword ? 'eye-off' : 'eye'} category="actions" fallback={showPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
                                 </button>
                             </div>
                         </div>
@@ -208,7 +210,7 @@ const ResetPassword = () => {
                                         color: '#6B7280'
                                     }}
                                 >
-                                    {showConfirmPassword ? '🙈' : '👁️'}
+                                    <Icon name={null} category={null} fallback={showConfirmPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
                                 </button>
                             </div>
                         </div>

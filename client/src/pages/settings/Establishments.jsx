@@ -10,13 +10,15 @@ import {
     getEstablishments,
     createEstablishment,
     updateEstablishment,
-    deleteEstablishment
+    deleteEstablishment,
+    migrateProductsToEstablishment
 } from '../../services/establishmentService';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import StockTransfer from '../../components/establishment/StockTransfer';
+import Icon from '../../components/ui/Icon';
 import { useLanguage } from '../../context/LanguageContext';
 
 const Establishments = () => {
@@ -99,36 +101,69 @@ const Establishments = () => {
         setModalOpen(true);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
 
-        if (modalMode === 'create' && subscription?.plan !== 'enterprise') {
-            setError(t('enterprise_only_create'));
-            return;
+
+   const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (modalMode === 'create' && subscription?.plan !== 'enterprise') {
+        setError(t('enterprise_only_create'));
+        return;
+    }
+
+    if (!formData.name) {
+        setError(t('establishment_name_required'));
+        return;
+    }
+
+    try {
+        let newEstablishmentId = null;
+        
+        if (modalMode === 'create') {
+            const response = await createEstablishment(formData);
+            newEstablishmentId = response.establishment?._id;
+            setSuccess(t('establishment_created'));
+        } else {
+            await updateEstablishment(selectedEstablishment._id, formData);
+            setSuccess(t('establishment_updated'));
         }
-
-        if (!formData.name) {
-            setError(t('establishment_name_required'));
-            return;
-        }
-
-        try {
-            if (modalMode === 'create') {
-                await createEstablishment(formData);
-                setSuccess(t('establishment_created'));
-            } else {
-                await updateEstablishment(selectedEstablishment._id, formData);
-                setSuccess(t('establishment_updated'));
+        
+        // Recharger les établissements
+        const estResponse = await getEstablishments();
+        setEstablishments(estResponse.establishments || []);
+        
+        // ⭐ Migration : proposer si c'est le PREMIER établissement créé
+        if (modalMode === 'create' && establishments.length === 0 && newEstablishmentId) {
+            // Compter les produits sans établissement
+            const productsResponse = await api.get('/products');
+            const productsWithoutEstablishment = productsResponse.products?.filter(p => !p.establishmentId) || [];
+            
+            if (productsWithoutEstablishment.length > 0) {
+                const shouldMigrate = window.confirm(
+                    t('migrate_products_confirm', { count: productsWithoutEstablishment.length, name: formData.name })
+                );
+                
+                if (shouldMigrate) {
+                    try {
+                        await migrateProductsToEstablishment(newEstablishmentId);
+                        setSuccess(t('products_migrated_success'));
+                    } catch (err) {
+                        console.error('Erreur migration:', err);
+                        setError(t('error_migrating_products'));
+                    }
+                }
             }
-            setModalOpen(false);
-            const estResponse = await getEstablishments();
-            setEstablishments(estResponse.establishments || []);
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-            setError(err.response?.data?.message || t('error_saving'));
         }
-    };
+        
+        setModalOpen(false);
+        setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+        setError(err.response?.data?.message || t('error_saving'));
+    }
+};
+
+
 
     const handleDelete = async () => {
         if (!deleteModal.id) return;
@@ -161,12 +196,24 @@ const Establishments = () => {
 
     const getTypeLabel = (type) => {
         const labels = {
-            pharmacy: `🏪 ${t('pharmacy')}`,
-            clinic: `🏥 ${t('clinic')}`,
-            hospital: `🏨 ${t('hospital')}`,
-            warehouse: `📦 ${t('warehouse')}`
+            pharmacy: { icon: 'pharmacy', category: 'establishment', fallback: '🏪', label: t('pharmacy') },
+            clinic: { icon: 'clinic', category: 'establishment', fallback: '🏥', label: t('clinic') },
+            hospital: { icon: 'hospital', category: 'establishment', fallback: '🏨', label: t('hospital') },
+            warehouse: { icon: 'products', category: 'nav', fallback: '📦', label: t('warehouse') }
         };
-        return labels[type] || type;
+        const item = labels[type];
+        if (!item) return type;
+        
+        return (
+            <>
+                {item.icon ? (
+                    <Icon name={item.icon} category={item.category} fallback={item.fallback} style={{ width: '16px', height: '16px', marginRight: '4px' }} />
+                ) : (
+                    <span style={{ marginRight: '4px' }}>{item.fallback}</span>
+                )}
+                {item.label}
+            </>
+        );
     };
 
     if (loading) return <Loader />;
@@ -182,17 +229,22 @@ const Establishments = () => {
                 gap: 'var(--spacing-4)'
             }}>
                 <div>
-                    <h2>🏢 {t('establishments_title')}</h2>
+                    <h2>
+                        <Icon name="establishment" category="nav" fallback="🏢" style={{ width: '24px', height: '24px', marginRight: '8px' }} />
+                        {t('establishments_title')}
+                    </h2>
                     <p style={{ color: 'var(--gray-500)' }}>
                         {t('establishments_subtitle')}
                     </p>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--spacing-3)' }}>
                     <button className="btn btn-secondary" onClick={() => setShowTransferModal(true)}>
-                        📦 {t('transfer_stock')}
+                        <Icon name="products" category="nav" fallback="📦" style={{ width: '16px', height: '16px', marginRight: '4px' }} />
+                        {t('transfer_stock')}
                     </button>
                     <button className="btn btn-primary" onClick={openCreateModal}>
-                        + {t('new_establishment')}
+                        <Icon name="add" category="actions" fallback="+" style={{ width: '16px', height: '16px', marginRight: '4px' }} />
+                        {t('new_establishment')}
                     </button>
                 </div>
             </div>
@@ -203,9 +255,13 @@ const Establishments = () => {
             {subscription?.plan !== 'enterprise' ? (
                 <div className="card">
                     <div className="card-body" style={{ textAlign: 'center', padding: 'var(--spacing-8)' }}>
-                        <p>⛔ {t('enterprise_only_message')}</p>
+                        <p>
+                            <Icon name="error" category="status" fallback="⛔" style={{ width: '20px', height: '20px', marginRight: '4px' }} />
+                            {t('enterprise_only_message')}
+                        </p>
                         <Link to="/subscription" className="btn btn-primary" style={{ marginTop: 'var(--spacing-3)' }}>
-                            💎 {t('upgrade_to_enterprise')}
+                            <Icon name="subscription" category="nav" fallback="💎" style={{ width: '16px', height: '16px', marginRight: '4px' }} />
+                            {t('upgrade_to_enterprise')}
                         </Link>
                     </div>
                 </div>
@@ -255,7 +311,7 @@ const Establishments = () => {
                                                     onClick={() => openEditModal(est)}
                                                     title={t('edit')}
                                                 >
-                                                    ✏️
+                                                    <Icon name="edit" category="actions" fallback="✏️" style={{ width: '16px', height: '16px' }} />
                                                 </button>
                                                 <button
                                                     className="btn btn-sm btn-outline"
@@ -267,7 +323,7 @@ const Establishments = () => {
                                                     style={{ color: 'var(--danger)' }}
                                                     title={t('delete')}
                                                 >
-                                                    🗑️
+                                                    <Icon name="delete" category="actions" fallback="🗑️" style={{ width: '16px', height: '16px' }} />
                                                 </button>
                                             </div>
                                         </td>

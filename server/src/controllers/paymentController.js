@@ -1,18 +1,19 @@
 /**
  * CONTRÔLEUR PAIEMENT - Stripe (paiements en EUR)
  * ⭐ Conforme à Stripe : devise EUR, prix en centimes
+ * ⭐ Support paiement local / Mobile Money
  */
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Subscription = require('../models/Subscription');
 const Company = require('../models/Company');
+const nodemailer = require('nodemailer');
 
 // ⭐ Plans d'abonnement - Prix en EUR (centimes)
-// Conversion indicative basée sur un taux approximatif (1 EUR ≈ 9000 GNF)
 const PLANS = {
     basic: {
         name: 'Basic',
-        price: 500, // 5,00 EUR (≈ 45 000 GNF)
+        price: 500, // 5,00 EUR
         currency: 'eur',
         duration: 30,
         description: '500 produits, 10 employés, rapports PDF',
@@ -20,7 +21,7 @@ const PLANS = {
     },
     premium: {
         name: 'Premium',
-        price: 1000, // 10,00 EUR (≈ 90 000 GNF)
+        price: 1000, // 10,00 EUR
         currency: 'eur',
         duration: 30,
         description: '2000 produits, 30 employés, statistiques avancées',
@@ -28,13 +29,24 @@ const PLANS = {
     },
     enterprise: {
         name: 'Enterprise',
-        price: 2500, // 25,00 EUR (≈ 225 000 GNF)
+        price: 2500, // 25,00 EUR
         currency: 'eur',
         duration: 30,
         description: 'Illimité, API, support prioritaire',
         features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees', 'advanced_stats', 'multiple_locations', 'api_access', 'priority_support']
     }
 };
+
+// ⭐ Configuration email (à adapter avec vos identifiants)
+const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: process.env.EMAIL_PORT || 587,
+    secure: false,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
 
 /**
  * @desc    Créer une session de paiement Stripe
@@ -143,6 +155,117 @@ exports.stripeWebhook = async (req, res) => {
     }
 
     res.json({ received: true });
+};
+
+/**
+ * @desc    Soumettre une demande de paiement local
+ * @route   POST /api/payment/local-request
+ * @access  Private
+ */
+exports.submitLocalPaymentRequest = async (req, res) => {
+    try {
+        const {
+            fullName,
+            email,
+            phone,
+            companyName,
+            plan,
+            country,
+            contactMethod,
+            message
+        } = req.body;
+
+        // Validation
+        if (!fullName || !email || !phone || !companyName || !plan || !country) {
+            return res.status(400).json({
+                success: false,
+                message: 'Tous les champs obligatoires doivent être remplis'
+            });
+        }
+
+        const planData = PLANS[plan];
+        if (!planData) {
+            return res.status(400).json({
+                success: false,
+                message: 'Plan invalide'
+            });
+        }
+
+        const planPrice = planData.price / 100; // Conversion centimes → euros
+
+        // Construire le contenu de l'email pour l'admin
+        const adminEmailContent = `
+            <h2>📱 Nouvelle demande de paiement local</h2>
+            <hr />
+            <h3>Informations client</h3>
+            <ul>
+                <li><strong>Nom complet :</strong> ${fullName}</li>
+                <li><strong>Email :</strong> ${email}</li>
+                <li><strong>Téléphone :</strong> ${phone}</li>
+                <li><strong>Entreprise :</strong> ${companyName}</li>
+                <li><strong>Pays :</strong> ${country}</li>
+            </ul>
+            <h3>Détails de l'abonnement</h3>
+            <ul>
+                <li><strong>Plan choisi :</strong> ${planData.name}</li>
+                <li><strong>Prix :</strong> ${planPrice} € / mois</li>
+                <li><strong>Mode de contact préféré :</strong> ${contactMethod === 'email' ? 'Email' : 'WhatsApp'}</li>
+            </ul>
+            ${message ? `<h3>Message du client</h3><p>${message}</p>` : ''}
+            <hr />
+            <p><em>Cette demande a été envoyée depuis le formulaire de paiement local StockMedi.</em></p>
+        `;
+
+        // Construire le contenu de l'email pour le client
+        const clientEmailContent = `
+            <h2>✅ Votre demande a bien été reçue !</h2>
+            <p>Bonjour ${fullName.split(' ')[0]},</p>
+            <p>Nous avons bien reçu votre demande d'abonnement au plan <strong>${planData.name}</strong> (${planPrice} €/mois).</p>
+            <p>Notre équipe va traiter votre demande dans les plus brefs délais. Vous recevrez une notification par ${contactMethod === 'email' ? 'email' : 'WhatsApp'} avec les instructions pour finaliser votre paiement par Mobile Money.</p>
+            <p><strong>Numéros Mobile Money :</strong> +224 623679567 / +224 660947398</p>
+            <p><em>Veuillez attendre notre confirmation avant d'effectuer le paiement.</em></p>
+            <hr />
+            <p>Merci de votre confiance,</p>
+            <p><strong>L'équipe StockMedi</strong></p>
+            <p><small>Cet email est automatique, merci de ne pas y répondre.</small></p>
+        `;
+
+        // Envoyer l'email à l'admin
+        const adminEmail = process.env.ADMIN_EMAIL || 'admin@stockmedi.com';
+        await transporter.sendMail({
+            from: `"StockMedi" <${process.env.EMAIL_USER}>`,
+            to: adminEmail,
+            subject: `📱 [StockMedi] Demande de paiement local - ${fullName} - ${planData.name}`,
+            html: adminEmailContent
+        });
+
+        // Envoyer l'email de confirmation au client
+        await transporter.sendMail({
+            from: `"StockMedi" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: `✅ [StockMedi] Confirmation de votre demande d'abonnement`,
+            html: clientEmailContent
+        });
+
+        console.log(`📧 Email envoyé à l'admin (${adminEmail}) et au client (${email})`);
+
+        // ⭐ Notification WhatsApp à l'admin (si configuré)
+        if (contactMethod === 'whatsapp' && process.env.ADMIN_WHATSAPP) {
+            // Optionnel : intégrer l'API WhatsApp Business
+            console.log(`📱 Notification WhatsApp à envoyer à ${process.env.ADMIN_WHATSAPP}`);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Demande envoyée avec succès'
+        });
+    } catch (error) {
+        console.error('❌ Erreur soumission paiement local:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors de l\'envoi de la demande'
+        });
+    }
 };
 
 // Fonction pour activer l'abonnement après paiement

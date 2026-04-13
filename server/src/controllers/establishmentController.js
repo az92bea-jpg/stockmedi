@@ -252,3 +252,62 @@ exports.transferStock = async (req, res) => {
         res.status(500).json({ success: false, message: 'Erreur lors du transfert' });
     }
 };
+
+/**
+ * @desc    Migrer les produits sans établissement vers un établissement
+ * @route   POST /api/establishments/:id/migrate-products
+ * @access  Private (owner)
+ */
+exports.migrateProductsToEstablishment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const companyId = req.user.companyId;
+
+        // Vérifier que l'établissement appartient bien à l'entreprise
+        const establishment = await Establishment.findOne({
+            _id: id,
+            companyId: companyId
+        });
+
+        if (!establishment) {
+            return res.status(404).json({
+                success: false,
+                message: 'Établissement non trouvé'
+            });
+        }
+
+        // Compter les produits sans établissement
+        const Product = require('../models/Product');
+        const count = await Product.countDocuments({
+            companyId: companyId,
+            establishmentId: null
+        });
+
+        if (count === 0) {
+            return res.status(200).json({
+                success: true,
+                message: 'Aucun produit à migrer',
+                migratedCount: 0
+            });
+        }
+
+        // Migrer tous les produits sans établissement
+        const result = await Product.updateMany(
+            { companyId: companyId, establishmentId: null },
+            { $set: { establishmentId: id } }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: `${result.modifiedCount} produit(s) migré(s) avec succès`,
+            migratedCount: result.modifiedCount
+        });
+    } catch (error) {
+        console.error('❌ Erreur migration produits:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors de la migration des produits',
+            error: error.message
+        });
+    }
+};

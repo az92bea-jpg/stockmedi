@@ -64,7 +64,8 @@ const translations = {
         manage_products: 'Gérer les produits',
         stock_entry: 'Entrée de stock',
         no_quick_actions: 'Aucune action rapide disponible. Contactez votre administrateur.',
-        
+        migrate_products_confirm: 'Vous avez {{count}} produit(s) non rattaché(s) à un établissement. Voulez-vous les associer à "{{name}}" ?',
+
         // ========== ARCHIVES ==========
         dashboard_archives: 'Archives du tableau de bord',
         archives_subtitle: 'Consultez l\'historique des réinitialisations',
@@ -370,6 +371,10 @@ const translations = {
         activate: 'Activer',
         deactivate: 'Désactiver',
         employee_limit_reached: 'Limite d\'employés atteinte. Passez à un plan supérieur.',
+        establishments: 'Établissements',
+        all_establishments: 'Tous les établissements',
+        establishments_access: 'Accès aux établissements',
+        establishments_hint: 'Si aucun établissement n\'est sélectionné, l\'employé aura accès à tous.',
         
         // ========== PARAMÈTRES ==========
         settings_title: 'Paramètres',
@@ -412,6 +417,7 @@ const translations = {
         role_employee: 'Employé',
         expiration_hint: 'Alerte X jours avant expiration',
         logo_url: 'Logo (URL)',
+        logo_url_placeholder: 'https://...',
         
         // ========== ABONNEMENT ==========
         subscription_title: 'Abonnement',
@@ -444,6 +450,23 @@ const translations = {
         multiple_locations: 'Multi-emplacements',
         api_access: 'API Access',
         priority_support: 'Support prioritaire',
+        local_payment_title: 'Demande de paiement local',
+        full_name: 'Nom complet',
+        full_name_placeholder: 'Dr. Jean Dupont',
+        preferred_contact: 'Mode de contact préféré',
+        additional_message: 'Message (optionnel)',
+        additional_message_placeholder: 'Informations supplémentaires...',
+        payment_info_title: 'Fonctionnement du paiement local',
+        payment_info_description: 'Après validation de votre demande, vous recevrez les instructions pour effectuer le paiement par Mobile Money. Votre abonnement sera activé manuellement après réception du paiement.',
+        mobile_money_numbers: 'Numéros Mobile Money',
+        submit_request: 'Envoyer la demande',
+        payment_request_success: 'Votre demande a été envoyée avec succès ! Vous recevrez un email de confirmation.',
+        error_submitting: 'Erreur lors de l\'envoi de la demande',
+        request_received: 'Demande reçue !',
+        request_received_description: 'Merci. Votre demande a bien été enregistrée. Vous recevrez un email de confirmation dans quelques instants.',
+        local_payment_option: 'Option de paiement local',
+        local_payment_description: 'Pour les pays non supportés par Stripe, payez par Mobile Money.',
+        pay_by_mobile_money: 'Payer par Mobile Money',
         
         // ========== ÉTABLISSEMENTS ==========
         establishments_title: 'Établissements',
@@ -464,7 +487,12 @@ const translations = {
         loading_establishments: 'Chargement des établissements...',
         no_establishments_create_one: 'Aucun établissement. Créez-en un dans les paramètres.',
         establishment_count: 'établissement(s)',
-        
+        establishment_name_placeholder: 'Pharmacie du Centre',
+        street_placeholder: 'Kaloum, Rue KA001',
+        products_migrated_success: 'Produits migrés avec succès',
+        error_migrating_products: 'Erreur lors de la migration des produits',
+        restock_transfer_etc: 'Réapprovisionnement, mutation, etc.',
+
         // ========== TRANSFERT DE STOCK ==========
         transfer: 'Transférer',
         transfer_success: 'Transfert effectué avec succès',
@@ -483,8 +511,7 @@ const translations = {
         available_stock: 'Stock disponible',
         max_quantity_available: 'Quantité maximale disponible',
         reason_optional: 'Motif (optionnel)',
-        restock_transfer_etc: 'Réapprovisionnement, mutation, etc.',
-        
+
         // ========== AUTHENTIFICATION ==========
         fill_required_fields: 'Veuillez remplir tous les champs obligatoires',
         registration_success: 'Inscription réussie ! Redirection vers la connexion...',
@@ -664,6 +691,7 @@ const translations = {
         manage_products: 'Manage products',
         stock_entry: 'Stock entry',
         no_quick_actions: 'No quick actions available. Contact your administrator.',
+        migrate_products_confirm: 'You have {{count}} product(s) not assigned to any establishment. Do you want to assign them to "{{name}}"?',
         
         // ========== ARCHIVES ==========
         dashboard_archives: 'Dashboard Archives',
@@ -970,6 +998,10 @@ const translations = {
         activate: 'Activate',
         deactivate: 'Deactivate',
         employee_limit_reached: 'Employee limit reached. Upgrade to a higher plan.',
+        establishments: 'Establishments',
+        all_establishments: 'All establishments',
+        establishments_access: 'Establishment access',
+        establishments_hint: 'If no establishment is selected, the employee will have access to all.',
         
         // ========== SETTINGS ==========
         settings_title: 'Settings',
@@ -1012,6 +1044,7 @@ const translations = {
         role_employee: 'Employee',
         expiration_hint: 'Alert X days before expiration',
         logo_url: 'Logo (URL)',
+        logo_url_placeholder: 'https://...',
         
         // ========== SUBSCRIPTION ==========
         subscription_title: 'Subscription',
@@ -1044,6 +1077,23 @@ const translations = {
         multiple_locations: 'Multiple locations',
         api_access: 'API Access',
         priority_support: 'Priority support',
+        local_payment_title: 'Local Payment Request',
+        full_name: 'Full Name',
+        full_name_placeholder: 'Dr. John Doe',
+        preferred_contact: 'Preferred Contact Method',
+        additional_message: 'Additional Message (optional)',
+        additional_message_placeholder: 'Additional information...',
+        payment_info_title: 'How Local Payment Works',
+        payment_info_description: 'After your request is validated, you will receive instructions to complete the payment via Mobile Money. Your subscription will be manually activated after payment is received.',
+        mobile_money_numbers: 'Mobile Money Numbers',
+        submit_request: 'Submit Request',
+        payment_request_success: 'Your request has been sent successfully! You will receive a confirmation email.',
+        error_submitting: 'Error submitting request',
+        request_received: 'Request Received!',
+        request_received_description: 'Thank you. Your request has been recorded. You will receive a confirmation email shortly.',
+        local_payment_option: 'Local Payment Option',
+        local_payment_description: 'For countries not supported by Stripe, pay via Mobile Money.',
+        pay_by_mobile_money: 'Pay via Mobile Money',
         
         // ========== ESTABLISHMENTS ==========
         establishments_title: 'Establishments',
@@ -1064,7 +1114,12 @@ const translations = {
         loading_establishments: 'Loading establishments...',
         no_establishments_create_one: 'No establishments. Create one in settings.',
         establishment_count: 'establishment(s)',
-        
+        establishment_name_placeholder: 'Central Pharmacy',
+        street_placeholder: 'Kaloum, KA001 Street',
+        products_migrated_success: 'Products migrated successfully',
+        error_migrating_products: 'Error migrating products',
+        restock_transfer_etc: 'Restock, transfer, etc.',
+
         // ========== STOCK TRANSFER ==========
         transfer: 'Transfer',
         transfer_success: 'Transfer completed successfully',
@@ -1083,7 +1138,6 @@ const translations = {
         available_stock: 'Available stock',
         max_quantity_available: 'Maximum quantity available',
         reason_optional: 'Reason (optional)',
-        restock_transfer_etc: 'Restock, transfer, etc.',
         
         // ========== AUTHENTICATION ==========
         fill_required_fields: 'Please fill in all required fields',

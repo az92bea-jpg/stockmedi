@@ -8,6 +8,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
+import Icon from '../../components/ui/Icon';
 import { useLanguage } from '../../context/LanguageContext';
 
 const Register = () => {
@@ -127,8 +128,9 @@ const Register = () => {
                 overflowY: 'auto'
             }}>
                 <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-6)' }}>
-                    <div style={{ fontSize: '2.5rem', marginBottom: 'var(--spacing-2)' }}>💊</div>
-                    <h1 style={{ color: 'var(--primary-500)', marginBottom: 'var(--spacing-2)' }}>StockMedi</h1>
+                    <div style={{ marginBottom: 'var(--spacing-2)' }}>
+                        <Icon name="logo" category="nav" fallback="💊 StockMedi" style={{ width: 'auto', height: '60px' }} />
+                    </div>
                     <p style={{ color: 'var(--gray-500)', fontSize: '0.875rem' }}>
                         {t('create_company_space')}
                     </p>
@@ -214,7 +216,7 @@ const Register = () => {
                                         color: 'var(--gray-500)'
                                     }}
                                 >
-                                    {showPassword ? '🙈' : '👁️'}
+                                    <Icon name={showPassword ? 'eye-off' : 'eye'} category="actions" fallback={showPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
                                 </button>
                             </div>
                         </div>
@@ -247,7 +249,7 @@ const Register = () => {
                                         color: 'var(--gray-500)'
                                     }}
                                 >
-                                    {showConfirmPassword ? '🙈' : '👁️'}
+                                    <Icon name={showConfirmPassword ? 'eye-off' : 'eye'} category="actions" fallback={showConfirmPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
                                 </button>
                             </div>
                         </div>

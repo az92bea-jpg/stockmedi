@@ -382,3 +382,39 @@ exports.generateSalesExcel = async (req, res) => {
         });
     }
 };
+/**
+ * @desc    Rapport d'inventaire par établissement
+ * @route   GET /api/reports/inventory/establishment/:establishmentId
+ * @access  Private
+ */
+exports.getInventoryByEstablishment = async (req, res) => {
+    try {
+        const { establishmentId } = req.params;
+        
+        // Vérifier l'accès (déjà fait par le middleware, mais double vérification)
+        if (!req.user.hasAccessToEstablishment(establishmentId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Accès refusé à cet établissement'
+            });
+        }
+        
+        const products = await Product.find({
+            companyId: req.user.companyId,
+            establishmentId: establishmentId,
+            isActive: true
+        }).populate('establishmentId', 'name');
+        
+        res.json({
+            success: true,
+            establishmentId,
+            products
+        });
+    } catch (error) {
+        console.error('❌ Erreur rapport établissement:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors de la génération du rapport'
+        });
+    }
+};

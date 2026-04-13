@@ -1,5 +1,6 @@
 /**
  * CONTRÔLEUR PRODUIT
+ * ⭐ Support filtrage par établissements accessibles (employés)
  */
 
 const Product = require('../models/Product');
@@ -8,6 +9,7 @@ const mongoose = require('mongoose');
 
 /**
  * @desc    Récupérer tous les produits
+ * ⭐ Filtrage automatique par établissements accessibles pour les employés
  */
 exports.getProducts = async (req, res) => {
     try {
@@ -15,8 +17,28 @@ exports.getProducts = async (req, res) => {
         
         const query = { companyId: req.user.companyId, isActive: true };
         
+        // ⭐ Filtrer par établissements accessibles pour les employés
+        const accessibleIds = req.user.getAccessibleEstablishmentIds();
+        if (accessibleIds !== null) {
+            if (accessibleIds.length === 0) {
+                // L'employé n'a accès à aucun établissement
+                return res.json({
+                    success: true,
+                    products: [],
+                    total: 0,
+                    page: parseInt(page),
+                    pages: 0
+                });
+            }
+            query.establishmentId = { $in: accessibleIds };
+        }
+        
         if (search) {
-            query.$text = { $search: search };
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { genericName: { $regex: search, $options: 'i' } },
+                { barcode: { $regex: search, $options: 'i' } }
+            ];
         }
         if (category) {
             query.category = category;
@@ -25,14 +47,14 @@ exports.getProducts = async (req, res) => {
             query.quantity = 0;
         } else if (stockStatus === 'low_stock') {
             query.quantity = { $gt: 0 };
-            query.$expr = { $lte: ["$quantity", "$reorderPoint"] };
+            query.$expr = { $lte: ['$quantity', '$reorderPoint'] };
         }
         
         const products = await Product.find(query)
-            .populate('establishmentId', 'name')
+            .populate('establishmentId', 'name type')
             .sort({ createdAt: -1 })
-            .limit(limit * 1)
-            .skip((page - 1) * limit);
+            .limit(parseInt(limit))
+            .skip((parseInt(page) - 1) * parseInt(limit));
         
         const total = await Product.countDocuments(query);
         
@@ -41,10 +63,10 @@ exports.getProducts = async (req, res) => {
             products,
             total,
             page: parseInt(page),
-            pages: Math.ceil(total / limit)
+            pages: Math.ceil(total / parseInt(limit))
         });
     } catch (error) {
-        console.error('Erreur récupération produits:', error);
+        console.error('❌ Erreur récupération produits:', error);
         res.status(500).json({
             success: false,
             message: 'Erreur lors de la récupération des produits',
@@ -55,13 +77,14 @@ exports.getProducts = async (req, res) => {
 
 /**
  * @desc    Récupérer un produit par ID
+ * ⭐ Vérification de l'accès à l'établissement du produit
  */
 exports.getProduct = async (req, res) => {
     try {
         const product = await Product.findOne({
             _id: req.params.id,
             companyId: req.user.companyId
-        }).populate('establishmentId', 'name');
+        }).populate('establishmentId', 'name type');
 
         if (!product) {
             return res.status(404).json({
@@ -70,12 +93,20 @@ exports.getProduct = async (req, res) => {
             });
         }
 
+        // ⭐ Vérifier que l'employé a accès à l'établissement du produit
+        if (product.establishmentId && !req.user.hasAccessToEstablishment(product.establishmentId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Accès refusé à cet établissement'
+            });
+        }
+
         res.json({
             success: true,
             product
         });
     } catch (error) {
-        console.error('Erreur récupération produit:', error);
+        console.error('❌ Erreur récupération produit:', error);
         res.status(500).json({
             success: false,
             message: 'Erreur lors de la récupération du produit',
@@ -86,6 +117,7 @@ exports.getProduct = async (req, res) => {
 
 /**
  * @desc    Créer un nouveau produit
+ * ⭐ Vérification de l'accès à l'établissement
  */
 exports.createProduct = async (req, res) => {
     try {
@@ -98,19 +130,20 @@ exports.createProduct = async (req, res) => {
             establishmentId
         } = req.body;
 
+        // Validations de base
         if (!name) {
             return res.status(400).json({
                 success: false,
                 message: 'Le nom du produit est requis'
             });
         }
-        if (!purchasePrice) {
+        if (!purchasePrice && purchasePrice !== 0) {
             return res.status(400).json({
                 success: false,
                 message: 'Le prix d\'achat est requis'
             });
         }
-        if (!sellingPrice) {
+        if (!sellingPrice && sellingPrice !== 0) {
             return res.status(400).json({
                 success: false,
                 message: 'Le prix de vente est requis'
@@ -123,45 +156,55 @@ exports.createProduct = async (req, res) => {
             });
         }
 
-        // ⭐ Vérifier si l'utilisateur a des établissements (plan Enterprise)
+        // Vérifier si l'utilisateur a des établissements
         const userEstablishments = await Establishment.find({ companyId: req.user.companyId });
         const hasEstablishments = userEstablishments.length > 0;
 
-        // ⭐ Si l'utilisateur a des établissements, il doit fournir un establishmentId valide
-        if (hasEstablishments && (!establishmentId || establishmentId === '')) {
-            return res.status(400).json({
-                success: false,
-                message: 'L\'établissement est requis pour créer un produit'
-            });
+        // Si l'utilisateur a des établissements, il doit en fournir un
+        let cleanEstablishmentId = null;
+        if (hasEstablishments) {
+            if (!establishmentId || establishmentId === '') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'L\'établissement est requis pour créer un produit'
+                });
+            }
+            cleanEstablishmentId = establishmentId;
+            
+            // ⭐ Vérifier que l'employé a accès à cet établissement
+            if (!req.user.hasAccessToEstablishment(cleanEstablishmentId)) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Accès refusé à cet établissement'
+                });
+            }
         }
-
-        // ⭐ Nettoyer establishmentId (undefined si chaîne vide ou pas d'établissements)
-        const cleanEstablishmentId = (hasEstablishments && establishmentId && establishmentId !== '') ? establishmentId : null;
-        
-        // ⭐ Convertir la quantité en nombre
-        const productQuantity = parseInt(quantity) || 0;
 
         const product = await Product.create({
             companyId: req.user.companyId,
             name,
+            type: req.body.type || 'Générique',
             genericName: genericName || '',
-            category: category || 'médicament',
+            category: category || 'Médicament',
+            subCategory: req.body.subCategory || '',
             manufacturer: manufacturer || '',
             batchNumber: batchNumber || '',
             barcode: barcode || '',
             establishmentId: cleanEstablishmentId,
-            quantity: productQuantity,
-            unit: unit || 'boîte(s)',
+            quantity: parseInt(quantity) || 0,
+            unit: unit || 'Boîtes',
             reorderPoint: reorderPoint || 10,
             location: location || '',
-            purchasePrice: parseFloat(purchasePrice),
-            sellingPrice: parseFloat(sellingPrice),
+            purchasePrice: parseFloat(purchasePrice) || 0,
+            sellingPrice: parseFloat(sellingPrice) || 0,
             manufacturingDate: manufacturingDate || null,
             expirationDate,
             prescriptionRequired: prescriptionRequired || false,
             description: description || '',
             isActive: true
         });
+
+        await product.populate('establishmentId', 'name type');
 
         res.status(201).json({
             success: true,
@@ -179,6 +222,7 @@ exports.createProduct = async (req, res) => {
 
 /**
  * @desc    Mettre à jour un produit
+ * ⭐ Vérification de l'accès à l'établissement
  */
 exports.updateProduct = async (req, res) => {
     try {
@@ -194,11 +238,29 @@ exports.updateProduct = async (req, res) => {
             });
         }
 
+        // ⭐ Vérifier l'accès à l'établissement actuel
+        if (product.establishmentId && !req.user.hasAccessToEstablishment(product.establishmentId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Accès refusé à cet établissement'
+            });
+        }
+
+        // ⭐ Si changement d'établissement, vérifier l'accès au nouveau
+        if (req.body.establishmentId && req.body.establishmentId !== product.establishmentId?.toString()) {
+            if (!req.user.hasAccessToEstablishment(req.body.establishmentId)) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Accès refusé au nouvel établissement'
+                });
+            }
+        }
+
         const allowedUpdates = [
-            'name', 'genericName', 'category', 'manufacturer', 
-            'batchNumber', 'barcode', 'unit', 'reorderPoint', 
-            'location', 'purchasePrice', 'sellingPrice', 
-            'manufacturingDate', 'expirationDate', 
+            'name', 'type', 'genericName', 'category', 'subCategory', 'manufacturer',
+            'batchNumber', 'barcode', 'unit', 'reorderPoint',
+            'location', 'purchasePrice', 'sellingPrice',
+            'manufacturingDate', 'expirationDate',
             'prescriptionRequired', 'description', 'quantity', 'establishmentId'
         ];
         
@@ -209,6 +271,7 @@ exports.updateProduct = async (req, res) => {
         });
 
         await product.save();
+        await product.populate('establishmentId', 'name type');
 
         res.json({
             success: true,
@@ -226,6 +289,7 @@ exports.updateProduct = async (req, res) => {
 
 /**
  * @desc    Supprimer un produit (archivage)
+ * ⭐ Vérification de l'accès à l'établissement
  */
 exports.deleteProduct = async (req, res) => {
     try {
@@ -238,6 +302,14 @@ exports.deleteProduct = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: 'Produit non trouvé'
+            });
+        }
+
+        // ⭐ Vérifier l'accès à l'établissement
+        if (product.establishmentId && !req.user.hasAccessToEstablishment(product.establishmentId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Accès refusé à cet établissement'
             });
         }
 
@@ -256,7 +328,7 @@ exports.deleteProduct = async (req, res) => {
             message: 'Produit archivé avec succès'
         });
     } catch (error) {
-        console.error('Erreur suppression produit:', error);
+        console.error('❌ Erreur suppression produit:', error);
         res.status(500).json({
             success: false,
             message: 'Erreur lors de la suppression du produit',
@@ -267,6 +339,7 @@ exports.deleteProduct = async (req, res) => {
 
 /**
  * @desc    Récupérer les alertes
+ * ⭐ Filtrage par établissements accessibles
  */
 exports.getAlerts = async (req, res) => {
     try {
@@ -274,32 +347,47 @@ exports.getAlerts = async (req, res) => {
         const soonExpiration = new Date();
         soonExpiration.setDate(today.getDate() + 30);
 
+        const query = { companyId: req.user.companyId, isActive: true };
+        
+        // ⭐ Filtrer par établissements accessibles
+        const accessibleIds = req.user.getAccessibleEstablishmentIds();
+        if (accessibleIds !== null) {
+            if (accessibleIds.length === 0) {
+                return res.json({
+                    success: true,
+                    alerts: {
+                        lowStock: { count: 0, items: [] },
+                        outOfStock: { count: 0, items: [] },
+                        expiringSoon: { count: 0, items: [] },
+                        expired: { count: 0, items: [] }
+                    }
+                });
+            }
+            query.establishmentId = { $in: accessibleIds };
+        }
+
         const lowStock = await Product.find({
-            companyId: req.user.companyId,
-            isActive: true,
+            ...query,
             quantity: { $gt: 0 },
-            $expr: { $lte: ["$quantity", "$reorderPoint"] }
-        }).select('name quantity reorderPoint');
+            $expr: { $lte: ['$quantity', '$reorderPoint'] }
+        }).select('name quantity reorderPoint establishmentId');
 
         const outOfStock = await Product.find({
-            companyId: req.user.companyId,
-            isActive: true,
+            ...query,
             quantity: 0
-        }).select('name quantity');
+        }).select('name quantity establishmentId');
 
         const expiringSoon = await Product.find({
-            companyId: req.user.companyId,
-            isActive: true,
+            ...query,
             expirationDate: { $gte: today, $lte: soonExpiration },
             quantity: { $gt: 0 }
-        }).select('name expirationDate quantity');
+        }).select('name expirationDate quantity establishmentId');
 
         const expired = await Product.find({
-            companyId: req.user.companyId,
-            isActive: true,
+            ...query,
             expirationDate: { $lt: today },
             quantity: { $gt: 0 }
-        }).select('name expirationDate quantity');
+        }).select('name expirationDate quantity establishmentId');
 
         res.json({
             success: true,
@@ -311,7 +399,7 @@ exports.getAlerts = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Erreur récupération alertes:', error);
+        console.error('❌ Erreur récupération alertes:', error);
         res.status(500).json({
             success: false,
             message: 'Erreur lors de la récupération des alertes',

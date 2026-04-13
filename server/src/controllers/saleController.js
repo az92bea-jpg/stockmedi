@@ -1,5 +1,6 @@
 /**
  * CONTRÔLEUR VENTES
+ * ⭐ Support filtrage par établissements accessibles (employés)
  */
 
 const Sale = require('../models/Sale');
@@ -46,17 +47,14 @@ async function createSaleWithRetry(saleData, userId, companyId, maxRetries = 5) 
             
             return { success: true, sale };
         } catch (error) {
-            // Si c'est une erreur de doublon, on réessaie
             if (error.code === 11000 && error.keyPattern?.saleNumber) {
                 console.log(`⚠️ Doublon détecté, nouvelle tentative (${attempt + 1}/${maxRetries})...`);
                 continue;
             }
-            // Sinon, on propage l'erreur
             throw error;
         }
     }
     
-    // Si on arrive ici, toutes les tentatives ont échoué
     throw new Error('Impossible de générer un numéro de vente unique après plusieurs tentatives');
 }
 
@@ -64,6 +62,7 @@ async function createSaleWithRetry(saleData, userId, companyId, maxRetries = 5) 
 
 /**
  * @desc    Créer une nouvelle vente
+ * ⭐ Vérification de l'accès à l'établissement
  */
 exports.createSale = async (req, res) => {
     try {
@@ -94,6 +93,16 @@ exports.createSale = async (req, res) => {
                 success: false,
                 message: 'Établissement requis pour la vente'
             });
+        }
+
+        // ⭐ Vérifier l'accès à l'établissement pour les employés
+        if (establishmentId && establishmentId !== '') {
+            if (!req.user.hasAccessToEstablishment(establishmentId)) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Accès refusé à cet établissement'
+                });
+            }
         }
 
         let establishment = null;
@@ -130,6 +139,14 @@ exports.createSale = async (req, res) => {
                 });
             }
 
+            // ⭐ Vérifier l'accès au produit (via son établissement)
+            if (product.establishmentId && !req.user.hasAccessToEstablishment(product.establishmentId)) {
+                return res.status(403).json({
+                    success: false,
+                    message: `Accès refusé au produit ${product.name}`
+                });
+            }
+
             const canSell = product.canBeSold(item.quantity);
             if (!canSell.can) {
                 return res.status(400).json({
@@ -163,7 +180,6 @@ exports.createSale = async (req, res) => {
         const taxAmount = (subtotal - discountAmount) * taxRate;
         const total = subtotal - discountAmount + taxAmount;
 
-        // Données de la vente
         const saleData = {
             establishmentId: establishmentId && establishmentId !== '' ? establishmentId : null,
             items: saleItems,
@@ -181,7 +197,6 @@ exports.createSale = async (req, res) => {
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
         };
 
-        // Création avec retry automatique
         const result = await createSaleWithRetry(saleData, req.user.id, req.user.companyId);
 
         if (!result.success) {
@@ -193,7 +208,6 @@ exports.createSale = async (req, res) => {
 
         const sale = result.sale;
 
-        // Populate pour le reçu
         await sale.populate('userId', 'firstName lastName email');
         await sale.populate('establishmentId', 'name address phone email');
         await sale.populate('companyId', 'name logo address phone email');
@@ -214,12 +228,28 @@ exports.createSale = async (req, res) => {
 
 /**
  * @desc    Récupérer toutes les ventes
+ * ⭐ Filtrage par établissements accessibles pour les employés
  */
 exports.getSales = async (req, res) => {
     try {
         const { page = 1, limit = 20, startDate, endDate, paymentStatus } = req.query;
 
         const query = { companyId: req.user.companyId };
+
+        // ⭐ Filtrer par établissements accessibles pour les employés
+        const accessibleIds = req.user.getAccessibleEstablishmentIds();
+        if (accessibleIds !== null) {
+            if (accessibleIds.length === 0) {
+                return res.json({
+                    success: true,
+                    sales: [],
+                    totals: { totalAmount: 0, totalDiscount: 0, totalTax: 0, count: 0 },
+                    page: parseInt(page),
+                    pages: 0
+                });
+            }
+            query.establishmentId = { $in: accessibleIds };
+        }
 
         if (startDate || endDate) {
             query.createdAt = {};
@@ -232,8 +262,8 @@ exports.getSales = async (req, res) => {
             .populate('userId', 'firstName lastName')
             .populate('establishmentId', 'name')
             .sort({ createdAt: -1 })
-            .limit(limit * 1)
-            .skip((page - 1) * limit);
+            .limit(parseInt(limit))
+            .skip((parseInt(page) - 1) * parseInt(limit));
 
         const total = await Sale.countDocuments(query);
 
@@ -255,7 +285,7 @@ exports.getSales = async (req, res) => {
             sales,
             totals: totals[0] || { totalAmount: 0, totalDiscount: 0, totalTax: 0, count: 0 },
             page: parseInt(page),
-            pages: Math.ceil(total / limit)
+            pages: Math.ceil(total / parseInt(limit))
         });
     } catch (error) {
         console.error('❌ Erreur récupération ventes:', error);
@@ -269,6 +299,7 @@ exports.getSales = async (req, res) => {
 
 /**
  * @desc    Récupérer une vente par ID
+ * ⭐ Vérification de l'accès à l'établissement
  */
 exports.getSale = async (req, res) => {
     try {
@@ -284,6 +315,14 @@ exports.getSale = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: 'Vente non trouvée'
+            });
+        }
+
+        // ⭐ Vérifier l'accès à l'établissement de la vente
+        if (sale.establishmentId && !req.user.hasAccessToEstablishment(sale.establishmentId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Accès refusé à cette vente'
             });
         }
 
@@ -303,6 +342,7 @@ exports.getSale = async (req, res) => {
 
 /**
  * @desc    Annuler une vente
+ * ⭐ Vérification de l'accès à l'établissement
  */
 exports.cancelSale = async (req, res) => {
     try {
@@ -317,6 +357,14 @@ exports.cancelSale = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: 'Vente non trouvée'
+            });
+        }
+
+        // ⭐ Vérifier l'accès à l'établissement
+        if (sale.establishmentId && !req.user.hasAccessToEstablishment(sale.establishmentId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Accès refusé à cette vente'
             });
         }
 
@@ -346,6 +394,7 @@ exports.cancelSale = async (req, res) => {
 
 /**
  * @desc    Récupérer les statistiques des ventes
+ * ⭐ Filtrage par établissements accessibles
  */
 exports.getSalesStats = async (req, res) => {
     try {
@@ -356,8 +405,33 @@ exports.getSalesStats = async (req, res) => {
             archived: false 
         };
         
+        // ⭐ Filtrer par établissements accessibles pour les employés
         if (establishmentId) {
+            // Vérifier l'accès si un établissement spécifique est demandé
+            if (!req.user.hasAccessToEstablishment(establishmentId)) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Accès refusé à cet établissement'
+                });
+            }
             matchQuery.establishmentId = new mongoose.Types.ObjectId(establishmentId);
+        } else {
+            // Sans établissement spécifié, filtrer par les établissements accessibles
+            const accessibleIds = req.user.getAccessibleEstablishmentIds();
+            if (accessibleIds !== null) {
+                if (accessibleIds.length === 0) {
+                    return res.json({
+                        success: true,
+                        stats: {
+                            daily: { total: 0, count: 0 },
+                            monthly: { total: 0, count: 0 },
+                            yearly: { total: 0, count: 0 },
+                            topProducts: []
+                        }
+                    });
+                }
+                matchQuery.establishmentId = { $in: accessibleIds };
+            }
         }
         
         const today = new Date();
@@ -412,6 +486,48 @@ exports.getSalesStats = async (req, res) => {
             success: false,
             message: 'Erreur lors de la récupération des statistiques',
             error: error.message
+        });
+    }
+};
+
+/**
+ * @desc    Récupérer les ventes d'un établissement spécifique
+ * @route   GET /api/sales/establishment/:establishmentId
+ * @access  Private
+ */
+exports.getSalesByEstablishment = async (req, res) => {
+    try {
+        const { establishmentId } = req.params;
+        const { page = 1, limit = 20 } = req.query;
+        
+        // L'accès est déjà vérifié par le middleware hasEstablishmentAccess
+        
+        const query = {
+            companyId: req.user.companyId,
+            establishmentId: establishmentId
+        };
+        
+        const sales = await Sale.find(query)
+            .populate('userId', 'firstName lastName')
+            .populate('establishmentId', 'name')
+            .sort({ createdAt: -1 })
+            .limit(parseInt(limit))
+            .skip((parseInt(page) - 1) * parseInt(limit));
+        
+        const total = await Sale.countDocuments(query);
+        
+        res.json({
+            success: true,
+            sales,
+            total,
+            page: parseInt(page),
+            pages: Math.ceil(total / parseInt(limit))
+        });
+    } catch (error) {
+        console.error('❌ Erreur récupération ventes par établissement:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors de la récupération des ventes'
         });
     }
 };
