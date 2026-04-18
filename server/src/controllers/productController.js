@@ -180,30 +180,35 @@ exports.createProduct = async (req, res) => {
             }
         }
 
-        const product = await Product.create({
-            companyId: req.user.companyId,
-            name,
-            type: req.body.type || 'Générique',
-            genericName: genericName || '',
-            category: category || 'Médicament',
-            subCategory: req.body.subCategory || '',
-            manufacturer: manufacturer || '',
-            batchNumber: batchNumber || '',
-            barcode: barcode || '',
-            establishmentId: cleanEstablishmentId,
-            quantity: parseInt(quantity) || 0,
-            unit: unit || 'Boîtes',
-            reorderPoint: reorderPoint || 10,
-            location: location || '',
-            purchasePrice: parseFloat(purchasePrice) || 0,
-            sellingPrice: parseFloat(sellingPrice) || 0,
-            manufacturingDate: manufacturingDate || null,
-            expirationDate,
-            prescriptionRequired: prescriptionRequired || false,
-            description: description || '',
-            isActive: true
-        });
+        // ⭐ Normalisation : supprimer subCategory si vide ou si catégorie ≠ Prestation médicale
+    let subCategory = req.body.subCategory;
+    if (!subCategory || subCategory === '' || (category || 'Médicament') !== 'Prestation médicale') {
+        subCategory = undefined;
+    }
 
+    const product = await Product.create({
+        companyId: req.user.companyId,
+        name,
+        type: req.body.type || 'Générique',
+        genericName: genericName || '',
+        category: category || 'Médicament',
+        subCategory: subCategory,  // ⭐ Peut être undefined (sera ignoré par Mongoose)
+        manufacturer: manufacturer || '',
+        batchNumber: batchNumber || '',
+        barcode: barcode || '',
+        establishmentId: cleanEstablishmentId,
+        quantity: parseInt(quantity) || 0,
+        unit: unit || 'Boîtes',
+        reorderPoint: reorderPoint || 10,
+        location: location || '',
+        purchasePrice: parseFloat(purchasePrice) || 0,
+        sellingPrice: parseFloat(sellingPrice) || 0,
+        manufacturingDate: manufacturingDate || null,
+        expirationDate,
+        prescriptionRequired: prescriptionRequired || false,
+        description: description || '',
+        isActive: true
+    });
         await product.populate('establishmentId', 'name type');
 
         res.status(201).json({
@@ -256,6 +261,18 @@ exports.updateProduct = async (req, res) => {
             }
         }
 
+        // ⭐ Normalisation : supprimer subCategory si vide ou si catégorie ≠ Prestation médicale
+        if (req.body.subCategory === '' || req.body.subCategory === null) {
+            delete req.body.subCategory;
+        }
+        if (req.body.category && req.body.category !== 'Prestation médicale') {
+            delete req.body.subCategory;
+        }
+        // Si la catégorie actuelle du produit n'est pas Prestation médicale et qu'on ne la change pas
+        if (!req.body.category && product.category !== 'Prestation médicale') {
+            delete req.body.subCategory;
+        }
+
         const allowedUpdates = [
             'name', 'type', 'genericName', 'category', 'subCategory', 'manufacturer',
             'batchNumber', 'barcode', 'unit', 'reorderPoint',
@@ -263,7 +280,7 @@ exports.updateProduct = async (req, res) => {
             'manufacturingDate', 'expirationDate',
             'prescriptionRequired', 'description', 'quantity', 'establishmentId'
         ];
-        
+
         allowedUpdates.forEach(key => {
             if (req.body[key] !== undefined) {
                 product[key] = req.body[key];

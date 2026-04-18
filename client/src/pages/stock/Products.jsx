@@ -277,14 +277,6 @@ const Products = () => {
                 establishmentId: shouldSendEstablishment ? selectedEstablishment : undefined
             };
             
-            // ⭐ CORRECTION : Supprimer subCategory si vide ou si catégorie != Prestation médicale
-            if (!productData.subCategory || productData.subCategory === '') {
-                delete productData.subCategory;
-            }
-            if (productData.category !== 'Prestation médicale') {
-                delete productData.subCategory;
-            }
-            
             if (modalMode === 'create') {
                 await productService.createProduct(productData);
                 setSuccess(t('product_created'));
@@ -309,15 +301,6 @@ const Products = () => {
                     description: formData.description,
                     establishmentId: shouldSendEstablishment ? selectedEstablishment : undefined
                 };
-                
-                // ⭐ CORRECTION : Supprimer subCategory si vide ou si catégorie != Prestation médicale
-                if (!updateData.subCategory || updateData.subCategory === '') {
-                    delete updateData.subCategory;
-                }
-                if (updateData.category !== 'Prestation médicale') {
-                    delete updateData.subCategory;
-                }
-                
                 await productService.updateProduct(selectedProduct._id, updateData);
                 setSuccess(t('product_updated'));
             }
