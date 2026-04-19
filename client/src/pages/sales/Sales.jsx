@@ -236,6 +236,7 @@ const Sales = () => {
                 setShowReceiptModal(true);
                 setSuccess(t('sale_success'));
                 clearCart();
+                localStorage.removeItem('employee_daily_sales');
                 setCustomerName('');
                 setCustomerPhone('');
                 setPrescriptionNumber('');

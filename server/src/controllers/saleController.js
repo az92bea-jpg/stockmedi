@@ -228,7 +228,7 @@ exports.createSale = async (req, res) => {
 
 /**
  * @desc    Récupérer toutes les ventes
- * ⭐ Filtrage par établissements accessibles pour les employés
+ * Filtrage par établissements accessibles pour les employés
  */
 exports.getSales = async (req, res) => {
     try {
@@ -236,7 +236,7 @@ exports.getSales = async (req, res) => {
 
         const query = { companyId: req.user.companyId };
 
-        // ⭐ Filtrer par établissements accessibles pour les employés
+        // ⭐ Filtrer par établissements accessibles
         const accessibleIds = req.user.getAccessibleEstablishmentIds();
         if (accessibleIds !== null) {
             if (accessibleIds.length === 0) {
@@ -248,15 +248,30 @@ exports.getSales = async (req, res) => {
                     pages: 0
                 });
             }
-            query.establishmentId = { $in: accessibleIds };
+            // ⭐ CORRECTION 1 : Convertir en ObjectId
+            query.establishmentId = { $in: accessibleIds.map(id => new mongoose.Types.ObjectId(id)) };
         }
 
+        // ⭐ CORRECTION 2 : Gérer le fuseau horaire pour les dates
         if (startDate || endDate) {
             query.createdAt = {};
-            if (startDate) query.createdAt.$gte = new Date(startDate);
-            if (endDate) query.createdAt.$lte = new Date(endDate);
+            if (startDate) {
+                // Début de journée en UTC
+                const start = new Date(startDate);
+                start.setUTCHours(0, 0, 0, 0);
+                query.createdAt.$gte = start;
+            }
+            if (endDate) {
+                // Fin de journée en UTC
+                const end = new Date(endDate);
+                end.setUTCHours(23, 59, 59, 999);
+                query.createdAt.$lte = end;
+            }
         }
+        
         if (paymentStatus) query.paymentStatus = paymentStatus;
+
+        console.log('📊 Query getSales:', JSON.stringify(query, null, 2));
 
         const sales = await Sale.find(query)
             .populate('userId', 'firstName lastName')
@@ -266,6 +281,8 @@ exports.getSales = async (req, res) => {
             .skip((parseInt(page) - 1) * parseInt(limit));
 
         const total = await Sale.countDocuments(query);
+
+        console.log('📊 Sales trouvées:', sales.length);
 
         const totals = await Sale.aggregate([
             { $match: query },
@@ -296,7 +313,6 @@ exports.getSales = async (req, res) => {
         });
     }
 };
-
 /**
  * @desc    Récupérer une vente par ID
  * ⭐ Vérification de l'accès à l'établissement
@@ -394,18 +410,17 @@ exports.cancelSale = async (req, res) => {
 
 /**
  * @desc    Récupérer les statistiques des ventes
- * ⭐ Filtrage par établissements accessibles
+ * Filtrage par établissements accessibles
  */
 exports.getSalesStats = async (req, res) => {
     try {
         const { establishmentId } = req.query;
         
         const matchQuery = { 
-            companyId: req.user.companyId, 
-            archived: false 
+            companyId: req.user.companyId
         };
         
-        // ⭐ Filtrer par établissements accessibles pour les employés
+        // ⭐ Filtrer par établissements accessibles
         if (establishmentId) {
             // Vérifier l'accès si un établissement spécifique est demandé
             if (!req.user.hasAccessToEstablishment(establishmentId)) {
@@ -416,9 +431,14 @@ exports.getSalesStats = async (req, res) => {
             }
             matchQuery.establishmentId = new mongoose.Types.ObjectId(establishmentId);
         } else {
-            // Sans établissement spécifié, filtrer par les établissements accessibles
+            // Sans établissement spécifié
             const accessibleIds = req.user.getAccessibleEstablishmentIds();
-            if (accessibleIds !== null) {
+            
+            // Owner / Super-admin : voir TOUTES les ventes
+            if (req.user.role === 'owner' || req.user.role === 'super-admin') {
+                // Ne pas filtrer
+            } else if (accessibleIds !== null) {
+                // Employé avec restrictions
                 if (accessibleIds.length === 0) {
                     return res.json({
                         success: true,
@@ -430,15 +450,16 @@ exports.getSalesStats = async (req, res) => {
                         }
                     });
                 }
-                matchQuery.establishmentId = { $in: accessibleIds };
+                //Convertir en ObjectId
+                matchQuery.establishmentId = { $in: accessibleIds.map(id => new mongoose.Types.ObjectId(id)) };
             }
+            // Si accessibleIds === null → employé sans restriction → pas de filtre
         }
-        
-        const today = new Date();
-        const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        const startOfYear = new Date(today.getFullYear(), 0, 1);
 
+        const now = new Date();
+        const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+        const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+        const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1, 0, 0, 0, 0));
         const stats = {};
 
         const dailySales = await Sale.aggregate([

@@ -2,11 +2,11 @@
  * PAGE TABLEAU DE BORD - Vue d'ensemble de l'activité
  * - Owner : contrôle total, archive manuelle
  * - Employé : dashboard journalier (réinitialisation auto toutes les 24h)
- * ⭐ Support multi-devises dynamique
- * ⭐ Traductions FR/EN complètes
+ * Support multi-devises dynamique
+ * Traductions FR/EN complètes
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import { resetAndArchiveDashboard } from '../../services/archiveService';
@@ -27,7 +27,6 @@ const Dashboard = () => {
     const isOwner = user?.role === 'owner' || user?.role === 'super-admin';
     const isEmployee = user?.role === 'employee';
     
-    // ⭐ État pour la devise configurée
     const [currency, setCurrency] = useState('GNF');
     const [loading, setLoading] = useState(true);
     const [archiving, setArchiving] = useState(false);
@@ -36,21 +35,19 @@ const Dashboard = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
-    
-    // État pour les ventes journalières de l'employé (si autorisé)
     const [employeeDailySales, setEmployeeDailySales] = useState(null);
     
     const [selectedEstablishment, setSelectedEstablishment] = useState('');
     const [establishments, setEstablishments] = useState([]);
     const [subscription, setSubscription] = useState(null);
+    
+    const isInitialMount = useRef(true);
 
-    // Vérifier les permissions de l'employé
     const userPermissions = user?.permissions || [];
     const canManageStock = isOwner || userPermissions.includes('manage_stock');
     const canMakeSales = isOwner || userPermissions.includes('make_sales');
     const canViewSales = canMakeSales || userPermissions.includes('view_sales');
 
-    // ⭐ Charger la devise configurée
     const loadCompanySettings = useCallback(async () => {
         try {
             const response = await api.get('/companies/me');
@@ -59,11 +56,9 @@ const Dashboard = () => {
             }
         } catch (err) {
             console.error('Erreur chargement devise:', err);
-            // Garde GNF par défaut
         }
     }, []);
 
-    // Vérifier et réinitialiser le dashboard employé si nécessaire (toutes les 24h)
     const checkAndResetEmployeeDashboard = useCallback(() => {
         const lastDate = localStorage.getItem(EMPLOYEE_DASHBOARD_KEY);
         const today = new Date().toDateString();
@@ -86,7 +81,6 @@ const Dashboard = () => {
         return false;
     }, []);
 
-    // Charger l'abonnement
     const loadSubscription = useCallback(async () => {
         try {
             const response = await api.get('/subscription');
@@ -96,30 +90,24 @@ const Dashboard = () => {
         }
     }, []);
 
-    // Charger les établissements (uniquement si plan Enterprise)
     const loadEstablishments = useCallback(async () => {
         try {
             const response = await api.get('/establishments');
             const estList = response.establishments || [];
             setEstablishments(estList);
-            if (estList.length > 0) {
-                setSelectedEstablishment(estList[0]._id);
-            } else {
-                setSelectedEstablishment('');
-            }
+            setSelectedEstablishment('');
         } catch (err) {
             console.error('Erreur chargement établissements:', err);
         }
     }, []);
 
-    // Récupérer les données du dashboard
-    const fetchDashboardData = useCallback(async () => {
+    const fetchDashboardData = useCallback(async (establishmentId) => {
         try {
             setLoading(true);
             
             let url = '/sales/stats';
-            if (selectedEstablishment && subscription?.plan === 'enterprise') {
-                url += `?establishmentId=${selectedEstablishment}`;
+            if (isOwner && establishmentId && establishmentId !== '') {
+                url += `?establishmentId=${establishmentId}`;
             }
             
             const [salesStats, alertsData] = await Promise.all([
@@ -130,34 +118,40 @@ const Dashboard = () => {
             setStats(salesStats.stats);
             setAlerts(alertsData.alerts);
             
-            // Pour l'employé autorisé, récupérer ses ventes du jour
-            if (isEmployee && canViewSales) {
-                const savedSales = localStorage.getItem(EMPLOYEE_SALES_KEY);
+            //EMPLOYÉ : Récupérer ses ventes du jour
+            if (isEmployee) {
+                const today = new Date().toISOString().split('T')[0];
+                const salesResponse = await api.get(`/sales?startDate=${today}&endDate=${today}&limit=100`);
                 
-                if (!savedSales) {
-                    const today = new Date().toISOString().split('T')[0];
-                    const salesResponse = await api.get(`/sales?startDate=${today}&endDate=${today}&limit=100`);
-                    
-                    const dailySalesData = {
-                        date: today,
-                        count: salesResponse.sales?.length || 0,
-                        total: salesResponse.totals?.totalAmount || 0,
-                        sales: salesResponse.sales || []
-                    };
-                    
-                    localStorage.setItem(EMPLOYEE_SALES_KEY, JSON.stringify(dailySalesData));
-                    setEmployeeDailySales(dailySalesData);
-                }
+                console.log('DEBUG EMPLOYÉ - Ventes brutes:', salesResponse);
+                console.log('DEBUG EMPLOYÉ - User ID:', user?._id);
+                
+                // Filtrer les ventes de l'employé
+                const mySales = (salesResponse.sales || []).filter(sale => {
+                    const saleUserId = typeof sale.userId === 'object' ? sale.userId?._id : sale.userId;
+                    console.log('DEBUG - Comparaison:', saleUserId, user?._id);
+                    return saleUserId === user?._id;
+                });
+                
+                console.log('DEBUG EMPLOYÉ - Mes ventes filtrées:', mySales);
+                
+                const totalAmount = mySales.reduce((sum, sale) => sum + (sale.total || 0), 0);
+                
+                setEmployeeDailySales({
+                    date: today,
+                    count: mySales.length,
+                    total: totalAmount,
+                    sales: mySales
+                });
             }
         } catch (err) {
             setError(t('error'));
-            console.error(err);
+            console.error('❌ Erreur dashboard:', err);
         } finally {
             setLoading(false);
         }
-    }, [selectedEstablishment, subscription?.plan, isEmployee, canViewSales, t]);
+    }, [isOwner, isEmployee, user?._id, t]);
 
-    // Chargement initial
     useEffect(() => {
         const init = async () => {
             await loadCompanySettings();
@@ -167,22 +161,27 @@ const Dashboard = () => {
                 checkAndResetEmployeeDashboard();
             }
             
-            if (isOwner && subscription?.plan === 'enterprise') {
+            if (isOwner) {
                 await loadEstablishments();
             }
             
-            await fetchDashboardData();
+            await fetchDashboardData('');
         };
         
         init();
-    }, [isOwner, isEmployee, loadCompanySettings, loadSubscription, loadEstablishments, subscription?.plan, fetchDashboardData, checkAndResetEmployeeDashboard]);
+    }, [isOwner, isEmployee, loadCompanySettings, loadSubscription, loadEstablishments, fetchDashboardData, checkAndResetEmployeeDashboard]);
 
-    // Recharger les stats quand l'établissement change (uniquement pour owner Enterprise)
+    const handleEstablishmentChange = (newEstablishmentId) => {
+        setSelectedEstablishment(newEstablishmentId);
+        fetchDashboardData(newEstablishmentId);
+    };
+
     useEffect(() => {
-        if (isOwner && subscription?.plan === 'enterprise' && selectedEstablishment) {
-            fetchDashboardData();
+        if (!isInitialMount.current && establishments.length > 0 && selectedEstablishment === '') {
+            fetchDashboardData('');
         }
-    }, [selectedEstablishment, fetchDashboardData, subscription?.plan, isOwner]);
+        isInitialMount.current = false;
+    }, [establishments.length, fetchDashboardData, selectedEstablishment]);
 
     const handleArchiveAndReset = async () => {
         setArchiving(true);
@@ -191,7 +190,7 @@ const Dashboard = () => {
         try {
             const response = await resetAndArchiveDashboard();
             setSuccess(response.message || t('archive_and_reset_success') || 'Tableau de bord archivé et réinitialisé avec succès');
-            await fetchDashboardData();
+            await fetchDashboardData(selectedEstablishment);
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
             setError(err.response?.data?.message || t('error'));
@@ -211,7 +210,6 @@ const Dashboard = () => {
 
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
-            {/* En-tête avec boutons */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -247,12 +245,12 @@ const Dashboard = () => {
                 )}
             </div>
 
-            {/* Sélecteur d'établissement pour les propriétaires (uniquement si plan Enterprise) */}
+            {/* Sélecteur d'établissement - UNIQUEMENT pour Owner Enterprise */}
             {isOwner && subscription?.plan === 'enterprise' && establishments.length > 0 && (
                 <div style={{ marginBottom: 'var(--spacing-4)' }}>
                     <EstablishmentSelector
                         selectedId={selectedEstablishment}
-                        onSelect={setSelectedEstablishment}
+                        onSelect={handleEstablishmentChange}
                     />
                 </div>
             )}
@@ -260,7 +258,7 @@ const Dashboard = () => {
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
             {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
-            {/* ==================== SECTION OWNER : CA ET STATISTIQUES ==================== */}
+            {/* SECTION OWNER : CA ET STATISTIQUES */}
             {isOwner && stats && (
                 <div style={{
                     display: 'grid',
@@ -290,7 +288,7 @@ const Dashboard = () => {
                 </div>
             )}
 
-            {/* ==================== SECTION EMPLOYÉ : VENTES DU JOUR (si autorisé) ==================== */}
+            {/* SECTION EMPLOYÉ : VENTES DU JOUR */}
             {isEmployee && canViewSales && employeeDailySales && (
                 <div style={{
                     display: 'grid',
@@ -310,7 +308,7 @@ const Dashboard = () => {
                 </div>
             )}
 
-            {/* ==================== ALERTES (visibles par tous) ==================== */}
+            {/* ALERTES */}
             {alerts && (alerts.lowStock?.count > 0 || alerts.expiringSoon?.count > 0 || alerts.outOfStock?.count > 0 || alerts.expired?.count > 0) && (
                 <div className="card" style={{ marginBottom: 'var(--spacing-6)' }}>
                     <div className="card-header">
@@ -344,7 +342,7 @@ const Dashboard = () => {
                 </div>
             )}
 
-            {/* ==================== TOP PRODUITS ==================== */}
+            {/* TOP PRODUITS */}
             {stats?.topProducts?.length > 0 && (
                 <div className="card" style={{ marginBottom: 'var(--spacing-6)' }}>
                     <div className="card-header">
@@ -380,7 +378,7 @@ const Dashboard = () => {
                 </div>
             )}
 
-            {/* ==================== ACTIONS RAPIDES (adaptées au rôle) ==================== */}
+            {/* ACTIONS RAPIDES */}
             <div className="card">
                 <div className="card-header">
                     <h3>
@@ -428,7 +426,6 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Modale de confirmation d'archivage (owner uniquement) */}
             <ConfirmModal
                 isOpen={showArchiveConfirm}
                 onClose={() => setShowArchiveConfirm(false)}

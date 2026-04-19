@@ -140,6 +140,7 @@ const login = async (req, res) => {
         }
         
         user.lastLogin = new Date();
+        user.lastActivity = new Date();
         await user.save();
         
         const token = generateToken(user._id);

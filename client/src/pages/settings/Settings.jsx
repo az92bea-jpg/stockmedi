@@ -1,16 +1,18 @@
 /**
  * PAGE PARAMÈTRES - Configuration de l'entreprise et profil
- * ⭐ Synchronisation langue Settings → LanguageContext
+ * Synchronisation langue Settings → LanguageContext
+ * Section suppression de compte (RGPD) - Délai 7 jours
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
+import ConfirmModal from '../../components/common/ConfirmModal';
+import Icon from '../../components/ui/Icon';
 import { useLanguage } from '../../context/LanguageContext';
 
 const Settings = () => {
-    // ⭐ Récupérer changeLanguage depuis le contexte
     const { t, changeLanguage } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -18,6 +20,15 @@ const Settings = () => {
     const [success, setSuccess] = useState('');
     
     const [activeTab, setActiveTab] = useState('company');
+    
+    // ⭐ États pour la suppression de compte
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+    const [showDeletePassword, setShowDeletePassword] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [deletionRequested, setDeletionRequested] = useState(false);
+    const [deletionDate, setDeletionDate] = useState(null);
     
     const [companySettings, setCompanySettings] = useState({
         company: {
@@ -70,6 +81,15 @@ const Settings = () => {
         try {
             const response = await api.get('/settings/profile');
             setProfile(response.profile);
+            
+            // ⭐ Vérifier si une demande de suppression est en cours
+            const userResponse = await api.get('/auth/me');
+            if (userResponse.user?.deletionRequestedAt) {
+                setDeletionRequested(true);
+                const delDate = new Date(userResponse.user.deletionRequestedAt);
+                delDate.setDate(delDate.getDate() + 7);
+                setDeletionDate(delDate);
+            }
         } catch (err) {
             setError(t('error'));
             console.error(err);
@@ -156,9 +176,7 @@ const Settings = () => {
             });
             
             if (response.success) {
-                // ⭐ Synchroniser la langue avec le contexte
                 changeLanguage(companySettings.preferences.language);
-                
                 setSuccess(t('save_success') || 'Paramètres enregistrés avec succès');
                 setTimeout(() => setSuccess(''), 3000);
             }
@@ -234,6 +252,61 @@ const Settings = () => {
                     newPassword: '',
                     confirmPassword: ''
                 });
+                setTimeout(() => setSuccess(''), 3000);
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || t('error'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // ⭐ Demander la suppression du compte (délai 7 jours)
+    const handleRequestDeletion = async () => {
+    console.log('🔥 Clic sur Confirmer détecté');
+    console.log('deleteConfirmed:', deleteConfirmed);
+    console.log('deletePassword:', deletePassword ? '****' : 'VIDE');
+    
+    if (!deleteConfirmed || !deletePassword) {
+        setError('Veuillez cocher la case et saisir votre mot de passe');
+        return;
+    }
+        
+        setDeleting(true);
+        setError('');
+        
+        try {
+            const response = await api.post('/users/request-deletion', {
+                password: deletePassword
+            });
+            
+            if (response.success) {
+                setSuccess(response.message);
+                setDeletionRequested(true);
+                setDeletionDate(new Date(response.deletionDate));
+                setShowDeleteModal(false);
+                setDeletePassword('');
+                setDeleteConfirmed(false);
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || t('error'));
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    // ⭐ Annuler la demande de suppression
+    const handleCancelDeletion = async () => {
+        setSaving(true);
+        setError('');
+        
+        try {
+            const response = await api.post('/users/cancel-deletion');
+            
+            if (response.success) {
+                setSuccess(response.message);
+                setDeletionRequested(false);
+                setDeletionDate(null);
                 setTimeout(() => setSuccess(''), 3000);
             }
         } catch (err) {
@@ -569,7 +642,7 @@ const Settings = () => {
                         </div>
                     </div>
 
-                    <div className="card">
+                    <div className="card" style={{ marginBottom: 'var(--spacing-6)' }}>
                         <div className="card-header">
                             <h3>{t('change_password')}</h3>
                         </div>
@@ -679,8 +752,104 @@ const Settings = () => {
                             </form>
                         </div>
                     </div>
+
+                    {/* ⭐ SECTION SUPPRESSION DE COMPTE - UNIQUEMENT POUR OWNER */}
+                    {profile.role === 'owner' && (
+                        <div className="card" style={{ borderColor: 'var(--danger)' }}>
+                            <div className="card-header" style={{ backgroundColor: '#FEF2F2' }}>
+                                <h3 style={{ color: 'var(--danger)' }}>
+                                    <Icon name="warning" category="status" fallback="⚠️" style={{ marginRight: '0.5rem' }} />
+                                    {t('danger_zone')}
+                                </h3>
+                            </div>
+                            <div className="card-body">
+                                <h4 style={{ marginBottom: 'var(--spacing-2)' }}>
+                                    <Icon name="delete" category="actions" fallback="🗑️" style={{ marginRight: '0.5rem' }} />
+                                    {t('delete_account')}
+                                </h4>
+                                <p style={{ color: 'var(--gray-500)', marginBottom: 'var(--spacing-4)' }}>
+                                    {t('delete_account_warning')}
+                                </p>
+                                
+                                {deletionRequested ? (
+                                    <div style={{ backgroundColor: '#FEF3C7', padding: 'var(--spacing-3)', borderRadius: 'var(--radius-md)' }}>
+                                        <p style={{ color: '#92400E', marginBottom: 'var(--spacing-2)' }}>
+                                            ⏳ {t('deletion_pending') || 'Une demande de suppression est en cours.'}<br />
+                                            {t('deletion_scheduled') || 'Votre compte sera supprimé le'} {deletionDate?.toLocaleDateString('fr-FR')}.
+                                        </p>
+                                        <button className="btn btn-secondary" onClick={handleCancelDeletion} disabled={saving}>
+                                            {t('cancel_deletion') || 'Annuler la demande'}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button 
+                                        className="btn btn-danger" 
+                                        onClick={() => {
+                                            console.log('🔥 Ouverture modale de suppression');
+                                            setShowDeleteModal(true);
+                                        }} 
+                                        style={{ backgroundColor: 'var(--danger)', color: 'white' }}
+                                    >
+                                        {t('request_deletion') || 'Demander la suppression de mon compte'}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
+
+            {/* ⭐ Modale de confirmation de suppression */}
+            <ConfirmModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleRequestDeletion}
+                title={t('delete_account')}
+                confirmText={deleting ? '...' : t('confirm_deletion') || 'Confirmer'}
+                isDanger={true}
+                confirmDisabled={deleting}
+            >
+                <div className="form-group">
+                    <Alert type="warning" message={t('deletion_delay_warning') || 'Votre compte sera supprimé dans 7 jours. Vous pouvez annuler avant ce délai.'} />
+                </div>
+                <div className="form-group">
+                    <label className="form-label">{t('delete_account_password')}</label>
+                    <div style={{ position: 'relative' }}>
+                        <input
+                            type={showDeletePassword ? 'text' : 'password'}
+                            className="form-input"
+                            value={deletePassword}
+                            onChange={(e) => setDeletePassword(e.target.value)}
+                            style={{ paddingRight: '40px' }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowDeletePassword(!showDeletePassword)}
+                            style={{
+                                position: 'absolute',
+                                right: '10px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <Icon name={showDeletePassword ? 'eye-off' : 'eye'} category="actions" fallback={showDeletePassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
+                        </button>
+                    </div>
+                </div>
+                <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+                        <input
+                            type="checkbox"
+                            checked={deleteConfirmed}
+                            onChange={(e) => setDeleteConfirmed(e.target.checked)}
+                        />
+                        <span>{t('delete_account_confirm')}</span>
+                    </label>
+                </div>
+            </ConfirmModal>
         </div>
     );
 };

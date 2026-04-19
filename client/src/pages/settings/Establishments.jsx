@@ -140,9 +140,11 @@ const Establishments = () => {
             const productsWithoutEstablishment = productsResponse.products?.filter(p => !p.establishmentId) || [];
             
             if (productsWithoutEstablishment.length > 0) {
-                const shouldMigrate = window.confirm(
-                    t('migrate_products_confirm', { count: productsWithoutEstablishment.length, name: formData.name })
-                );
+                const message = t('migrate_products_confirm')
+                    .replace('{{count}}', productsWithoutEstablishment.length)
+                    .replace('{name}', formData.name);
+                const shouldMigrate = window.confirm(message);
+
                 
                 if (shouldMigrate) {
                     try {

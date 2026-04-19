@@ -44,6 +44,10 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const archiveRoutes = require('./routes/archiveRoutes');
 const establishmentRoutes = require('./routes/establishmentRoutes');
 const quoteRoutes = require('./routes/quoteRoutes');
+const userRoutes = require('./routes/userRoutes');
+const cronRoutes = require('./routes/cronRoutes');
+
+
 
 
 // ⭐ CRON JOBS (notifications email + nettoyage archives)
@@ -76,7 +80,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin/logs', logsRoutes);
 app.use('/api/establishments', establishmentRoutes);
 app.use('/api/quotes', quoteRoutes);
-
+app.use('/api/users', userRoutes);
+app.use('/api/cron', cronRoutes);
 
 
 // ========== NETTOYAGE AUTOMATIQUE DES ARCHIVES (CRON) ==========

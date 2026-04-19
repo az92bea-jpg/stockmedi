@@ -1,6 +1,7 @@
 /**
  * PAGE D'INSCRIPTION - Création d'un espace entreprise
  * ⭐ Traductions FR/EN complètes
+ * ⭐ Case "J'accepte les conditions d'utilisation"
  */
 
 import React, { useState } from 'react';
@@ -20,6 +21,7 @@ const Register = () => {
     
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
     
     const [formData, setFormData] = useState({
         email: '',
@@ -69,6 +71,11 @@ const Register = () => {
 
         if (formData.password.length < 6) {
             setError(t('password_too_short'));
+            return;
+        }
+
+        if (!acceptedTerms) {
+            setError(t('must_accept_terms'));
             return;
         }
 
@@ -328,6 +335,24 @@ const Register = () => {
                             onChange={handleChange}
                             disabled={loading}
                         />
+                    </div>
+
+                    {/* ⭐ NOUVEAU : Case conditions d'utilisation */}
+                    <div className="form-group" style={{ marginTop: 'var(--spacing-4)' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', cursor: 'pointer' }}>
+                            <input
+                                type="checkbox"
+                                checked={acceptedTerms}
+                                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                disabled={loading}
+                            />
+                            <span style={{ fontSize: '0.875rem' }}>
+                                {t('accept_terms')}{' '}
+                                <Link to="/terms" target="_blank" style={{ color: 'var(--primary-500)', fontWeight: 500 }}>
+                                    {t('terms_of_use')}
+                                </Link>
+                            </span>
+                        </label>
                     </div>
 
                     <button

@@ -1,9 +1,13 @@
 import React, { createContext, useState, useContext } from 'react';
 
-// Traductions complètes - FR & EN
+// ============================================================
+// TRADUCTIONS COMPLÈTES - FRANÇAIS & ENGLISH
+// ============================================================
+
 const translations = {
+    // ==================== FRANÇAIS ====================
     fr: {
-        // ========== GÉNÉRAL ==========
+        // ---------- GÉNÉRAL ----------
         app_name: 'StockMedi',
         loading: 'Chargement...',
         error: 'Erreur',
@@ -20,7 +24,7 @@ const translations = {
         send: 'Envoyer',
         locale: 'fr',
         
-        // ========== NAVIGATION ==========
+        // ---------- NAVIGATION ----------
         nav_dashboard: 'Tableau de bord',
         nav_products: 'Produits',
         nav_sales: 'Ventes',
@@ -39,7 +43,7 @@ const translations = {
         open_menu: 'Ouvrir le menu',
         menu: 'Menu',
         
-        // ========== DASHBOARD ==========
+        // ---------- DASHBOARD ----------
         dashboard_title: 'Tableau de bord',
         dashboard_welcome: 'Bienvenue sur StockMedi. Voici un aperçu de votre activité.',
         hello: 'Bonjour',
@@ -66,7 +70,7 @@ const translations = {
         no_quick_actions: 'Aucune action rapide disponible. Contactez votre administrateur.',
         migrate_products_confirm: 'Vous avez {{count}} produit(s) non rattaché(s) à un établissement. Voulez-vous les associer à "{{name}}" ?',
 
-        // ========== ARCHIVES ==========
+        // ---------- ARCHIVES ----------
         dashboard_archives: 'Archives du tableau de bord',
         archives_subtitle: 'Consultez l\'historique des réinitialisations',
         year: 'Année',
@@ -91,7 +95,7 @@ const translations = {
         archive_deleted_success: 'Archive supprimée définitivement',
         error_deleting_archive: 'Erreur lors de la suppression',
         
-        // ========== ALERTES ==========
+        // ---------- ALERTES ----------
         click_to_view: 'Cliquez pour voir',
         alerts: 'Alertes importantes',
         out_of_stock: 'Rupture',
@@ -103,7 +107,7 @@ const translations = {
         expiring_soon_products: 'produit(s) expirent dans les 30 jours',
         expired_products: 'produit(s) sont expirés',
         
-        // ========== PRODUITS ==========
+        // ---------- PRODUITS ----------
         products_title: 'Gestion des produits',
         products_subtitle: 'Gérez votre stock de produits médicaux',
         new_product: 'Nouveau produit',
@@ -201,7 +205,7 @@ const translations = {
         select: 'Sélectionner',
         consumable: 'Consommable',
         
-        // ========== VENTES ==========
+        // ---------- VENTES ----------
         sales_title: 'Point de vente',
         sales_subtitle: 'Enregistrez vos ventes rapidement',
         history: 'Historique des ventes',
@@ -265,8 +269,9 @@ const translations = {
         created_on: 'Créé le',
         by: 'par',
         not_provided: 'Non renseigné',
+        view_sales: 'Voir les ventes',
         
-        // ========== DEVIS / PROFORMAS ==========
+        // ---------- DEVIS / PROFORMAS ----------
         quotes_title: 'Devis / Proformas',
         quotes_subtitle: 'Gérez vos devis et convertissez-les en ventes',
         new_quote: 'Nouveau devis',
@@ -307,7 +312,7 @@ const translations = {
         quote_not_found: 'Devis non trouvé',
         notes_placeholder: 'Notes...',
         
-        // ========== RAPPORTS ==========
+        // ---------- RAPPORTS ----------
         reports_title: 'Rapports et exportations',
         reports_subtitle: 'Exportez vos données en PDF ou Excel',
         inventory: "Rapport d'inventaire",
@@ -330,7 +335,7 @@ const translations = {
         filterable_by_establishment: 'Filtrable par établissement',
         reports_filterable_by_establishment: 'Rapports filtrables par établissement',
 
-        // ========== EMPLOYÉS ==========
+        // ---------- EMPLOYÉS ----------
         employees_title: 'Gestion des employés',
         employees_subtitle: 'Gérez les comptes de vos employés et leurs permissions',
         add_employee: 'Ajouter un employé',
@@ -372,11 +377,11 @@ const translations = {
         deactivate: 'Désactiver',
         employee_limit_reached: 'Limite d\'employés atteinte. Passez à un plan supérieur.',
         establishments: 'Établissements',
-        all_establishments: 'Tous les établissements',
+        all_establishments: 'Tous',
         establishments_access: 'Accès aux établissements',
         establishments_hint: 'Si aucun établissement n\'est sélectionné, l\'employé aura accès à tous.',
         
-        // ========== PARAMÈTRES ==========
+        // ---------- PARAMÈTRES ----------
         settings_title: 'Paramètres',
         settings_subtitle: 'Configurez votre entreprise et votre compte utilisateur',
         company: 'Entreprise',
@@ -418,8 +423,30 @@ const translations = {
         expiration_hint: 'Alerte X jours avant expiration',
         logo_url: 'Logo (URL)',
         logo_url_placeholder: 'https://...',
+
+        // ---------- INSCRIPTION & CGU ----------
+        accept_terms: 'J\'accepte les',
+        terms_of_use: 'conditions d\'utilisation',
+        must_accept_terms: 'Vous devez accepter les conditions d\'utilisation',
+
+        // ---------- SUPPRESSION DE COMPTE (RGPD) ----------
+        delete_account: 'Supprimer mon compte',
+        delete_account_warning: 'La suppression de votre compte est définitive et irréversible.',
+        delete_account_confirm: 'Je comprends que cette action est définitive',
+        delete_account_password: 'Entrez votre mot de passe pour confirmer',
+        delete_account_success: 'Votre compte a été supprimé avec succès',
+        delete_account_error: 'Mot de passe incorrect',
+        danger_zone: 'Zone dangereuse',
+        inactivity_deletion_subject: 'Votre compte StockMedi sera bientôt supprimé',
+        inactivity_deletion_body: 'Votre compte est inactif depuis {months} mois. Il sera supprimé dans {days} jours.',
+        deletion_pending: 'Une demande de suppression est en cours.',
+        deletion_scheduled: 'Votre compte sera supprimé le',
+        cancel_deletion: 'Annuler la demande',
+        request_deletion: 'Demander la suppression de mon compte',
+        confirm_deletion: 'Confirmer',
+        deletion_delay_warning: 'Votre compte sera supprimé dans 7 jours. Vous pouvez annuler avant ce délai.',
         
-        // ========== ABONNEMENT ==========
+        // ---------- ABONNEMENT ----------
         subscription_title: 'Abonnement',
         subscription_subtitle: 'Gérez votre abonnement et choisissez le plan adapté à vos besoins',
         current_subscription: 'Votre abonnement actuel',
@@ -468,7 +495,7 @@ const translations = {
         local_payment_description: 'Vous manquez de carte pour payer via Stripe? Payez par Mobile Money.',
         pay_by_mobile_money: 'Payer par Mobile Money',
         
-        // ========== ÉTABLISSEMENTS ==========
+        // ---------- ÉTABLISSEMENTS ----------
         establishments_title: 'Établissements',
         establishments_subtitle: 'Gérez vos pharmacies, cliniques et points de vente',
         new_establishment: 'Nouvel établissement',
@@ -493,7 +520,7 @@ const translations = {
         error_migrating_products: 'Erreur lors de la migration des produits',
         restock_transfer_etc: 'Réapprovisionnement, mutation, etc.',
 
-        // ========== TRANSFERT DE STOCK ==========
+        // ---------- TRANSFERT DE STOCK ----------
         transfer: 'Transférer',
         transfer_success: 'Transfert effectué avec succès',
         error_transfer: 'Erreur lors du transfert',
@@ -512,7 +539,7 @@ const translations = {
         max_quantity_available: 'Quantité maximale disponible',
         reason_optional: 'Motif (optionnel)',
 
-        // ========== AUTHENTIFICATION ==========
+        // ---------- AUTHENTIFICATION ----------
         fill_required_fields: 'Veuillez remplir tous les champs obligatoires',
         registration_success: 'Inscription réussie ! Redirection vers la connexion...',
         registration_error: 'Erreur lors de l\'inscription',
@@ -537,7 +564,7 @@ const translations = {
         password_reset_success: 'Mot de passe réinitialisé avec succès !',
         reset_error: 'Erreur lors de la réinitialisation',
         
-        // ========== PWA ==========
+        // ---------- PWA ----------
         install_app_title: 'Installer StockMedi',
         install_app_subtitle: 'Installez l\'application pour un accès rapide',
         install: 'Installer',
@@ -545,7 +572,7 @@ const translations = {
         pwa_declined: 'Utilisateur a refusé l\'installation',
         pharma_solution: 'Solution de gestion pharmaceutique',
         
-        // ========== COMMUN ==========
+        // ---------- COMMUN ----------
         cancel_btn: 'Annuler',
         confirm: 'Confirmer',
         back: 'Retour',
@@ -559,7 +586,7 @@ const translations = {
         contact_admin: 'Contactez votre administrateur',
         notes: 'Notes',
         
-        // ========== PIED DE PAGE ==========
+        // ---------- PIED DE PAGE ----------
         footer_description: 'Solution de gestion pharmaceutique multi-espaces pour pharmacies, cliniques et hôpitaux.',
         footer_quick_links: 'Liens rapides',
         footer_information: 'Informations',
@@ -576,7 +603,7 @@ const translations = {
         footer_rights: 'Tous droits réservés.',
         footer_developed_by: 'Développé par',
 
-        // ========== CONFIDENTIALITE ==========
+        // ---------- CONFIDENTIALITÉ ----------
         back_to_dashboard: 'Retour au tableau de bord',
         privacy_title: 'Charte de confidentialité',
         privacy_last_update: 'Dernière mise à jour',
@@ -629,8 +656,10 @@ const translations = {
         privacy_version: 'Version',
         privacy_last_review: 'Dernière révision',
     },
+
+    // ==================== ENGLISH ====================
     en: {
-        // ========== GENERAL ==========
+        // ---------- GENERAL ----------
         app_name: 'StockMedi',
         loading: 'Loading...',
         error: 'Error',
@@ -647,7 +676,7 @@ const translations = {
         send: 'Send',
         locale: 'en',
         
-        // ========== NAVIGATION ==========
+        // ---------- NAVIGATION ----------
         nav_dashboard: 'Dashboard',
         nav_products: 'Products',
         nav_sales: 'Sales',
@@ -666,7 +695,7 @@ const translations = {
         open_menu: 'Open menu',
         menu: 'Menu',
         
-        // ========== DASHBOARD ==========
+        // ---------- DASHBOARD ----------
         dashboard_title: 'Dashboard',
         dashboard_welcome: 'Welcome to StockMedi. Here is an overview of your activity.',
         hello: 'Hello',
@@ -693,7 +722,7 @@ const translations = {
         no_quick_actions: 'No quick actions available. Contact your administrator.',
         migrate_products_confirm: 'You have {{count}} product(s) not assigned to any establishment. Do you want to assign them to "{{name}}"?',
         
-        // ========== ARCHIVES ==========
+        // ---------- ARCHIVES ----------
         dashboard_archives: 'Dashboard Archives',
         archives_subtitle: 'View reset history',
         year: 'Year',
@@ -718,7 +747,7 @@ const translations = {
         archive_deleted_success: 'Archive permanently deleted',
         error_deleting_archive: 'Error deleting archive',
         
-        // ========== ALERTS ==========
+        // ---------- ALERTS ----------
         click_to_view: 'Click to view',
         alerts: 'Important alerts',
         out_of_stock: 'Out of stock',
@@ -730,7 +759,7 @@ const translations = {
         expiring_soon_products: 'product(s) expiring within 30 days',
         expired_products: 'product(s) expired',
         
-        // ========== PRODUCTS ==========
+        // ---------- PRODUCTS ----------
         products_title: 'Product Management',
         products_subtitle: 'Manage your medical products inventory',
         new_product: 'New product',
@@ -828,7 +857,7 @@ const translations = {
         select: 'Select',
         consumable: 'Consumable',
         
-        // ========== SALES ==========
+        // ---------- SALES ----------
         sales_title: 'Point of Sale',
         sales_subtitle: 'Record your sales quickly',
         history: 'Sales history',
@@ -892,8 +921,9 @@ const translations = {
         created_on: 'Created on',
         by: 'by',
         not_provided: 'Not provided',
+        view_sales: 'View sales',
         
-        // ========== QUOTES / PROFORMAS ==========
+        // ---------- QUOTES / PROFORMAS ----------
         quotes_title: 'Quotes / Proformas',
         quotes_subtitle: 'Manage your quotes and convert them to sales',
         new_quote: 'New quote',
@@ -934,7 +964,7 @@ const translations = {
         quote_not_found: 'Quote not found',
         notes_placeholder: 'Notes...',
         
-        // ========== REPORTS ==========
+        // ---------- REPORTS ----------
         reports_title: 'Reports & Exports',
         reports_subtitle: 'Export your data to PDF or Excel',
         inventory: 'Inventory Report',
@@ -957,7 +987,7 @@ const translations = {
         filterable_by_establishment: 'Filterable by establishment',
         reports_filterable_by_establishment: 'Reports filterable by establishment',
 
-        // ========== EMPLOYEES ==========
+        // ---------- EMPLOYEES ----------
         employees_title: 'Employee Management',
         employees_subtitle: 'Manage your employees and their permissions',
         add_employee: 'Add employee',
@@ -999,11 +1029,11 @@ const translations = {
         deactivate: 'Deactivate',
         employee_limit_reached: 'Employee limit reached. Upgrade to a higher plan.',
         establishments: 'Establishments',
-        all_establishments: 'All establishments',
+        all_establishments: 'All',
         establishments_access: 'Establishment access',
         establishments_hint: 'If no establishment is selected, the employee will have access to all.',
         
-        // ========== SETTINGS ==========
+        // ---------- SETTINGS ----------
         settings_title: 'Settings',
         settings_subtitle: 'Configure your company and user account',
         company: 'Company',
@@ -1045,8 +1075,30 @@ const translations = {
         expiration_hint: 'Alert X days before expiration',
         logo_url: 'Logo (URL)',
         logo_url_placeholder: 'https://...',
+
+        // ---------- REGISTRATION & TERMS ----------
+        accept_terms: 'I accept the',
+        terms_of_use: 'terms of use',
+        must_accept_terms: 'You must accept the terms of use',
+
+        // ---------- ACCOUNT DELETION (GDPR) ----------
+        delete_account: 'Delete my account',
+        delete_account_warning: 'Account deletion is permanent and irreversible.',
+        delete_account_confirm: 'I understand this action is permanent',
+        delete_account_password: 'Enter your password to confirm',
+        delete_account_success: 'Your account has been successfully deleted',
+        delete_account_error: 'Incorrect password',
+        danger_zone: 'Danger zone',
+        inactivity_deletion_subject: 'Your StockMedi account will be deleted soon',
+        inactivity_deletion_body: 'Your account has been inactive for {months} months. It will be deleted in {days} days.',
+        deletion_pending: 'A deletion request is in progress.',
+        deletion_scheduled: 'Your account will be deleted on',
+        cancel_deletion: 'Cancel request',
+        request_deletion: 'Request account deletion',
+        confirm_deletion: 'Confirm',
+        deletion_delay_warning: 'Your account will be deleted in 7 days. You can cancel before this delay.',
         
-        // ========== SUBSCRIPTION ==========
+        // ---------- SUBSCRIPTION ----------
         subscription_title: 'Subscription',
         subscription_subtitle: 'Manage your subscription and choose the plan that suits your needs',
         current_subscription: 'Your current subscription',
@@ -1095,7 +1147,7 @@ const translations = {
         local_payment_description: 'Don\'t have a card to pay via Stripe? Pay with Mobile Money.',
         pay_by_mobile_money: 'Pay via Mobile Money',
         
-        // ========== ESTABLISHMENTS ==========
+        // ---------- ESTABLISHMENTS ----------
         establishments_title: 'Establishments',
         establishments_subtitle: 'Manage your pharmacies, clinics and points of sale',
         new_establishment: 'New establishment',
@@ -1120,7 +1172,7 @@ const translations = {
         error_migrating_products: 'Error migrating products',
         restock_transfer_etc: 'Restock, transfer, etc.',
 
-        // ========== STOCK TRANSFER ==========
+        // ---------- STOCK TRANSFER ----------
         transfer: 'Transfer',
         transfer_success: 'Transfer completed successfully',
         error_transfer: 'Transfer error',
@@ -1139,7 +1191,7 @@ const translations = {
         max_quantity_available: 'Maximum quantity available',
         reason_optional: 'Reason (optional)',
         
-        // ========== AUTHENTICATION ==========
+        // ---------- AUTHENTICATION ----------
         fill_required_fields: 'Please fill in all required fields',
         registration_success: 'Registration successful! Redirecting to login...',
         registration_error: 'Registration error',
@@ -1164,7 +1216,7 @@ const translations = {
         password_reset_success: 'Password reset successfully!',
         reset_error: 'Reset error',
         
-        // ========== PWA ==========
+        // ---------- PWA ----------
         install_app_title: 'Install StockMedi',
         install_app_subtitle: 'Install the app for quick access',
         install: 'Install',
@@ -1172,7 +1224,7 @@ const translations = {
         pwa_declined: 'User declined installation',
         pharma_solution: 'Pharmaceutical Management Solution',
         
-        // ========== COMMON ==========
+        // ---------- COMMON ----------
         cancel_btn: 'Cancel',
         confirm: 'Confirm',
         back: 'Back',
@@ -1186,7 +1238,7 @@ const translations = {
         contact_admin: 'Contact your administrator',
         notes: 'Notes',
 
-        // ========== FOOTER ==========
+        // ---------- FOOTER ----------
         footer_description: 'Multi-space pharmaceutical management solution for pharmacies, clinics and hospitals.',
         footer_quick_links: 'Quick links',
         footer_information: 'Information',
@@ -1203,7 +1255,7 @@ const translations = {
         footer_rights: 'All rights reserved.',
         footer_developed_by: 'Developed by',
 
-        // ========== PRIVAVACY ==========
+        // ---------- PRIVAVACY ----------
         back_to_dashboard: 'Back to dashboard',
         privacy_title: 'Privacy Policy',
         privacy_last_update: 'Last updated',
@@ -1257,6 +1309,10 @@ const translations = {
         privacy_last_review: 'Last reviewed',
     }
 };
+
+// ============================================================
+// CONTEXTE ET PROVIDER
+// ============================================================
 
 const LanguageContext = createContext();
 

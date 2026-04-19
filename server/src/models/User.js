@@ -81,6 +81,15 @@ const UserSchema = new mongoose.Schema({
     lastLogin: { 
         type: Date, 
         default: null 
+    },
+    // ⭐ CHAMPS RGPD (DOIVENT ÊTRE DANS LE SCHEMA)
+    deletionRequestedAt: {
+        type: Date,
+        default: null
+    },
+    lastActivity: {
+        type: Date,
+        default: Date.now
     }
 }, { 
     timestamps: true 
@@ -148,5 +157,11 @@ UserSchema.methods.getAccessibleEstablishmentIds = function() {
 UserSchema.methods.isAdmin = function() {
     return this.role === 'owner' || this.role === 'super-admin';
 };
+
+/*// ⭐ Middleware pour mettre à jour lastActivity
+UserSchema.pre('save', function(next) {
+    this.lastActivity = new Date();
+    next();
+});*/
 
 module.exports = mongoose.model('User', UserSchema);

@@ -1,10 +1,10 @@
 /**
  * COMPOSANT HEADER - Barre de navigation supérieure
  * ⭐ Traductions FR/EN complètes
+ * ⭐ Bouton déconnexion supprimé (reste dans la sidebar)
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import NotificationBell from '../common/NotificationBell';
 import api from '../../services/api';
@@ -13,12 +13,11 @@ import Icon from '../ui/Icon';
 
 const Header = ({ onMenuClick, isSidebarOpen }) => {
     const { t, language, changeLanguage } = useLanguage();
-    const navigate = useNavigate();
     const user = authService.getCurrentUser();
     const [company, setCompany] = useState(null);
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const hasFetchedCompany = useRef(false);
-
+    // ... reste du code inchangé
     useEffect(() => {
         const handleResize = () => setWindowWidth(window.innerWidth);
         window.addEventListener('resize', handleResize);
@@ -39,11 +38,6 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
         };
         fetchCompany();
     }, [user?.companyId]);
-
-    const handleLogout = () => {
-        authService.logout();
-        navigate('/login');
-    };
 
     const getDisciplineLabel = (discipline) => {
         const labels = { 
@@ -211,23 +205,6 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
                 }}>
                     {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                 </div>
-                <button onClick={handleLogout} style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                    color: '#4B5563',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    transition: 'all 0.2s ease'
-                }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#EF4444'; e.currentTarget.style.color = 'white'; }}
-                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#4B5563'; }}>
-                    <Icon name="logout" category="actions" fallback="🚪" style={{ width: '1rem', height: '1rem' }} />
-                    {t('nav_logout')}
-                </button>
             </div>
         </header>
     );

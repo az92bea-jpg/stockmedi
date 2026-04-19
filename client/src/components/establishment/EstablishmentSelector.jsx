@@ -1,10 +1,12 @@
 /**
  * COMPOSANT SÉLECTEUR D'ÉTABLISSEMENT
- * ⭐ Traductions FR/EN complètes
+ * Traductions FR/EN complètes
+ * Option "Tous les établissements" ajoutée
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
+import Icon from '../../components/ui/Icon';
 import { useLanguage } from '../../context/LanguageContext';
 
 const EstablishmentSelector = ({ selectedId, onSelect, className = '' }) => {
@@ -17,15 +19,14 @@ const EstablishmentSelector = ({ selectedId, onSelect, className = '' }) => {
             setLoading(true);
             const response = await api.get('/establishments');
             setEstablishments(response.establishments || []);
-            if (response.establishments?.length > 0 && !selectedId) {
-                onSelect(response.establishments[0]._id);
-            }
+            // Ne PAS sélectionner automatiquement le premier établissement
+            // Laisser le parent gérer la valeur par défaut (chaîne vide = "Tous")
         } catch (err) {
             console.error('Erreur chargement établissements:', err);
         } finally {
             setLoading(false);
         }
-    }, [selectedId, onSelect]);
+    }, []);
 
     useEffect(() => {
         loadEstablishments();
@@ -51,6 +52,11 @@ const EstablishmentSelector = ({ selectedId, onSelect, className = '' }) => {
                 value={selectedId || ''}
                 onChange={(e) => onSelect(e.target.value)}
             >
+                {/* Option "Tous les établissements" */}
+                <option value="">
+                    <Icon name="establishment" category="nav" fallback="🏢" style={{ width: '14px', height: '14px', marginRight: '4px' }} />
+                    {t('all_establishments')}
+                </option>
                 {establishments.map(est => (
                     <option key={est._id} value={est._id}>
                         {est.name} {!est.isActive && `(${t('inactive')})`}
