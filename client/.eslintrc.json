@@ -1,0 +1,15 @@
+{
+  "extends": ["react-app"],
+  "overrides": [
+    {
+      "files": ["src/service-worker.js"],
+      "env": {
+        "serviceworker": true
+      },
+      "globals": {
+        "self": "readonly",
+        "__WB_MANIFEST": "readonly"
+      }
+    }
+  ]
+}

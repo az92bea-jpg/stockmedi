@@ -2,11 +2,34 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
+// ========== GESTION PWA - INSTALLATION ==========
+let deferredPrompt;
 
-// Enregistrement du Service Worker
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    console.log('✅ PWA peut être installée');
+    window.dispatchEvent(new CustomEvent('pwa-ready', { detail: deferredPrompt }));
+});
+
+window.addEventListener('appinstalled', () => {
+    console.log('✅ PWA installée avec succès');
+    deferredPrompt = null;
+});
+
+// ========== RENDU REACT ==========
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+    <React.StrictMode>
+        <App />
+    </React.StrictMode>
+);
+
+// ========== SERVICE WORKER PAR DÉFAUT (CRA) ==========
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker
+            .register('/service-worker.js')
             .then((registration) => {
                 console.log('✅ Service Worker enregistré:', registration.scope);
             })
@@ -15,31 +38,3 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
-
-
-// ========== GESTION PWA ==========
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    // Empêcher l'affichage automatique
-    e.preventDefault();
-    // Stocker l'événement
-    deferredPrompt = e;
-    console.log('✅ PWA peut être installée');
-    
-    // Afficher une notification personnalisée
-    window.dispatchEvent(new CustomEvent('pwa-ready', { detail: deferredPrompt }));
-});
-
-// Écouter l'installation
-window.addEventListener('appinstalled', () => {
-    console.log('✅ PWA installée avec succès');
-    deferredPrompt = null;
-});
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-    <React.StrictMode>
-        <App />
-    </React.StrictMode>
-);
