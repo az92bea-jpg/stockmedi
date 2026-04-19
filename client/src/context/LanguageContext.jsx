@@ -585,6 +585,8 @@ const translations = {
         no_permission: 'Vous n\'avez pas la permission',
         contact_admin: 'Contactez votre administrateur',
         notes: 'Notes',
+        update_available: 'Une nouvelle version est disponible !',
+        update_now: 'Mettre à jour',
         
         // ---------- PIED DE PAGE ----------
         footer_description: 'Solution de gestion pharmaceutique multi-espaces pour pharmacies, cliniques et hôpitaux.',
@@ -1237,6 +1239,8 @@ const translations = {
         no_permission: 'You do not have permission',
         contact_admin: 'Contact your administrator',
         notes: 'Notes',
+        update_available: 'A new version is available!',
+        update_now: 'Update now',
 
         // ---------- FOOTER ----------
         footer_description: 'Multi-space pharmaceutical management solution for pharmacies, clinics and hospitals.',

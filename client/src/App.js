@@ -1,8 +1,9 @@
 /**
  * APPLICATION PRINCIPALE - StockMedi
+ * ⭐ Support PWA - Bandeau de mise à jour automatique
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { authService } from './services/authService';
 import { LanguageProvider } from './context/LanguageContext';
@@ -29,7 +30,7 @@ import Employees from './pages/settings/Employees';
 import Subscription from './pages/settings/Subscription';
 import Archives from './pages/archives/Archives';
 import Establishments from './pages/settings/Establishments';
-import LocalPayment from './pages/payment/LocalPayment'; // ⭐ Ajout
+import LocalPayment from './pages/payment/LocalPayment';
 
 // Pages Admin
 import AdminDashboard from './components/admin/AdminDashboard';
@@ -42,9 +43,10 @@ import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import About from './pages/legal/About';
 import Terms from './pages/legal/Terms';
 import Contact from './pages/legal/Contact';
-import InstallPrompt from './components/common/InstallPrompt';
 
-// Layout
+// Composants
+import InstallPrompt from './components/common/InstallPrompt';
+import UpdateBanner from './components/common/UpdateBanner';
 import Layout from './components/layout/Layout';
 
 // Devis
@@ -54,7 +56,6 @@ import QuoteDetail from './pages/quotes/QuoteDetail';
 
 // ==================== COMPOSANTS DE PROTECTION ====================
 
-// Protection de base (authentification uniquement)
 const ProtectedRoute = ({ children }) => {
     if (!authService.isAuthenticated()) {
         return <Navigate to="/login" replace />;
@@ -62,7 +63,6 @@ const ProtectedRoute = ({ children }) => {
     return children;
 };
 
-// Protection super-admin
 const SuperAdminRoute = ({ children }) => {
     const user = authService.getCurrentUser();
     if (!authService.isAuthenticated()) {
@@ -74,7 +74,6 @@ const SuperAdminRoute = ({ children }) => {
     return children;
 };
 
-// Protection owner uniquement
 const OwnerRoute = ({ children }) => {
     const user = authService.getCurrentUser();
     if (!authService.isAuthenticated()) {
@@ -89,6 +88,40 @@ const OwnerRoute = ({ children }) => {
 // ==================== APPLICATION ====================
 
 function App() {
+    // ⭐ États pour la mise à jour PWA
+    const [updateAvailable, setUpdateAvailable] = useState(false);
+    const [updateRegistration, setUpdateRegistration] = useState(null);
+
+    useEffect(() => {
+        // ⭐ Écouter l'événement de mise à jour PWA
+        const handleUpdateAvailable = (event) => {
+            console.log('🆕 [App] Mise à jour PWA détectée');
+            setUpdateAvailable(true);
+            setUpdateRegistration(event.detail.registration);
+        };
+
+        window.addEventListener('pwaUpdateAvailable', handleUpdateAvailable);
+
+        return () => {
+            window.removeEventListener('pwaUpdateAvailable', handleUpdateAvailable);
+        };
+    }, []);
+
+    const handleUpdate = () => {
+        if (updateRegistration && updateRegistration.waiting) {
+            // ⭐ Envoyer SKIP_WAITING au service worker en attente
+            updateRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            setUpdateAvailable(false);
+        } else {
+            // Fallback : recharger la page
+            window.location.reload();
+        }
+    };
+
+    const handleDismiss = () => {
+        setUpdateAvailable(false);
+    };
+
     return (
         <LanguageProvider>
             <Router>
@@ -175,7 +208,17 @@ function App() {
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Router>
+            
+            {/* ⭐ Composants PWA */}
             <InstallPrompt />
+            
+            {/* ⭐ Bandeau de mise à jour PWA */}
+            {updateAvailable && (
+                <UpdateBanner 
+                    onUpdate={handleUpdate} 
+                    onDismiss={handleDismiss}
+                />
+            )}
         </LanguageProvider>
     );
 }
