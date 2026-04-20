@@ -1,8 +1,8 @@
 /**
  * PAGE VENTES - Point de vente et historique
- * ⭐ Support multi-devises dynamique
- * ⭐ Traductions FR/EN complètes
- * ⭐ Correction saisie remise + TVA sans arrondi
+ * Support multi-devises dynamique
+ * Traductions FR/EN complètes
+ * Correction saisie remise + TVA sans arrondi
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -48,16 +48,18 @@ const Sales = () => {
     const [salesHistory, setSalesHistory] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(false);
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
-    
+
     const [selectedEstablishment, setSelectedEstablishment] = useState('');
     const [establishments, setEstablishments] = useState([]);
+    const [taxRate, setTaxRate] = useState(18);
 
-    // ⭐ Charger la devise configurée
+    // Charger la devise configurée et le taux de TVA
     const loadCompanySettings = useCallback(async () => {
         try {
             const response = await api.get('/companies/me');
-            if (response.success && response.company?.settings?.currency) {
-                setCurrency(response.company.settings.currency);
+            if (response.success) {
+                setCurrency(response.company?.settings?.currency || 'GNF');
+                setTaxRate(response.company?.settings?.taxRate || 18);
             }
         } catch (err) {
             console.error('Erreur chargement devise:', err);
@@ -182,8 +184,9 @@ const Sales = () => {
 
     const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
     const discountAmount = discountType === 'percentage' ? (subtotal * (parseFloat(discount) || 0) / 100) : (parseFloat(discount) || 0);
-    // ⭐ Correction TVA : pas d'arrondi pour afficher les centimes
-    const taxAmount = (subtotal - discountAmount) * 0.18;
+    // Correction TVA : pas d'arrondi pour afficher les centimes
+    //const taxAmount = (subtotal - discountAmount) * 0.18;
+    const taxAmount = (subtotal - discountAmount) * (taxRate / 100);
     const total = subtotal - discountAmount + taxAmount;
 
     const clearCart = () => {
@@ -477,7 +480,7 @@ const Sales = () => {
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-2)' }}>
-                                    <span>{t('tax')}</span>
+                                    <span>{t('tax')} ({taxRate}%)</span>
                                     <span>{formatPrice(taxAmount)} {currency}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.1rem', marginTop: 'var(--spacing-3)', paddingTop: 'var(--spacing-3)', borderTop: '2px solid var(--gray-200)' }}>
