@@ -215,7 +215,9 @@ const Footer = () => {
             }}>
                 <p>© {currentYear} {t('app_name')}. {t('footer_copyright') || 'Tous droits réservés.'}</p>
                 <p style={{ marginTop: '8px' }}>
-                    {t('footer_version') || 'Version'} 1.0.0 | {t('footer_developed') || 'Développé avec'} 💊 {t('footer_for_health') || 'pour la santé'}
+                    {t('footer_version') || 'Version'} 1.0.0 | {t('footer_developed') || 'Développé avec'}{' '}
+                    <Icon name="pill" category="nav" fallback="💊" style={{ width: '1rem', height: '1rem', margin: '0 4px' }} />{' '}
+                    {t('footer_for_health') || 'pour la santé'}
                 </p>
             </div>
         </footer>
