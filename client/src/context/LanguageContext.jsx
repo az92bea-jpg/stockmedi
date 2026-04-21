@@ -494,6 +494,8 @@ const translations = {
         local_payment_option: 'Option de paiement local',
         local_payment_description: 'Vous manquez de carte pour payer via Stripe? Payez par Mobile Money.',
         pay_by_mobile_money: 'Payer par Mobile Money',
+        quotes_feature: 'Devis',
+        receipt_feature: 'Reçu',
         
         // ---------- ÉTABLISSEMENTS ----------
         establishments_title: 'Établissements',
@@ -1148,6 +1150,8 @@ const translations = {
         local_payment_option: 'Local Payment Option',
         local_payment_description: 'Don\'t have a card to pay via Stripe? Pay with Mobile Money.',
         pay_by_mobile_money: 'Pay via Mobile Money',
+        quotes_feature: 'Quotes',
+        receipt_feature: 'Receipt',
         
         // ---------- ESTABLISHMENTS ----------
         establishments_title: 'Establishments',

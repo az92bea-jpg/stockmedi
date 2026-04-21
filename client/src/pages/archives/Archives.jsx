@@ -28,9 +28,7 @@ const Archives = () => {
     const loadCompanySettings = useCallback(async () => {
         try {
             const response = await api.get('/companies/me');
-            if (response.success && response.company?.settings?.currency) {
-                setCurrency(response.company.settings.currency);
-            }
+            setCurrency(response.company?.settings?.currency || 'GNF');
         } catch (err) {
             console.error('Erreur chargement devise:', err);
         }

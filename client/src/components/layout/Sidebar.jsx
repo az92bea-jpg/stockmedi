@@ -3,7 +3,7 @@
  * ⭐ Traductions FR/EN complètes
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { useLanguage } from '../../context/LanguageContext';
@@ -15,6 +15,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
     const user = authService.getCurrentUser();
     const [subscription, setSubscription] = useState(null);
+    const hasFetched = useRef(false);
 
     const fetchSubscription = useCallback(async () => {
         try {
@@ -26,7 +27,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     }, []);
 
     useEffect(() => {
-        if (user?.role === 'owner') {
+        if (user?.role === 'owner' && !hasFetched.current) {
+            hasFetched.current = true;
             fetchSubscription();
         }
     }, [user?.role, fetchSubscription]);

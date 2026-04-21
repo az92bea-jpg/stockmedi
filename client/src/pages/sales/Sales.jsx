@@ -17,13 +17,14 @@ import { useLanguage } from '../../context/LanguageContext';
 import EstablishmentSelector from '../../components/establishment/EstablishmentSelector';
 import api from '../../services/api';
 import { authService } from '../../services/authService';
+import '../../styles/pages/Sales.css';
 
 const Sales = () => {
     const { t } = useLanguage();
     const user = authService.getCurrentUser();
     const canMakeSales = user?.role === 'owner' || user?.role === 'super-admin' || (user?.permissions && user.permissions.includes('make_sales'));
     
-    // ⭐ État pour la devise configurée
+    // État pour la devise configurée
     const [currency, setCurrency] = useState('GNF');
     const [products, setProducts] = useState([]);
     const [cart, setCart] = useState([]);
@@ -202,7 +203,7 @@ const Sales = () => {
         return true;
     };
 
-    // ⭐ Gestionnaire de saisie pour la remise (accepte , et .)
+    // Gestionnaire de saisie pour la remise (accepte , et .)
     const handleDiscountChange = (e) => {
         let value = e.target.value.replace(',', '.');
         if (value === '' || /^\d*\.?\d*$/.test(value)) {
@@ -282,7 +283,7 @@ const Sales = () => {
         }
     }, [showHistory]);
 
-    // ⭐ Formatage du prix avec 2 décimales
+    // Formatage du prix avec 2 décimales
     const formatPrice = (price) => {
         if (price === undefined || price === null) return '0';
         return price.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -311,7 +312,8 @@ const Sales = () => {
             {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
             {!showHistory ? (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 450px', gap: 'var(--spacing-6)' }}>
+                <div className="sales-grid">
+                    {/* Colonne gauche - Recherche et produits */}
                     <div>
                         {establishments.length > 0 && (
                             <div className="card" style={{ marginBottom: 'var(--spacing-4)' }}>
@@ -352,42 +354,32 @@ const Sales = () => {
                                 <div className="card-header">
                                     <h3>{t('available_products')}</h3>
                                 </div>
-                                <div className="card-body" style={{ padding: 0 }}>
+                                <div className="card-body search-results-container">
                                     {searchResults.map(product => {
                                         const stockInEstablishment = product.quantity || 0;
                                         return (
                                             <div
                                                 key={product._id}
-                                                style={{
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    alignItems: 'center',
-                                                    padding: 'var(--spacing-3) var(--spacing-4)',
-                                                    borderBottom: '1px solid var(--gray-100)',
-                                                    cursor: 'pointer',
-                                                    transition: 'background-color var(--transition-fast)'
-                                                }}
+                                                className="search-result-item"
                                                 onClick={() => addToCart(product)}
-                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
-                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                             >
-                                                <div>
-                                                    <div style={{ fontWeight: 500 }}>{product.name}</div>
+                                                <div className="search-result-info">
+                                                    <div className="search-result-name">{product.name}</div>
                                                     {product.genericName && (
-                                                        <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
+                                                        <div className="search-result-generic">
                                                             {product.genericName}
                                                         </div>
                                                     )}
-                                                    <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>
+                                                    <div className="search-result-stock">
                                                         {t('stock')}: {stockInEstablishment} {product.unit}
                                                     </div>
                                                 </div>
-                                                <div style={{ textAlign: 'right' }}>
-                                                    <div style={{ fontWeight: 600, color: 'var(--primary-500)' }}>
-                                                        {formatPrice(product.sellingPrice)} {currency}
-                                                    </div>
+                                                <div className="search-result-price">
+                                                    {formatPrice(product.sellingPrice)} {currency}
                                                     {product.prescriptionRequired && (
-                                                        <div style={{ fontSize: '0.7rem', color: 'var(--warning)' }}>📋 {t('prescription_required')}</div>
+                                                        <div className="search-result-prescription">
+                                                            📋 {t('prescription_required')}
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
@@ -406,91 +398,131 @@ const Sales = () => {
                         )}
                     </div>
 
+                    {/* Colonne droite - Panier */}
                     <div>
                         <div className="card">
                             <div className="card-header">
                                 <h3>{t('cart')}</h3>
                             </div>
-                            <div className="card-body" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                            
+                            <div className="card-body cart-items">
                                 {cart.length === 0 ? (
                                     <div style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 'var(--spacing-4)' }}>
                                         {t('empty_cart')}
                                     </div>
                                 ) : (
                                     cart.map(item => (
-                                        <div key={item.productId} style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            padding: 'var(--spacing-2) 0',
-                                            borderBottom: '1px solid var(--gray-100)'
-                                        }}>
-                                            <div style={{ flex: 2 }}>
-                                                <div style={{ fontWeight: 500 }}>{item.name}</div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
+                                        <div key={item.productId} className="cart-item">
+                                            <div className="cart-item-info">
+                                                <div className="cart-item-name">{item.name}</div>
+                                                <div className="cart-item-price">
                                                     {formatPrice(item.unitPrice)} {currency}
                                                 </div>
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
-                                                <button className="btn btn-sm btn-outline" onClick={() => updateQuantity(item.productId, item.quantity - 1)}>-</button>
-                                                <span style={{ minWidth: '40px', textAlign: 'center' }}>{item.quantity}</span>
-                                                <button className="btn btn-sm btn-outline" onClick={() => updateQuantity(item.productId, item.quantity + 1)}>+</button>
-                                                <button className="btn btn-sm btn-outline" onClick={() => removeFromCart(item.productId)} style={{ color: 'var(--danger)', marginLeft: 'var(--spacing-2)' }}>✕</button>
+                                            <div className="cart-item-actions">
+                                                <button 
+                                                    className="btn btn-sm btn-outline" 
+                                                    onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="cart-item-quantity">{item.quantity}</span>
+                                                <button 
+                                                    className="btn btn-sm btn-outline" 
+                                                    onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                                                >
+                                                    +
+                                                </button>
+                                                <button 
+                                                    className="btn btn-sm btn-outline" 
+                                                    onClick={() => removeFromCart(item.productId)} 
+                                                    style={{ color: 'var(--danger)', marginLeft: 'var(--spacing-2)' }}
+                                                >
+                                                    ✕
+                                                </button>
                                             </div>
                                         </div>
                                     ))
                                 )}
                             </div>
 
-                            <div className="card-body" style={{ borderTop: '1px solid var(--gray-200)', borderBottom: '1px solid var(--gray-200)' }}>
+                            <div className="cart-customer-section">
                                 <div className="form-group">
                                     <label className="form-label">{t('customer_name')}</label>
-                                    <input type="text" className="form-input" placeholder={t('customer_name_placeholder')} value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+                                    <input 
+                                        type="text" 
+                                        className="form-input" 
+                                        placeholder={t('customer_name_placeholder')} 
+                                        value={customerName} 
+                                        onChange={(e) => setCustomerName(e.target.value)} 
+                                    />
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">{t('customer_phone')}</label>
-                                    <input type="tel" className="form-input" placeholder={t('customer_phone_placeholder')} value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
+                                    <input 
+                                        type="tel" 
+                                        className="form-input" 
+                                        placeholder={t('customer_phone_placeholder')} 
+                                        value={customerPhone} 
+                                        onChange={(e) => setCustomerPhone(e.target.value)} 
+                                    />
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">{t('prescription_number')}</label>
-                                    <input type="text" className="form-input" placeholder={t('prescription_placeholder')} value={prescriptionNumber} onChange={(e) => setPrescriptionNumber(e.target.value)} />
+                                    <input 
+                                        type="text" 
+                                        className="form-input" 
+                                        placeholder={t('prescription_placeholder')} 
+                                        value={prescriptionNumber} 
+                                        onChange={(e) => setPrescriptionNumber(e.target.value)} 
+                                    />
                                 </div>
                             </div>
 
                             <div className="card-body">
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-2)' }}>
+                                <div className="cart-total-row">
                                     <span>{t('subtotal')}</span>
                                     <span>{formatPrice(subtotal)} {currency}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
+                                
+                                <div className="cart-total-discount">
                                     <span>{t('discount')}</span>
-                                    <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+                                    <div className="cart-discount-inputs">
                                         <input 
                                             type="text" 
-                                            style={{ width: '80px', textAlign: 'right' }} 
-                                            className="form-input" 
+                                            className="form-input cart-discount-input" 
                                             value={discount} 
                                             onChange={handleDiscountChange} 
                                             placeholder="0"
                                         />
-                                        <select className="form-select" style={{ width: '80px' }} value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
+                                        <select 
+                                            className="form-select cart-discount-select" 
+                                            value={discountType} 
+                                            onChange={(e) => setDiscountType(e.target.value)}
+                                        >
                                             <option value="fixed">{currency}</option>
                                             <option value="percentage">%</option>
                                         </select>
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-2)' }}>
+                                
+                                <div className="cart-total-row">
                                     <span>{t('tax')} ({taxRate}%)</span>
                                     <span>{formatPrice(taxAmount)} {currency}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.1rem', marginTop: 'var(--spacing-3)', paddingTop: 'var(--spacing-3)', borderTop: '2px solid var(--gray-200)' }}>
+                                
+                                <div className="cart-total-final">
                                     <span>{t('total')}</span>
                                     <span style={{ color: 'var(--primary-500)' }}>{formatPrice(total)} {currency}</span>
                                 </div>
 
                                 <div className="form-group" style={{ marginTop: 'var(--spacing-4)' }}>
                                     <label className="form-label">{t('payment_method')}</label>
-                                    <select className="form-select" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                                    <select 
+                                        className="form-select" 
+                                        value={paymentMethod} 
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    >
                                         <option value="cash">💰 {t('cash')}</option>
                                         <option value="card">💳 {t('card')}</option>
                                         <option value="mobile_money">📱 {t('mobile_money')}</option>
@@ -498,11 +530,21 @@ const Sales = () => {
                                     </select>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}>
-                                    <button className="btn btn-primary" style={{ flex: 2 }} onClick={() => setConfirmModalOpen(true)} disabled={cart.length === 0 || loading || !canMakeSales} title={!canMakeSales ? t('no_permission_sales') : ""}>
+                                <div className="cart-actions">
+                                    <button 
+                                        className="btn btn-primary" 
+                                        style={{ flex: 2 }} 
+                                        onClick={() => setConfirmModalOpen(true)} 
+                                        disabled={cart.length === 0 || loading || !canMakeSales} 
+                                        title={!canMakeSales ? t('no_permission_sales') : ""}
+                                    >
                                         {loading ? <Loader size="sm" /> : t('validate')}
                                     </button>
-                                    <button className="btn btn-secondary" onClick={clearCart} disabled={cart.length === 0}>
+                                    <button 
+                                        className="btn btn-secondary" 
+                                        onClick={clearCart} 
+                                        disabled={cart.length === 0}
+                                    >
                                         {t('clear')}
                                     </button>
                                 </div>
@@ -511,6 +553,8 @@ const Sales = () => {
                     </div>
                 </div>
             ) : (
+
+                // ... historique ...
                 <div className="card">
                     <div className="card-header">
                         <h3>{t('history')}</h3>

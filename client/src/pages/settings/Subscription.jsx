@@ -1,7 +1,7 @@
 /**
  * PAGE ABONNEMENT - Gestion des plans
- * ⭐ Prix affichés en EUR (conformité Stripe)
- * ⭐ Option paiement local / Mobile Money
+ * Prix affichés en EUR (conformité Stripe)
+ * Option paiement local / Mobile Money
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -23,7 +23,7 @@ const Subscription = () => {
     const [subscription, setSubscription] = useState(null);
     const [plans, setPlans] = useState([]);
 
-    // ⭐ Formatage du prix en EUR (divise par 100 car Stripe stocke en centimes)
+    // Formatage du prix en EUR (divise par 100 car Stripe stocke en centimes)
     const formatPriceEUR = (priceInCents) => {
         if (!priceInCents && priceInCents !== 0) return '0,00 €';
         const euros = priceInCents / 100;
@@ -91,7 +91,7 @@ const Subscription = () => {
         }
     };
 
-    // ⭐ Rediriger vers le paiement local
+    // Rediriger vers le paiement local
     const handleLocalPayment = (planId) => {
         navigate(`/local-payment?plan=${planId}`);
     };
@@ -157,7 +157,7 @@ const Subscription = () => {
             {/* Plans d'abonnement */}
             <h3 style={{ marginBottom: 'var(--spacing-4)' }}>{t('choose_plan')}</h3>
             
-            {/* ⭐ Option de paiement local */}
+            {/* Option de paiement local */}
             <div className="card" style={{ marginBottom: 'var(--spacing-6)', backgroundColor: '#F0FDF4', border: '1px solid #0F6B3A' }}>
                 <div className="card-body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
                     <div>
@@ -237,6 +237,8 @@ const Subscription = () => {
                                     else if (feature === 'multiple_locations') featureText = t('multiple_locations');
                                     else if (feature === 'api_access') featureText = t('api_access');
                                     else if (feature === 'priority_support') featureText = t('priority_support');
+                                    else if (feature === 'quotes') featureText = t('quotes_feature');
+                                    else if (feature === 'receipt') featureText = t('receipt_feature');
                                     else featureText = feature;
                                     
                                     return (

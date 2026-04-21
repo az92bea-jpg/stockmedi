@@ -1,6 +1,6 @@
 /**
  * CONTRÔLEUR EMPLOYÉS - Gestion des employés
- * ⭐ Support affectation aux établissements (plan Enterprise)
+ * Support affectation aux établissements (plan Enterprise)
  */
 
 const User = require('../models/User');
@@ -14,7 +14,7 @@ function hashPassword(password) {
     return crypto.createHash('sha256').update(password).digest('hex');
 }
 
-// ⭐ Plans et limites d'employés
+// Plans et limites d'employés
 const PLAN_LIMITS = {
     trial: 3,
     basic: 10,
@@ -61,7 +61,7 @@ exports.addEmployee = async (req, res) => {
     try {
         const { email, password, firstName, lastName, phone, discipline, permissions, establishments } = req.body;
 
-        // ⭐ VÉRIFIER LA LIMITE D'EMPLOYÉS SELON LE PLAN
+        // VÉRIFIER LA LIMITE D'EMPLOYÉS SELON LE PLAN
         const subscription = await Subscription.findOne({ companyId: req.user.companyId });
         const currentEmployeeCount = await User.countDocuments({ 
             companyId: req.user.companyId, 
@@ -87,7 +87,7 @@ exports.addEmployee = async (req, res) => {
             });
         }
 
-        // ⭐ Vérifier que les établissements appartiennent bien à l'entreprise (si fournis)
+        // Vérifier que les établissements appartiennent bien à l'entreprise (si fournis)
         let validEstablishments = [];
         if (establishments && establishments.length > 0) {
             const companyEstablishments = await Establishment.find({
@@ -181,7 +181,7 @@ exports.updateEmployee = async (req, res) => {
         if (discipline) employee.discipline = discipline;
         if (permissions) employee.permissions = permissions;
         
-        // ⭐ Gérer les établissements
+        // Gérer les établissements
         if (establishments !== undefined) {
             if (establishments.length > 0) {
                 const companyEstablishments = await Establishment.find({

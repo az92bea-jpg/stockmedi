@@ -16,6 +16,8 @@
 html {
   font-size: 16px;
   scroll-behavior: smooth;
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
 body {
@@ -26,6 +28,13 @@ body {
   background-color: var(--gray-50);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+#root {
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
 /* ========== TYPOGRAPHIE ========== */
@@ -67,6 +76,32 @@ input, select, textarea, button {
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 .text-left { text-align: left; }
+
+/* ========== SCROLLBAR STYLÉE - UNIVERSELLE ========== */
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+    background: #E5E7EB;
+    border-radius: 5px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: #0F6B3A;
+    border-radius: 5px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: #0a4e2a;
+}
+
+/* Pour Firefox */
+* {
+    scrollbar-width: auto;
+    scrollbar-color: #0F6B3A #E5E7EB;
+}
 
 /* ========== ANIMATIONS ========== */
 @keyframes fadeIn {

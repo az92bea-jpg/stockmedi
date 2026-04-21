@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import './styles/main.css';  // ⭐ AJOUTER CETTE LIGNE
 import App from './App';
 
 // ========== GESTION PWA - INSTALLATION ==========

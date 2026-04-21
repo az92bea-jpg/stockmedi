@@ -28,7 +28,7 @@ const QuoteDetail = () => {
     const [success, setSuccess] = useState('');
     const [showConvertConfirm, setShowConvertConfirm] = useState(false);
 
-    // ⭐ Charger la devise configurée
+    // Charger la devise configurée
     const loadCompanySettings = useCallback(async () => {
         try {
             const response = await api.get('/companies/me');

@@ -41,7 +41,7 @@ const Dashboard = () => {
     const [establishments, setEstablishments] = useState([]);
     const [subscription, setSubscription] = useState(null);
     
-    const isInitialMount = useRef(true);
+    //const isInitialMount = useRef(true);
 
     const userPermissions = user?.permissions || [];
     const canManageStock = isOwner || userPermissions.includes('manage_stock');
@@ -118,22 +118,14 @@ const Dashboard = () => {
             setStats(salesStats.stats);
             setAlerts(alertsData.alerts);
             
-            //EMPLOYÉ : Récupérer ses ventes du jour
             if (isEmployee) {
                 const today = new Date().toISOString().split('T')[0];
                 const salesResponse = await api.get(`/sales?startDate=${today}&endDate=${today}&limit=100`);
                 
-                console.log('DEBUG EMPLOYÉ - Ventes brutes:', salesResponse);
-                console.log('DEBUG EMPLOYÉ - User ID:', user?._id);
-                
-                // Filtrer les ventes de l'employé
                 const mySales = (salesResponse.sales || []).filter(sale => {
                     const saleUserId = typeof sale.userId === 'object' ? sale.userId?._id : sale.userId;
-                    console.log('DEBUG - Comparaison:', saleUserId, user?._id);
                     return saleUserId === user?._id;
                 });
-                
-                console.log('DEBUG EMPLOYÉ - Mes ventes filtrées:', mySales);
                 
                 const totalAmount = mySales.reduce((sum, sale) => sum + (sale.total || 0), 0);
                 
@@ -152,7 +144,9 @@ const Dashboard = () => {
         }
     }, [isOwner, isEmployee, user?._id, t]);
 
-    useEffect(() => {
+
+
+    /*useEffect(() => {
         const init = async () => {
             await loadCompanySettings();
             await loadSubscription();
@@ -169,19 +163,44 @@ const Dashboard = () => {
         };
         
         init();
-    }, [isOwner, isEmployee, loadCompanySettings, loadSubscription, loadEstablishments, fetchDashboardData, checkAndResetEmployeeDashboard]);
+    }, [
+        isOwner, 
+        isEmployee, 
+        loadCompanySettings, 
+        loadSubscription, 
+        loadEstablishments, 
+        fetchDashboardData, 
+        checkAndResetEmployeeDashboard
+    ]);*/
+    const hasInitialized = useRef(false);
+
+        useEffect(() => {
+            if (hasInitialized.current) return;
+            hasInitialized.current = true;
+            
+            const init = async () => {
+                await loadCompanySettings();
+                await loadSubscription();
+                
+                if (isEmployee) {
+                    checkAndResetEmployeeDashboard();
+                }
+                
+                if (isOwner) {
+                    await loadEstablishments();
+                }
+                
+                await fetchDashboardData('');
+            };
+            
+            init();
+        }, [isOwner, isEmployee, loadCompanySettings, loadSubscription, loadEstablishments, fetchDashboardData, checkAndResetEmployeeDashboard]);
+
 
     const handleEstablishmentChange = (newEstablishmentId) => {
         setSelectedEstablishment(newEstablishmentId);
         fetchDashboardData(newEstablishmentId);
     };
-
-    useEffect(() => {
-        if (!isInitialMount.current && establishments.length > 0 && selectedEstablishment === '') {
-            fetchDashboardData('');
-        }
-        isInitialMount.current = false;
-    }, [establishments.length, fetchDashboardData, selectedEstablishment]);
 
     const handleArchiveAndReset = async () => {
         setArchiving(true);

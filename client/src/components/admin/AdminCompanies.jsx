@@ -48,7 +48,7 @@ const AdminCompanies = () => {
         } finally {
             setLoading(false);
         }
-    }, [pagination.page, filters]);
+    }, [pagination.page, filters.search, filters.status]); // ⭐ Dépendances primitives
 
     useEffect(() => {
         fetchCompanies();

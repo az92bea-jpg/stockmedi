@@ -1,7 +1,7 @@
 /**
  * CONTRÔLEUR PAIEMENT - Stripe (paiements en EUR)
- * ⭐ Conforme à Stripe : devise EUR, prix en centimes
- * ⭐ Support paiement local / Mobile Money
+ * Conforme à Stripe : devise EUR, prix en centimes
+ * Support paiement local / Mobile Money
  */
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -9,35 +9,35 @@ const Subscription = require('../models/Subscription');
 const Company = require('../models/Company');
 const nodemailer = require('nodemailer');
 
-// ⭐ Plans d'abonnement - Prix en EUR (centimes)
+// Plans d'abonnement - Prix en EUR (centimes)
 const PLANS = {
     basic: {
         name: 'Basic',
-        price: 500, // 5,00 EUR
+        price: 899, // 8,99 EUR
         currency: 'eur',
         duration: 30,
         description: '500 produits, 10 employés, rapports PDF',
-        features: ['stock_basic', 'sales_basic', 'reports_basic', 'pdf_exports', 'employees']
+        features: ['stock_basic', 'sales_basic', 'reports_basic', 'pdf_exports', 'employees', 'quotes', 'receipt']
     },
     premium: {
         name: 'Premium',
-        price: 1000, // 10,00 EUR
+        price: 1899, // 18,99 EUR
         currency: 'eur',
         duration: 30,
         description: '2000 produits, 30 employés, statistiques avancées',
-        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees', 'advanced_stats']
+        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees', 'advanced_stats', 'quotes', 'receipt']
     },
     enterprise: {
         name: 'Enterprise',
-        price: 2500, // 25,00 EUR
+        price: 4799, // 47,99 EUR
         currency: 'eur',
         duration: 30,
         description: 'Illimité, API, support prioritaire',
-        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees', 'advanced_stats', 'multiple_locations', 'api_access', 'priority_support']
+        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees', 'advanced_stats', 'multiple_locations', 'api_access', 'quotes', 'receipt','priority_support']
     }
 };
 
-// ⭐ Configuration email (à adapter avec vos identifiants)
+//  Configuration email (à adapter avec vos identifiants)
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: process.env.EMAIL_PORT || 587,
@@ -249,7 +249,7 @@ exports.submitLocalPaymentRequest = async (req, res) => {
 
         console.log(`📧 Email envoyé à l'admin (${adminEmail}) et au client (${email})`);
 
-        // ⭐ Notification WhatsApp à l'admin (si configuré)
+        // Notification WhatsApp à l'admin (si configuré)
         if (contactMethod === 'whatsapp' && process.env.ADMIN_WHATSAPP) {
             // Optionnel : intégrer l'API WhatsApp Business
             console.log(`📱 Notification WhatsApp à envoyer à ${process.env.ADMIN_WHATSAPP}`);

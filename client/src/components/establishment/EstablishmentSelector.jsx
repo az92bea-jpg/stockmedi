@@ -4,7 +4,7 @@
  * Option "Tous les établissements" ajoutée
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../services/api';
 import Icon from '../../components/ui/Icon';
 import { useLanguage } from '../../context/LanguageContext';
@@ -13,14 +13,13 @@ const EstablishmentSelector = ({ selectedId, onSelect, className = '' }) => {
     const { t } = useLanguage();
     const [establishments, setEstablishments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const hasFetched = useRef(false);
 
     const loadEstablishments = useCallback(async () => {
         try {
             setLoading(true);
             const response = await api.get('/establishments');
             setEstablishments(response.establishments || []);
-            // Ne PAS sélectionner automatiquement le premier établissement
-            // Laisser le parent gérer la valeur par défaut (chaîne vide = "Tous")
         } catch (err) {
             console.error('Erreur chargement établissements:', err);
         } finally {
@@ -29,6 +28,8 @@ const EstablishmentSelector = ({ selectedId, onSelect, className = '' }) => {
     }, []);
 
     useEffect(() => {
+        if (hasFetched.current) return;
+        hasFetched.current = true;
         loadEstablishments();
     }, [loadEstablishments]);
 
@@ -52,7 +53,6 @@ const EstablishmentSelector = ({ selectedId, onSelect, className = '' }) => {
                 value={selectedId || ''}
                 onChange={(e) => onSelect(e.target.value)}
             >
-                {/* Option "Tous les établissements" */}
                 <option value="">
                     <Icon name="establishment" category="nav" fallback="🏢" style={{ width: '14px', height: '14px', marginRight: '4px' }} />
                     {t('all_establishments')}

@@ -9,7 +9,7 @@ import Header from './Header';
 import Footer from './Footer';
 
 const Layout = () => {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false); // Sidebar ouverte par defaut si true
 
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
@@ -17,54 +17,70 @@ const Layout = () => {
 
     return (
         <div style={{ 
-            display: 'flex', 
+            display: 'flex',
+            flexDirection: 'column',
             minHeight: '100vh',
-            position: 'relative'
+            position: 'relative',
+            backgroundColor: '#F9FAFB'
         }}>
-            <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-            
-            <div className="main-content" style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                minHeight: '100vh',
-                transition: 'margin-left 0.3s ease',
-                width: '100%'
-            }}>
-                <Header onMenuClick={toggleSidebar} isSidebarOpen={sidebarOpen} />
-                <main style={{
-                    flex: '1 0 auto',
-                    padding: '24px',
-                    backgroundColor: '#F9FAFB',
-                    width: '100%',
-                    boxSizing: 'border-box'
+            <div style={{ display: 'flex', flex: 1 }}>
+                <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+                
+                <div className="main-content" style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transition: 'margin-left 0.3s ease',
+                    width: '100%'
                 }}>
-                    <Outlet />
-                </main>
-                <Footer />
+                    <Header onMenuClick={toggleSidebar} isSidebarOpen={sidebarOpen} />
+                    <main style={{
+                        flex: 1,  // Pousse le footer vers le bas
+                        padding: '24px',
+                        backgroundColor: '#F9FAFB',
+                        width: '100%',
+                        boxSizing: 'border-box'
+                    }}>
+                        <Outlet />
+                    </main>
+                </div>
             </div>
+            
+            {/* Ligne de séparation */}
+            {/* <div style={{ 
+                height: '2px',
+                backgroundColor: 'red',
+                border: '1px solid black',
+                marginTop: '100px',
+                marginBottom: '10px',
+                marginLeft: '24px',
+                marginRight: '24px'
+            }} />*/}
+            <div style={{ 
+                borderTop: '1px dashed #D1D5DB',
+                marginTop: '300px',
+                marginBottom: '18px',
+                marginLeft: '24px',
+                marginRight: '24px'
+                //margin: '20px 50px'
+            }} />
+            <Footer />
 
             <style>{`
-                /* Desktop : le contenu principal se décale quand la sidebar est ouverte */
                 @media (min-width: 769px) {
                     .main-content {
                         margin-left: ${sidebarOpen ? '280px' : '0'};
                         transition: margin-left 0.3s ease;
                     }
                 }
-                
-                /* Mobile : le contenu principal reste toujours à gauche (pas de marge) */
                 @media (max-width: 768px) {
                     .main-content {
                         margin-left: 0 !important;
                     }
                     main {
                         padding: 16px !important;
-                        flex: 1 0 auto !important;
                     }
                 }
-                
-                /* Pour les très petits écrans */
                 @media (max-width: 480px) {
                     main {
                         padding: 12px !important;

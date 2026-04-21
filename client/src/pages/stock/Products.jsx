@@ -463,6 +463,7 @@ const Products = () => {
                 </div>
             </div>
 
+
             {/* Liste des produits */}
             {filteredProducts.length === 0 ? (
                 <div className="card">
@@ -472,114 +473,122 @@ const Products = () => {
                 </div>
             ) : (
                 <div className="card">
+                    {/* Conteneur avec scroll horizontal */}
                     <div style={{
-                        display: 'flex',
-                        gap: 'var(--spacing-4)',
-                        padding: 'var(--spacing-3) var(--spacing-4)',
-                        backgroundColor: 'var(--gray-50)',
-                        borderBottom: '1px solid var(--gray-200)',
-                        fontWeight: 600,
-                        fontSize: '0.875rem',
-                        color: 'var(--gray-600)',
-                        flexWrap: 'wrap'
+                        overflowX: 'auto',
+                        WebkitOverflowScrolling: 'touch',
+                        width: '100%'
                     }}>
-                        <div style={{ width: '180px' }}>{t('dci')}</div>
-                        <div style={{ width: '100px' }}>{t('type')}</div>
-                        <div style={{ width: '120px' }}>{t('category')}</div>
-                        <div style={{ width: '80px' }}>{t('stock')}</div>
-                        <div style={{ width: '100px' }}>{t('selling_price')}</div>
-                        <div style={{ width: '80px' }}>{t('margin')}</div>
-                        <div style={{ width: '100px' }}>{t('expiration')}</div>
-                        <div style={{ width: '80px' }}>{t('actions')}</div>
-                    </div>
-
-                    {filteredProducts.map((product) => (
-                        <div
-                            key={product._id}
-                            style={{
-                                display: 'flex',
-                                gap: 'var(--spacing-4)',
-                                padding: 'var(--spacing-3) var(--spacing-4)',
-                                borderBottom: '1px solid var(--gray-100)',
-                                alignItems: 'center',
-                                transition: 'background-color 0.2s',
-                                flexWrap: 'wrap'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                        >
-                            <div style={{ width: '180px' }}>
-                                <strong>{product.name}</strong>
-                                {product.batchNumber && (
-                                    <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>
-                                        {t('lot')}: {product.batchNumber}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div style={{ width: '100px', fontSize: '0.8rem' }}>
-                                {product.type === 'Princeps' ? `💊 ${t('princeps')}` : `💊 ${t('generique')}`}
-                            </div>
-
-                            <div style={{ width: '120px', fontSize: '0.75rem' }}>
-                                <div>{getCategoryLabel(product.category)}</div>
-                                {product.subCategory && (
-                                    <div style={{ fontSize: '0.65rem', color: 'var(--gray-500)' }}>
-                                        {product.subCategory}
-                                    </div>
-                                )}
-                                <div style={{ fontSize: '0.65rem', color: 'var(--gray-500)', marginTop: '2px' }}>
-                                    📍 {product.location || t('in_stock')}
-                                </div>
-                                {product.establishmentId?.name && (
-                                    <div style={{ fontSize: '0.65rem', color: 'var(--primary-500)', marginTop: '2px' }}>
-                                        🏪 {product.establishmentId.name}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div style={{ width: '80px' }}>
-                                <span className={product.quantity === 0 ? 'badge-danger' : product.quantity <= product.reorderPoint ? 'badge-warning' : 'badge-success'}>
-                                    {formatPrice(product.quantity)} {product.unit}
-                                </span>
-                            </div>
-
-                            <div style={{ width: '100px', fontSize: '0.875rem' }}>
-                                <strong>{formatPrice(product.sellingPrice)} {currency}</strong>
-                            </div>
-
-                            <div style={{ width: '80px' }}>
-                                {(() => {
-                                    const purchase = Number(product.purchasePrice);
-                                    const selling = Number(product.sellingPrice);
-                                    if (purchase === 0 || isNaN(purchase)) return <span style={{ color: '#F59E0B' }}>N/A</span>;
-                                    const margin = ((selling - purchase) / purchase * 100).toFixed(1);
-                                    if (selling < purchase) return <span style={{ color: '#EF4444' }}>{margin}%</span>;
-                                    if (selling > purchase) return <span style={{ color: '#10B981' }}>+{margin}%</span>;
-                                    return <span style={{ color: '#F59E0B' }}>{margin}%</span>;
-                                })()}
-                            </div>
-
-                            <div style={{ width: '100px' }}>
-                                <span className={getExpirationStatusClass(product)}>
-                                    {product.expirationDate ? new Date(product.expirationDate).toLocaleDateString('fr-FR') : t('na')}
-                                </span>
-                            </div>
-
-                            <div style={{ width: '80px', display: 'flex', gap: 'var(--spacing-2)' }}>
-                                {canManageStock && (
-                                    <>
-                                        <button className="btn btn-sm btn-outline" onClick={() => openEditModal(product)} title={t('edit')}>✏️</button>
-                                        <button className="btn btn-sm btn-outline" onClick={() => handleDelete(product)} style={{ color: '#EF4444' }} title={t('delete')}>🗑️</button>
-                                    </>
-                                )}
-                                {!canManageStock && <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)' }}>{t('read_only')}</span>}
-                            </div>
+                        {/* En-tête du tableau */}
+                        <div style={{
+                            display: 'flex',
+                            minWidth: '1000px',
+                            gap: 'var(--spacing-4)',
+                            padding: 'var(--spacing-3) var(--spacing-4)',
+                            backgroundColor: 'var(--gray-50)',
+                            borderBottom: '1px solid var(--gray-200)',
+                            fontWeight: 600,
+                            fontSize: '0.875rem',
+                            color: 'var(--gray-600)'
+                        }}>
+                            <div style={{ width: '180px' }}>{t('dci')}</div>
+                            <div style={{ width: '100px' }}>{t('type')}</div>
+                            <div style={{ width: '120px' }}>{t('category')}</div>
+                            <div style={{ width: '80px' }}>{t('stock')}</div>
+                            <div style={{ width: '100px' }}>{t('selling_price')}</div>
+                            <div style={{ width: '80px' }}>{t('margin')}</div>
+                            <div style={{ width: '100px' }}>{t('expiration')}</div>
+                            <div style={{ width: '80px' }}>{t('actions')}</div>
                         </div>
-                    ))}
+
+                        {/* Lignes du tableau */}
+                        {filteredProducts.map((product) => (
+                            <div
+                                key={product._id}
+                                style={{
+                                    display: 'flex',
+                                    minWidth: '1000px',
+                                    gap: 'var(--spacing-4)',
+                                    padding: 'var(--spacing-3) var(--spacing-4)',
+                                    borderBottom: '1px solid var(--gray-100)',
+                                    alignItems: 'center',
+                                    transition: 'background-color 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                                <div style={{ width: '180px' }}>
+                                    <strong>{product.name}</strong>
+                                    {product.batchNumber && (
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>
+                                            {t('lot')}: {product.batchNumber}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div style={{ width: '100px', fontSize: '0.8rem' }}>
+                                    {product.type === 'Princeps' ? `💊 ${t('princeps')}` : `💊 ${t('generique')}`}
+                                </div>
+
+                                <div style={{ width: '120px', fontSize: '0.75rem' }}>
+                                    <div>{getCategoryLabel(product.category)}</div>
+                                    {product.subCategory && (
+                                        <div style={{ fontSize: '0.65rem', color: 'var(--gray-500)' }}>
+                                            {product.subCategory}
+                                        </div>
+                                    )}
+                                    <div style={{ fontSize: '0.65rem', color: 'var(--gray-500)', marginTop: '2px' }}>
+                                        📍 {product.location || t('in_stock')}
+                                    </div>
+                                    {product.establishmentId?.name && (
+                                        <div style={{ fontSize: '0.65rem', color: 'var(--primary-500)', marginTop: '2px' }}>
+                                            🏪 {product.establishmentId.name}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div style={{ width: '80px' }}>
+                                    <span className={product.quantity === 0 ? 'badge-danger' : product.quantity <= product.reorderPoint ? 'badge-warning' : 'badge-success'}>
+                                        {formatPrice(product.quantity)} {product.unit}
+                                    </span>
+                                </div>
+
+                                <div style={{ width: '100px', fontSize: '0.875rem' }}>
+                                    <strong>{formatPrice(product.sellingPrice)} {currency}</strong>
+                                </div>
+
+                                <div style={{ width: '80px' }}>
+                                    {(() => {
+                                        const purchase = Number(product.purchasePrice);
+                                        const selling = Number(product.sellingPrice);
+                                        if (purchase === 0 || isNaN(purchase)) return <span style={{ color: '#F59E0B' }}>N/A</span>;
+                                        const margin = ((selling - purchase) / purchase * 100).toFixed(1);
+                                        if (selling < purchase) return <span style={{ color: '#EF4444' }}>{margin}%</span>;
+                                        if (selling > purchase) return <span style={{ color: '#10B981' }}>+{margin}%</span>;
+                                        return <span style={{ color: '#F59E0B' }}>{margin}%</span>;
+                                    })()}
+                                </div>
+
+                                <div style={{ width: '100px' }}>
+                                    <span className={getExpirationStatusClass(product)}>
+                                        {product.expirationDate ? new Date(product.expirationDate).toLocaleDateString('fr-FR') : t('na')}
+                                    </span>
+                                </div>
+
+                                <div style={{ width: '80px', display: 'flex', gap: 'var(--spacing-2)' }}>
+                                    {canManageStock && (
+                                        <>
+                                            <button className="btn btn-sm btn-outline" onClick={() => openEditModal(product)} title={t('edit')}>✏️</button>
+                                            <button className="btn btn-sm btn-outline" onClick={() => handleDelete(product)} style={{ color: '#EF4444' }} title={t('delete')}>🗑️</button>
+                                        </>
+                                    )}
+                                    {!canManageStock && <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)' }}>{t('read_only')}</span>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
-
             {/* Modal de création/édition */}
             <Modal
                 isOpen={modalOpen}

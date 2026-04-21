@@ -42,7 +42,7 @@ const AdminUsers = () => {
         } finally {
             setLoading(false);
         }
-    }, [pagination.page, filters]);
+    }, [pagination.page, filters.search, filters.role]); // ⭐ Dépendances primitives
 
     useEffect(() => {
         fetchUsers();

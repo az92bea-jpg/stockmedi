@@ -1,0 +1,157 @@
+/**
+ * STYLES DE LA PAGE VENTES - StockMedi
+ * Responsive design pour le point de vente
+ */
+
+/* ========== GRILLE PRINCIPALE ========== */
+.sales-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(350px, 450px);
+    gap: var(--spacing-6);
+}
+
+/* ========== RESPONSIVE - MOBILE & TABLETTE ========== */
+@media (max-width: 900px) {
+    .sales-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ========== CARTE PANIER - SCROLL ========== */
+.cart-items {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* ========== ITEM PANIER ========== */
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-2) 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.cart-item-info {
+    flex: 2;
+}
+
+.cart-item-name {
+    font-weight: 500;
+}
+
+.cart-item-price {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.cart-item-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.cart-item-quantity {
+    min-width: 40px;
+    text-align: center;
+}
+
+/* ========== SECTION CLIENT ========== */
+.cart-customer-section {
+    border-top: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--gray-200);
+    padding: var(--spacing-4) var(--spacing-5);
+}
+
+/* ========== TOTAUX ========== */
+.cart-total-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-2);
+}
+
+.cart-total-discount {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-2);
+}
+
+.cart-discount-inputs {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.cart-discount-input {
+    width: 80px;
+    text-align: right;
+}
+
+.cart-discount-select {
+    width: 80px;
+}
+
+.cart-total-final {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-top: var(--spacing-3);
+    padding-top: var(--spacing-3);
+    border-top: 2px solid var(--gray-200);
+}
+
+/* ========== BOUTONS D'ACTION ========== */
+.cart-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-4);
+}
+
+/* ========== RÉSULTATS DE RECHERCHE ========== */
+.search-results-container {
+    padding: 0;
+}
+
+.search-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-3) var(--spacing-4);
+    border-bottom: 1px solid var(--gray-100);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.search-result-item:hover {
+    background-color: var(--gray-50);
+}
+
+.search-result-info {
+    flex: 1;
+}
+
+.search-result-name {
+    font-weight: 500;
+}
+
+.search-result-generic {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.search-result-stock {
+    font-size: 0.7rem;
+    color: var(--gray-400);
+}
+
+.search-result-price {
+    text-align: right;
+    font-weight: 600;
+    color: var(--primary-500);
+}
+
+.search-result-prescription {
+    font-size: 0.7rem;
+    color: var(--warning);
+}

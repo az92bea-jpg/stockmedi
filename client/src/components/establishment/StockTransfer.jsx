@@ -3,7 +3,7 @@
  * ⭐ Traductions FR/EN complètes
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { getEstablishments, transferStock } from '../../services/establishmentService';
 import { productService } from '../../services/productService';
 import Loader from '../common/Loader';
@@ -29,6 +29,7 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
     });
     
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const hasFetched = useRef(false);
 
     const loadData = useCallback(async () => {
         try {
@@ -51,6 +52,8 @@ const StockTransfer = ({ onSuccess, onCancel }) => {
     }, [t]);
 
     useEffect(() => {
+        if (hasFetched.current) return;
+        hasFetched.current = true;
         loadData();
     }, [loadData]);
 

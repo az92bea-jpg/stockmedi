@@ -1,7 +1,7 @@
 /**
  * COMPOSANT HEADER - Barre de navigation supérieure
- * ⭐ Traductions FR/EN complètes
- * ⭐ Bouton déconnexion supprimé (reste dans la sidebar)
+ * Traductions FR/EN complètes
+ * Bouton déconnexion supprimé (reste dans la sidebar)
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -17,7 +17,7 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
     const [company, setCompany] = useState(null);
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const hasFetchedCompany = useRef(false);
-    // ... reste du code inchangé
+
     useEffect(() => {
         const handleResize = () => setWindowWidth(window.innerWidth);
         window.addEventListener('resize', handleResize);
@@ -25,8 +25,10 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
     }, []);
 
     useEffect(() => {
+        if (hasFetchedCompany.current) return;
+        
         const fetchCompany = async () => {
-            if (user?.companyId && !hasFetchedCompany.current) {
+            if (user?.companyId) {
                 hasFetchedCompany.current = true;
                 try {
                     const response = await api.get('/companies/me');

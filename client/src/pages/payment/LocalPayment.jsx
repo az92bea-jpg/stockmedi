@@ -40,9 +40,9 @@ const LocalPayment = () => {
 
     // Plans disponibles avec leurs noms traduits
     const plans = [
-        { value: 'basic', label: 'Basic', price: '5€' },
-        { value: 'premium', label: 'Premium', price: '10€' },
-        { value: 'enterprise', label: 'Enterprise', price: '25€' }
+        { value: 'basic', label: 'Basic', price: '8,99€' },
+        { value: 'premium', label: 'Premium', price: '18,99€' },
+        { value: 'enterprise', label: 'Enterprise', price: '47,99€' }
     ];
 
     const countries = [
@@ -57,6 +57,51 @@ const LocalPayment = () => {
         { value: 'CG', label: 'Congo' },
         { value: 'GA', label: 'Gabon' },
         { value: 'CD', label: 'RDC' },
+        { value: 'GH', label: 'Ghana' },
+        { value: 'NG', label: 'Nigeria' },
+        { value: 'NE', label: 'Niger' },
+        { value: 'LR', label: 'Liberia' },
+        { value: 'ZA', label: 'Afrique du Sud' },
+        { value: 'MG', label: 'Madagascar' },
+        { value: 'KM', label: 'Comores' },
+        { value: 'TD', label: 'Tchad' },
+        { value: 'CF', label: 'Centrafrique' },
+        { value: 'GQ', label: 'Guinée Équatoriale' },
+        { value: 'GW', label: 'Guinée-Bissau' },
+        { value: 'MR', label: 'Mauritanie' },
+        { value: 'SL', label: 'Sierra Leone' },
+        { value: 'TG', label: 'Togo' },
+        { value: 'AO', label: 'Angola' },
+        { value: 'BW', label: 'Botswana' },
+        { value: 'BI', label: 'Burundi' },
+        { value: 'CV', label: 'Cap-Vert' },
+        { value: 'DJ', label: 'Djibouti' },
+        { value: 'ER', label: 'Érythrée' },
+        { value: 'SZ', label: 'Eswatini' },
+        { value: 'ET', label: 'Éthiopie' },
+        { value: 'GM', label: 'Gambie' },
+        { value: 'KE', label: 'Kenya' },
+        { value: 'LS', label: 'Lesotho' },
+        { value: 'LY', label: 'Libye' },
+        { value: 'MW', label: 'Malawi' },
+        { value: 'MU', label: 'Maurice' },
+        { value: 'YT', label: 'Mayotte' },
+        { value: 'MA', label: 'Maroc' },
+        { value: 'MZ', label: 'Mozambique' },
+        { value: 'NA', label: 'Namibie' },
+        { value: 'RE', label: 'Réunion' },
+        { value: 'RW', label: 'Rwanda' },
+        { value: 'ST', label: 'Sao Tomé-et-Principe' },
+        { value: 'SC', label: 'Seychelles' },
+        { value: 'SO', label: 'Somalie' },
+        { value: 'SS', label: 'Soudan du Sud' },
+        { value: 'SD', label: 'Soudan' },
+        { value: 'TZ', label: 'Tanzanie' },
+        { value: 'TN', label: 'Tunisie' },
+        { value: 'UG', label: 'Ouganda' },
+        { value: 'EH', label: 'Sahara Occidental' },
+        { value: 'ZM', label: 'Zambie' },
+        { value: 'ZW', label: 'Zimbabwe' },
         { value: 'OTHER', label: 'Autre' }
     ];
 

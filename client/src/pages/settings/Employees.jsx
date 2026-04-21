@@ -1,6 +1,6 @@
 /**
  * PAGE GESTION EMPLOYÉS
- * ⭐ Support affectation aux établissements (plan Enterprise)
+ * Support affectation aux établissements (plan Enterprise)
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -104,6 +104,15 @@ const Employees = () => {
     });
 
     // ⭐ Charger les établissements
+    /* {
+        try {
+            const response = await getEstablishments();
+            setEstablishments(response.establishments || []);
+        } catch (err) {
+            console.error('Erreur chargement établissements:', err);
+        }
+    }, []);*/
+
     const loadEstablishments = useCallback(async () => {
         try {
             const response = await getEstablishments();
@@ -124,12 +133,26 @@ const Employees = () => {
         } finally {
             setLoading(false);
         }
-    }, [t]);
+    }, [t]);  // ⭐ AJOUTER `t` dans les dépendances
+
+    /*const fetchEmployees = useCallback(async () => {
+        try {
+            setLoading(true);
+            const response = await api.get('/employees');
+            setEmployees(response.employees || []);
+        } catch (err) {
+            setError(t('error'));
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    }, [t]);*/
 
     useEffect(() => {
         loadEstablishments();
         fetchEmployees();
     }, [loadEstablishments, fetchEmployees]);
+
 
     const resetForm = () => {
         setFormData({
@@ -295,144 +318,151 @@ const Employees = () => {
 
             {/* Liste des employés */}
             <div className="card">
+                {/* Conteneur avec scroll horizontal global */}
                 <div style={{
-                    display: 'flex',
-                    gap: 'var(--spacing-4)',
-                    padding: 'var(--spacing-3) var(--spacing-4)',
-                    backgroundColor: 'var(--gray-50)',
-                    borderBottom: '1px solid var(--gray-200)',
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                    color: 'var(--gray-600)',
-                    flexWrap: 'wrap'
+                    overflowX: 'auto',
+                    WebkitOverflowScrolling: 'touch',
+                    width: '100%'
                 }}>
-                    <div style={{ width: '180px' }}>{t('employee')}</div>
-                    <div style={{ width: '120px' }}>{t('contact')}</div>
-                    <div style={{ width: '140px' }}>{t('discipline')}</div>
-                    <div style={{ width: '150px' }}>{t('permissions')}</div>
-                    <div style={{ width: '120px' }}>{t('establishments')}</div>
-                    <div style={{ width: '80px' }}>{t('status')}</div>
-                    <div style={{ width: '100px' }}>{t('actions')}</div>
-                </div>
+                    {/* En-tête du tableau */}
+                    <div style={{
+                        display: 'flex',
+                        minWidth: '900px',
+                        gap: 'var(--spacing-4)',
+                        padding: 'var(--spacing-3) var(--spacing-4)',
+                        backgroundColor: 'var(--gray-50)',
+                        borderBottom: '1px solid var(--gray-200)',
+                        fontWeight: 600,
+                        fontSize: '0.875rem',
+                        color: 'var(--gray-600)'
+                    }}>
+                        <div style={{ width: '180px' }}>{t('employee')}</div>
+                        <div style={{ width: '120px' }}>{t('contact')}</div>
+                        <div style={{ width: '140px' }}>{t('discipline')}</div>
+                        <div style={{ width: '150px' }}>{t('permissions')}</div>
+                        <div style={{ width: '120px' }}>{t('establishments')}</div>
+                        <div style={{ width: '80px' }}>{t('status')}</div>
+                        <div style={{ width: '100px' }}>{t('actions')}</div>
+                    </div>
 
-                <div>
-                    {employees.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--gray-500)' }}>
-                            {t('no_employees')}
-                        </div>
-                    ) : (
-                        employees.map(emp => {
-                            const disciplineColors = getDisciplineColor(emp.discipline);
-                            return (
-                                <div
-                                    key={emp._id}
-                                    style={{
-                                        display: 'flex',
-                                        gap: 'var(--spacing-4)',
-                                        padding: 'var(--spacing-3) var(--spacing-4)',
-                                        borderBottom: '1px solid var(--gray-100)',
-                                        alignItems: 'center',
-                                        transition: 'background-color 0.2s',
-                                        flexWrap: 'wrap'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                >
-                                    <div style={{ width: '180px' }}>
-                                        <strong>{emp.firstName} {emp.lastName}</strong>
-                                        <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
-                                            {emp.email}
+                    {/* Lignes du tableau */}
+                    <div>
+                        {employees.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--gray-500)', minWidth: '900px' }}>
+                                {t('no_employees')}
+                            </div>
+                        ) : (
+                            employees.map(emp => {
+                                const disciplineColors = getDisciplineColor(emp.discipline);
+                                return (
+                                    <div
+                                        key={emp._id}
+                                        style={{
+                                            display: 'flex',
+                                            minWidth: '900px',
+                                            gap: 'var(--spacing-4)',
+                                            padding: 'var(--spacing-3) var(--spacing-4)',
+                                            borderBottom: '1px solid var(--gray-100)',
+                                            alignItems: 'center',
+                                            transition: 'background-color 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    >
+                                        <div style={{ width: '180px' }}>
+                                            <strong>{emp.firstName} {emp.lastName}</strong>
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
+                                                {emp.email}
+                                            </div>
+                                        </div>
+                                        <div style={{ width: '120px', fontSize: '0.875rem' }}>
+                                            {emp.phone || '-'}
+                                        </div>
+                                        <div style={{ width: '140px' }}>
+                                            <span style={{
+                                                display: 'inline-block',
+                                                backgroundColor: disciplineColors.bg,
+                                                color: disciplineColors.color,
+                                                padding: '4px 10px',
+                                                borderRadius: '20px',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 500
+                                            }}>
+                                                {getDisciplineLabel(emp.discipline, t)}
+                                            </span>
+                                        </div>
+                                        <div style={{ width: '150px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                            {emp.permissions?.slice(0, 3).map(p => (
+                                                <span key={p} style={{
+                                                    display: 'inline-block',
+                                                    backgroundColor: 'var(--gray-100)',
+                                                    padding: '2px 6px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '0.7rem'
+                                                }}>
+                                                    {getPermissionLabel(p, t)}
+                                                </span>
+                                            ))}
+                                            {emp.permissions?.length > 3 && (
+                                                <span style={{
+                                                    backgroundColor: 'var(--gray-100)',
+                                                    padding: '2px 6px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '0.7rem'
+                                                }}>
+                                                    +{emp.permissions.length - 3}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div style={{ width: '120px', fontSize: '0.75rem' }}>
+                                            {emp.establishments?.length > 0 ? (
+                                                emp.establishments.map(e => (
+                                                    <div key={e._id}>
+                                                        <Icon name={null} category={null} fallback="🏢" style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+                                                        {e.name}
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <span style={{ color: 'var(--gray-400)' }}>{t('all_establishments')}</span>
+                                            )}
+                                        </div>
+                                        <div style={{ width: '80px' }}>
+                                            <span className={emp.isActive ? 'badge-success' : 'badge-danger'}>
+                                                {emp.isActive ? t('active') : t('inactive')}
+                                            </span>
+                                        </div>
+                                        <div style={{ width: '100px', display: 'flex', gap: 'var(--spacing-2)' }}>
+                                            <button 
+                                                className="btn btn-sm btn-outline" 
+                                                onClick={() => openEditModal(emp)} 
+                                                title={t('edit')}
+                                            >
+                                                <Icon name="edit" category="actions" fallback="✏️" style={{ width: '16px', height: '16px' }} />
+                                            </button>
+                                            <button 
+                                                className="btn btn-sm btn-outline" 
+                                                onClick={() => toggleEmployee(emp)} 
+                                                title={emp.isActive ? t('deactivate') : t('activate')} 
+                                                style={{ color: emp.isActive ? 'var(--warning)' : 'var(--success)' }}
+                                            >
+                                                <Icon name={null} category={null} fallback={emp.isActive ? '🔒' : '🔓'} style={{ width: '16px', height: '16px' }} />
+                                            </button>
+                                            <button 
+                                                className="btn btn-sm btn-outline" 
+                                                onClick={() => deleteEmployee(emp)} 
+                                                title={t('delete')} 
+                                                style={{ color: 'var(--danger)' }}
+                                            >
+                                                <Icon name="delete" category="actions" fallback="🗑️" style={{ width: '16px', height: '16px' }} />
+                                            </button>
                                         </div>
                                     </div>
-                                    <div style={{ width: '120px', fontSize: '0.875rem' }}>
-                                        {emp.phone || '-'}
-                                    </div>
-                                    <div style={{ width: '140px' }}>
-                                        <span style={{
-                                            display: 'inline-block',
-                                            backgroundColor: disciplineColors.bg,
-                                            color: disciplineColors.color,
-                                            padding: '4px 10px',
-                                            borderRadius: '20px',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 500
-                                        }}>
-                                            {getDisciplineLabel(emp.discipline, t)}
-                                        </span>
-                                    </div>
-                                    <div style={{ width: '150px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                                        {emp.permissions?.slice(0, 3).map(p => (
-                                            <span key={p} style={{
-                                                display: 'inline-block',
-                                                backgroundColor: 'var(--gray-100)',
-                                                padding: '2px 6px',
-                                                borderRadius: '4px',
-                                                fontSize: '0.7rem'
-                                            }}>
-                                                {getPermissionLabel(p, t)}
-                                            </span>
-                                        ))}
-                                        {emp.permissions?.length > 3 && (
-                                            <span style={{
-                                                backgroundColor: 'var(--gray-100)',
-                                                padding: '2px 6px',
-                                                borderRadius: '4px',
-                                                fontSize: '0.7rem'
-                                            }}>
-                                                +{emp.permissions.length - 3}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div style={{ width: '120px', fontSize: '0.75rem' }}>
-                                        {emp.establishments?.length > 0 ? (
-                                            emp.establishments.map(e => (
-                                                <div key={e._id}>
-                                                    <Icon name={null} category={null} fallback="🏢" style={{ width: '12px', height: '12px', marginRight: '4px' }} /> {/* ⚠️ establishment.svg à créer */}
-                                                    {e.name}
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <span style={{ color: 'var(--gray-400)' }}>{t('all_establishments')}</span>
-                                        )}
-                                    </div>
-                                    <div style={{ width: '80px' }}>
-                                        <span className={emp.isActive ? 'badge-success' : 'badge-danger'}>
-                                            {emp.isActive ? t('active') : t('inactive')}
-                                        </span>
-                                    </div>
-                                    <div style={{ width: '100px', display: 'flex', gap: 'var(--spacing-2)' }}>
-                                        <button 
-                                            className="btn btn-sm btn-outline" 
-                                            onClick={() => openEditModal(emp)} 
-                                            title={t('edit')}
-                                        >
-                                            <Icon name="edit" category="actions" fallback="✏️" style={{ width: '16px', height: '16px' }} />
-                                        </button>
-                                        <button 
-                                            className="btn btn-sm btn-outline" 
-                                            onClick={() => toggleEmployee(emp)} 
-                                            title={emp.isActive ? t('deactivate') : t('activate')} 
-                                            style={{ color: emp.isActive ? 'var(--warning)' : 'var(--success)' }}
-                                        >
-                                            {/* ⚠️ lock.svg et unlock.svg à créer */}
-                                            <Icon name={null} category={null} fallback={emp.isActive ? '🔒' : '🔓'} style={{ width: '16px', height: '16px' }} />
-                                        </button>
-                                        <button 
-                                            className="btn btn-sm btn-outline" 
-                                            onClick={() => deleteEmployee(emp)} 
-                                            title={t('delete')} 
-                                            style={{ color: 'var(--danger)' }}
-                                        >
-                                            <Icon name="delete" category="actions" fallback="🗑️" style={{ width: '16px', height: '16px' }} />
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })
-                    )}
+                                );
+                            })
+                        )}
+                    </div>
                 </div>
             </div>
-
             {/* Modal d'ajout/modification */}
             <Modal
                 isOpen={modalOpen}

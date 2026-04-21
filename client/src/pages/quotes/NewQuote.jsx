@@ -1,9 +1,10 @@
 /**
  * PAGE NOUVEAU DEVIS - Création d'un devis
  * Réutilise le panier des ventes
- * ⭐ Support multi-devises dynamique
- * ⭐ Traductions FR/EN complètes
- * ⭐ Correction saisie remise (accepte , et .)
+ * Support multi-devises dynamique
+ * Traductions FR/EN complètes
+ * Correction saisie remise (accepte , et .)
+ * Responsive design
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -16,12 +17,13 @@ import Alert from '../../components/common/Alert';
 import Icon from '../../components/ui/Icon';
 import EstablishmentSelector from '../../components/establishment/EstablishmentSelector';
 import { useLanguage } from '../../context/LanguageContext';
+import '../../styles/pages/NewQuote.css';
 
 const NewQuote = () => {
     const navigate = useNavigate();
     const { t } = useLanguage();
     
-    // ⭐ État pour la devise configurée
+    // État pour la devise configurée
     const [currency, setCurrency] = useState('GNF');
     const [loading, setLoading] = useState(false);
     const [products, setProducts] = useState([]);
@@ -40,7 +42,7 @@ const NewQuote = () => {
     const [selectedEstablishment, setSelectedEstablishment] = useState('');
     const [establishments, setEstablishments] = useState([]);
 
-    // ⭐ Charger la devise configurée
+    // Charger la devise configurée
     const loadCompanySettings = useCallback(async () => {
         try {
             const response = await api.get('/companies/me');
@@ -129,7 +131,7 @@ const NewQuote = () => {
         : (parseFloat(discount) || 0);
     const total = Math.max(0, subtotal - discountAmount);
 
-    // ⭐ Gestionnaire de saisie pour la remise (accepte , et .)
+    // Gestionnaire de saisie pour la remise (accepte , et .)
     const handleDiscountChange = (e) => {
         let value = e.target.value.replace(',', '.');
         if (value === '' || /^\d*\.?\d*$/.test(value)) {
@@ -193,7 +195,8 @@ const NewQuote = () => {
 
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: 'var(--spacing-6)' }}>
+            <div className="quote-grid">
+                {/* Colonne gauche - Recherche et produits */}
                 <div>
                     {establishments.length > 0 && (
                         <div className="card" style={{ marginBottom: 'var(--spacing-4)' }}>
@@ -227,29 +230,20 @@ const NewQuote = () => {
                             <div className="card-header">
                                 <h3>{t('available_products')}</h3>
                             </div>
-                            <div className="card-body" style={{ padding: 0 }}>
+                            <div className="card-body search-results-container">
                                 {searchResults.map(product => (
                                     <div
                                         key={product._id}
-                                        style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            padding: 'var(--spacing-3) var(--spacing-4)',
-                                            borderBottom: '1px solid var(--gray-100)',
-                                            cursor: 'pointer'
-                                        }}
+                                        className="search-result-item"
                                         onClick={() => addToCart(product)}
-                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                     >
-                                        <div>
-                                            <div style={{ fontWeight: 500 }}>{product.name}</div>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
+                                        <div className="search-result-info">
+                                            <div className="search-result-name">{product.name}</div>
+                                            <div className="search-result-stock">
                                                 {t('stock')}: {product.quantity} {product.unit}
                                             </div>
                                         </div>
-                                        <div style={{ fontWeight: 600, color: 'var(--primary-500)' }}>
+                                        <div className="search-result-price">
                                             {formatPrice(product.sellingPrice)} {currency}
                                         </div>
                                     </div>
@@ -259,34 +253,29 @@ const NewQuote = () => {
                     )}
                 </div>
 
+                {/* Colonne droite - Panier */}
                 <div>
                     <div className="card">
                         <div className="card-header">
                             <h3>{t('cart')} ({cart.length})</h3>
                         </div>
-                        <div className="card-body" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                        <div className="card-body quote-items">
                             {cart.length === 0 ? (
                                 <div style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 'var(--spacing-4)' }}>
                                     {t('empty_cart')}
                                 </div>
                             ) : (
                                 cart.map(item => (
-                                    <div key={item.productId} style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        padding: 'var(--spacing-2) 0',
-                                        borderBottom: '1px solid var(--gray-100)'
-                                    }}>
-                                        <div style={{ flex: 2 }}>
-                                            <div style={{ fontWeight: 500 }}>{item.name}</div>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
+                                    <div key={item.productId} className="quote-item">
+                                        <div className="quote-item-info">
+                                            <div className="quote-item-name">{item.name}</div>
+                                            <div className="quote-item-price">
                                                 {formatPrice(item.unitPrice)} {currency}
                                             </div>
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+                                        <div className="quote-item-actions">
                                             <button className="btn btn-sm btn-outline" onClick={() => updateQuantity(item.productId, item.quantity - 1)}>-</button>
-                                            <span>{item.quantity}</span>
+                                            <span className="quote-item-quantity">{item.quantity}</span>
                                             <button className="btn btn-sm btn-outline" onClick={() => updateQuantity(item.productId, item.quantity + 1)}>+</button>
                                             <button className="btn btn-sm btn-outline" onClick={() => removeFromCart(item.productId)} style={{ color: 'var(--danger)' }}>✕</button>
                                         </div>
@@ -295,7 +284,7 @@ const NewQuote = () => {
                             )}
                         </div>
 
-                        <div className="card-body" style={{ borderTop: '1px solid var(--gray-200)' }}>
+                        <div className="quote-customer-section">
                             <div className="form-group">
                                 <label className="form-label">{t('customer_name')}</label>
                                 <input type="text" className="form-input" placeholder={t('customer_name_placeholder')} value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
@@ -315,33 +304,32 @@ const NewQuote = () => {
                         </div>
 
                         <div className="card-body">
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-2)' }}>
+                            <div className="quote-total-row">
                                 <span>{t('subtotal')}</span>
                                 <span>{formatPrice(subtotal)} {currency}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
+                            <div className="quote-total-discount">
                                 <span>{t('discount')}</span>
-                                <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+                                <div className="quote-discount-inputs">
                                     <input 
                                         type="text" 
-                                        style={{ width: '80px', textAlign: 'right' }} 
-                                        className="form-input" 
+                                        className="form-input quote-discount-input" 
                                         value={discount} 
                                         onChange={handleDiscountChange} 
                                         placeholder="0"
                                     />
-                                    <select className="form-select" style={{ width: '80px' }} value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
+                                    <select className="form-select quote-discount-select" value={discountType} onChange={(e) => setDiscountType(e.target.value)}>
                                         <option value="fixed">{currency}</option>
                                         <option value="percentage">%</option>
                                     </select>
                                 </div>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.1rem', marginTop: 'var(--spacing-3)', paddingTop: 'var(--spacing-3)', borderTop: '2px solid var(--gray-200)' }}>
+                            <div className="quote-total-final">
                                 <span>{t('total')}</span>
                                 <span style={{ color: 'var(--primary-500)' }}>{formatPrice(total)} {currency}</span>
                             </div>
 
-                            <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}>
+                            <div className="quote-actions">
                                 <button className="btn btn-primary" style={{ flex: 2 }} onClick={handleSubmit} disabled={loading || cart.length === 0}>
                                     {loading ? <Loader size="sm" /> : t('generate_quote')}
                                 </button>

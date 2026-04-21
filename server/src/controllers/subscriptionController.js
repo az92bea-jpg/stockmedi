@@ -1,6 +1,6 @@
 /**
  * CONTRÔLEUR ABONNEMENT
- * ⭐ Prix convertis en EUR pour Stripe
+ * Prix convertis en EUR pour Stripe
  */
 
 const Subscription = require('../models/Subscription');
@@ -8,10 +8,10 @@ const Company = require('../models/Company');
 const User = require('../models/User');
 const { notifySubscriptionChanged } = require('./rnnotificationController');
 
-// ⭐ Taux de conversion GNF → EUR (approximatif)
+// Taux de conversion GNF → EUR (approximatif)
 const GNF_TO_EUR_RATE = 10000;
 
-// ⭐ Plans d'abonnement - Prix en GNF convertis en EUR (centimes)
+// Plans d'abonnement - Prix en GNF convertis en EUR (centimes)
 const PLANS = {
     trial: {
         name: 'Essai gratuit',
@@ -23,30 +23,27 @@ const PLANS = {
     },
     basic: {
         name: 'Basic',
-        priceGNF: 50000,
-        price: 500, // ⭐ 5,00 EUR en centimes (50000 GNF / 10000 * 100)
+        price: 899,  // 8,99 EUR en centimes (89900 GNF / 10000 * 100)
         duration: 30,
         maxProducts: 500,
         maxEmployees: 10,
-        features: ['stock_basic', 'sales_basic', 'reports_basic', 'pdf_exports', 'employees']
+        features: ['stock_basic', 'sales_basic', 'reports_basic', 'pdf_exports', 'quotes', 'receipt']
     },
     premium: {
         name: 'Premium',
-        priceGNF: 100000,
-        price: 1000, // ⭐ 10,00 EUR en centimes
+        price: 1899, // 18,99 EUR en centimes
         duration: 30,
         maxProducts: 2000,
         maxEmployees: 30,
-        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees', 'advanced_stats', 'multiple_locations']
+        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees_management', 'advanced_stats', 'quotes', 'receipt']
     },
     enterprise: {
         name: 'Enterprise',
-        priceGNF: 250000,
-        price: 2500, // ⭐ 25,00 EUR en centimes
+        price: 4799, // 47.99 EUR en centimes
         duration: 30,
-        maxProducts: 10000,
-        maxEmployees: 100,
-        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees', 'advanced_stats', 'multiple_locations', 'api_access', 'priority_support']
+        maxProducts: 999999, //10000,
+        maxEmployees: 999, //100,
+        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees_management', 'advanced_stats', 'multiple_locations', 'api_access', 'priority_support', 'quotes', 'receipt']
     }
 };
 
