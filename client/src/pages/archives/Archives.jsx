@@ -4,7 +4,7 @@
  * ⭐ Traductions FR/EN complètes
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { getArchives, deleteArchive } from '../../services/archiveService';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
@@ -24,8 +24,12 @@ const Archives = () => {
     const [filters, setFilters] = useState({ year: '', month: '' });
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, archiveId: null, archivePeriod: '' });
 
-    // Charger la devise configurée
+    const hasFetchedSettings = useRef(false);
+
     const loadCompanySettings = useCallback(async () => {
+        if (hasFetchedSettings.current) return;
+        hasFetchedSettings.current = true;
+        
         try {
             const response = await api.get('/companies/me');
             setCurrency(response.company?.settings?.currency || 'GNF');
@@ -57,8 +61,11 @@ const Archives = () => {
 
     useEffect(() => {
         loadCompanySettings();
+    }, [loadCompanySettings]);
+
+    useEffect(() => {
         fetchArchives();
-    }, [loadCompanySettings, fetchArchives]);
+    }, [filters.year, filters.month, pagination.page, fetchArchives]);
 
     const handleDelete = async () => {
         if (!deleteModal.archiveId) return;
@@ -128,7 +135,7 @@ const Archives = () => {
                             <select
                                 className="form-select"
                                 value={filters.year}
-                                onChange={(e) => setFilters({ ...filters, year: e.target.value, page: 1 })}
+                                onChange={(e) => setFilters({ ...filters, year: e.target.value })}
                             >
                                 <option value="">{t('all_years')}</option>
                                 {years.map(year => (
@@ -141,7 +148,7 @@ const Archives = () => {
                             <select
                                 className="form-select"
                                 value={filters.month}
-                                onChange={(e) => setFilters({ ...filters, month: e.target.value, page: 1 })}
+                                onChange={(e) => setFilters({ ...filters, month: e.target.value })}
                                 disabled={!filters.year}
                             >
                                 <option value="">{t('all_months')}</option>

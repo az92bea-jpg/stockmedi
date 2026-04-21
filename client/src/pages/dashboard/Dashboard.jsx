@@ -48,7 +48,12 @@ const Dashboard = () => {
     const canMakeSales = isOwner || userPermissions.includes('make_sales');
     const canViewSales = canMakeSales || userPermissions.includes('view_sales');
 
+    const hasFetchedSettings = useRef(false);
+
     const loadCompanySettings = useCallback(async () => {
+        if (hasFetchedSettings.current) return;
+        hasFetchedSettings.current = true;
+        
         try {
             const response = await api.get('/companies/me');
             if (response.success && response.company?.settings?.currency) {

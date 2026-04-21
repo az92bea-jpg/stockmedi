@@ -5,7 +5,7 @@
  * ⭐ Correction saisie prix (accepte , et .)
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { productService } from '../../services/productService';
 import api from '../../services/api';
@@ -22,7 +22,6 @@ const Products = () => {
     const user = authService.getCurrentUser();
     const canManageStock = user?.role === 'owner' || user?.role === 'super-admin' || (user?.permissions && user.permissions.includes('manage_stock'));
     
-    // ⭐ État pour la devise configurée
     const [currency, setCurrency] = useState('GNF');
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
@@ -63,8 +62,14 @@ const Products = () => {
         description: ''
     });
 
-    // ⭐ Charger la devise configurée
+    const hasFetchedSettings = useRef(false);
+    const hasFetchedProducts = useRef(false);
+    const hasFetchedEstablishments = useRef(false);
+
     const loadCompanySettings = useCallback(async () => {
+        if (hasFetchedSettings.current) return;
+        hasFetchedSettings.current = true;
+        
         try {
             const response = await api.get('/companies/me');
             if (response.success && response.company?.settings?.currency) {
@@ -75,8 +80,10 @@ const Products = () => {
         }
     }, []);
 
-    // Charger les établissements
     const loadEstablishments = useCallback(async () => {
+        if (hasFetchedEstablishments.current) return;
+        hasFetchedEstablishments.current = true;
+        
         try {
             const response = await api.get('/establishments');
             setEstablishments(response.establishments || []);
@@ -89,6 +96,9 @@ const Products = () => {
     }, [selectedEstablishment]);
 
     const fetchProducts = useCallback(async () => {
+        if (hasFetchedProducts.current) return;
+        hasFetchedProducts.current = true;
+        
         try {
             setLoading(true);
             const response = await productService.getProducts({});
@@ -104,11 +114,17 @@ const Products = () => {
 
     useEffect(() => {
         loadCompanySettings();
+    }, [loadCompanySettings]);
+
+    useEffect(() => {
         fetchProducts();
+    }, [fetchProducts]);
+
+    useEffect(() => {
         if (user?.role === 'owner') {
             loadEstablishments();
         }
-    }, [loadCompanySettings, fetchProducts, user?.role, loadEstablishments]);
+    }, [user?.role, loadEstablishments]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -139,19 +155,14 @@ const Products = () => {
         setFilteredProducts(results);
     }, [products, filters]);
 
-    // ⭐ Gestionnaire de saisie pour les prix (accepte , et .)
     const handlePriceChange = (e) => {
         const { name, value } = e.target;
-        // Remplacer la virgule par un point
         let cleanValue = value.replace(',', '.');
-        
-        // Autoriser uniquement les nombres et un point décimal
         if (cleanValue === '' || /^\d*\.?\d*$/.test(cleanValue)) {
             setFormData({ ...formData, [name]: cleanValue });
         }
     };
 
-    // ⭐ Validation des prix avec devise dynamique
     const validatePrices = () => {
         const purchase = parseFloat(formData.purchasePrice) || 0;
         const selling = parseFloat(formData.sellingPrice) || 0;
@@ -269,7 +280,6 @@ const Products = () => {
         try {
             const shouldSendEstablishment = establishments.length > 0 && selectedEstablishment;
             
-            // Convertir les prix en nombres
             const productData = {
                 ...formData,
                 purchasePrice: parseFloat(formData.purchasePrice) || 0,
@@ -305,6 +315,7 @@ const Products = () => {
                 setSuccess(t('product_updated'));
             }
             setModalOpen(false);
+            hasFetchedProducts.current = false;
             fetchProducts();
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
@@ -318,6 +329,7 @@ const Products = () => {
             try {
                 await productService.deleteProduct(product._id);
                 setSuccess(t('product_deleted'));
+                hasFetchedProducts.current = false;
                 fetchProducts();
                 setTimeout(() => setSuccess(''), 3000);
             } catch (err) {
@@ -463,7 +475,6 @@ const Products = () => {
                 </div>
             </div>
 
-
             {/* Liste des produits */}
             {filteredProducts.length === 0 ? (
                 <div className="card">
@@ -473,13 +484,11 @@ const Products = () => {
                 </div>
             ) : (
                 <div className="card">
-                    {/* Conteneur avec scroll horizontal */}
                     <div style={{
                         overflowX: 'auto',
                         WebkitOverflowScrolling: 'touch',
                         width: '100%'
                     }}>
-                        {/* En-tête du tableau */}
                         <div style={{
                             display: 'flex',
                             minWidth: '1000px',
@@ -501,7 +510,6 @@ const Products = () => {
                             <div style={{ width: '80px' }}>{t('actions')}</div>
                         </div>
 
-                        {/* Lignes du tableau */}
                         {filteredProducts.map((product) => (
                             <div
                                 key={product._id}
@@ -589,6 +597,7 @@ const Products = () => {
                     </div>
                 </div>
             )}
+
             {/* Modal de création/édition */}
             <Modal
                 isOpen={modalOpen}

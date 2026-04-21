@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './styles/main.css';  // ⭐ AJOUTER CETTE LIGNE
+import './styles/main.css';
 import App from './App';
 
 // ========== GESTION PWA - INSTALLATION ==========
@@ -26,13 +26,37 @@ root.render(
     </React.StrictMode>
 );
 
-// ========== SERVICE WORKER PAR DÉFAUT (CRA) ==========
+// ========== SERVICE WORKER AVEC DÉTECTION DE MISE À JOUR ==========
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker
             .register('/service-worker.js')
             .then((registration) => {
                 console.log('✅ Service Worker enregistré:', registration.scope);
+                
+                // ⭐ Détection de mise à jour
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    if (!newWorker) return;
+                    
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            console.log('🆕 Nouvelle version disponible !');
+                            
+                            // ⭐ Émettre l'événement pour le bandeau
+                            window.dispatchEvent(new CustomEvent('pwaUpdateAvailable', { 
+                                detail: { registration } 
+                            }));
+                        }
+                    });
+                });
+                
+                // ⭐ Vérifier périodiquement les mises à jour (toutes les 4 heures)
+                setInterval(() => {
+                    console.log('🔄 Vérification de mise à jour...');
+                    registration.update();
+                }, 4 * 60 * 60 * 1000); // 4 heures
+                
             })
             .catch((error) => {
                 console.error('❌ Erreur Service Worker:', error);

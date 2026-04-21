@@ -5,7 +5,7 @@
  * ⭐ Traductions FR/EN complètes
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { quoteService } from '../../services/quoteService';
 import api from '../../services/api';
@@ -19,7 +19,6 @@ const Quotes = () => {
     const navigate = useNavigate();
     const { t } = useLanguage();
     
-    // ⭐ État pour la devise configurée
     const [currency, setCurrency] = useState('GNF');
     const [loading, setLoading] = useState(true);
     const [quotes, setQuotes] = useState([]);
@@ -29,8 +28,12 @@ const Quotes = () => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [quoteToDelete, setQuoteToDelete] = useState(null);
 
-    // ⭐ Charger la devise configurée
+    const hasFetchedSettings = useRef(false);
+
     const loadCompanySettings = useCallback(async () => {
+        if (hasFetchedSettings.current) return;
+        hasFetchedSettings.current = true;
+        
         try {
             const response = await api.get('/companies/me');
             if (response.success && response.company?.settings?.currency) {
@@ -57,8 +60,11 @@ const Quotes = () => {
 
     useEffect(() => {
         loadCompanySettings();
+    }, [loadCompanySettings]);
+
+    useEffect(() => {
         loadQuotes();
-    }, [loadCompanySettings, loadQuotes]);
+    }, [statusFilter, loadQuotes]);
 
     const handleDeleteClick = (quote) => {
         setQuoteToDelete(quote);

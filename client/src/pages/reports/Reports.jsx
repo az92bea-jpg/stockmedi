@@ -4,7 +4,7 @@
  * ⭐ Traductions FR/EN complètes
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import Loader from '../../components/common/Loader';
@@ -17,7 +17,6 @@ const Reports = () => {
     const { t } = useLanguage();
     const user = authService.getCurrentUser();
     
-    // ⭐ État pour la devise configurée
     const [currency, setCurrency] = useState('GNF');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -31,8 +30,13 @@ const Reports = () => {
     const [establishments, setEstablishments] = useState([]);
     const [subscription, setSubscription] = useState(null);
 
-    // ⭐ Charger la devise configurée
+    const hasFetchedSettings = useRef(false);
+    const hasFetchedData = useRef(false);
+
     const loadCompanySettings = useCallback(async () => {
+        if (hasFetchedSettings.current) return;
+        hasFetchedSettings.current = true;
+        
         try {
             const response = await api.get('/companies/me');
             if (response.success && response.company?.settings?.currency) {
@@ -44,6 +48,13 @@ const Reports = () => {
     }, []);
 
     useEffect(() => {
+        loadCompanySettings();
+    }, [loadCompanySettings]);
+
+    useEffect(() => {
+        if (user?.role !== 'owner' || hasFetchedData.current) return;
+        hasFetchedData.current = true;
+        
         const loadData = async () => {
             try {
                 const [subRes, estRes] = await Promise.all([
@@ -60,11 +71,8 @@ const Reports = () => {
             }
         };
         
-        loadCompanySettings();
-        if (user?.role === 'owner') {
-            loadData();
-        }
-    }, [user?.role, loadCompanySettings]);
+        loadData();
+    }, [user?.role]);
 
     const handleDateChange = (e) => {
         const { name, value } = e.target;
