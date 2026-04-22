@@ -3,10 +3,18 @@
  */
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { authService } from '../../services/authService';
 import Icon from '../ui/Icon';
 
 const AdminNav = () => {
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        authService.logout();
+        navigate('/login');
+    };
+
     return (
         <div style={{
             display: 'flex',
@@ -14,7 +22,8 @@ const AdminNav = () => {
             marginBottom: 'var(--spacing-6)',
             paddingBottom: 'var(--spacing-4)',
             borderBottom: '1px solid var(--gray-200)',
-            flexWrap: 'wrap'
+            flexWrap: 'wrap',
+            alignItems: 'center'
         }}>
             <NavLink 
                 to="/admin" 
@@ -45,6 +54,26 @@ const AdminNav = () => {
                 <Icon name="reports" category="nav" fallback="📋" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
                 Logs
             </NavLink>
+            
+            {/* ⭐ Lien vers le dashboard normal */}
+            <NavLink 
+                to="/dashboard" 
+                className="btn btn-sm btn-outline"
+                style={{ marginLeft: 'auto' }}
+            >
+                <Icon name="dashboard" category="nav" fallback="🏠" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
+                Dashboard
+            </NavLink>
+            
+            {/* ⭐ Bouton déconnexion */}
+            <button 
+                className="btn btn-sm btn-danger" 
+                onClick={handleLogout}
+                style={{ backgroundColor: '#EF4444', color: 'white', border: 'none' }}
+            >
+                <Icon name="logout" category="actions" fallback="🚪" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
+                Déconnexion
+            </button>
         </div>
     );
 };

@@ -1,0 +1,53 @@
+/**
+ * BADGES - Petites étiquettes colorées pour les statuts
+ */
+
+/* Badge succès (vert) - "Actif", "Validé" */
+.badge-success {
+    background-color: #D1FAE5;  /* Fond vert très clair */
+    color: #065F46;             /* Texte vert foncé */
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Badge warning (orange) - "Stock faible", "Expire bientôt" */
+.badge-warning {
+    background-color: #FEF3C7;  /* Fond orange très clair */
+    color: #92400E;             /* Texte orange foncé */
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Badge danger (rouge) - "Rupture", "Expiré", "Inactif" */
+.badge-danger {
+    background-color: #FEE2E2;  /* Fond rouge très clair */
+    color: #991B1B;             /* Texte rouge foncé */
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Badge info (bleu) - "Brouillon", "Envoyé" */
+.badge-info {
+    background-color: #DBEAFE;  /* Fond bleu très clair */
+    color: #1E40AF;             /* Texte bleu foncé */
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Badge secondaire (gris) - Neutre */
+.badge-secondary {
+    background-color: #F3F4F6;
+    color: #374151;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}

@@ -1,8 +1,8 @@
 /**
  * PAGE PRODUITS - Gestion complète du stock
- * ⭐ Support multi-devises dynamique
- * ⭐ Traductions FR/EN complètes
- * ⭐ Correction saisie prix (accepte , et .)
+ * Support multi-devises dynamique
+ * Traductions FR/EN complètes
+ * Correction saisie prix (accepte , et .)
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';

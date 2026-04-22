@@ -65,6 +65,7 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
         <header style={{
             backgroundColor: 'white',
             borderBottom: '1px solid #E5E7EB',
+            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)', /* Ombre très légère */
             padding: '12px 24px',
             display: 'flex',
             alignItems: 'center',
