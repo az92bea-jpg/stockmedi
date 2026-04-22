@@ -34,7 +34,7 @@ const Login = () => {
         try {
             const response = await authService.login(formData.email, formData.password);
             if (response.success) {
-                const user = authService.getCurrentUser();
+                //const user = authService.getCurrentUser();
                 // navigate(user?.role === 'super-admin' ? '/admin' : '/dashboard');
                 navigate('/dashboard');
             } else {
