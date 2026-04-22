@@ -602,7 +602,7 @@ const translations = {
         footer_hours: 'Lundi - Vendredi: 8h - 18h',
         footer_copyright: 'Tous droits réservés.',
         footer_version: 'Version',
-        footer_developed: 'Développé avec',
+        footer_developed: 'Développé avec la',
         footer_for_health: 'pour la santé',
         footer_rights: 'Tous droits réservés.',
         footer_developed_by: 'Développé par',
