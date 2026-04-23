@@ -567,17 +567,17 @@ const Sales = () => {
                                 {t('no_sales')}
                             </div>
                         ) : (
-                            <div>
+                            <div className="sales-history-container" style={{ overflowX: 'auto' }}>
                                 <div style={{
                                     display: 'flex',
+                                    minWidth: '900px',
                                     gap: 'var(--spacing-4)',
                                     padding: 'var(--spacing-3) var(--spacing-4)',
                                     backgroundColor: 'var(--gray-50)',
                                     borderBottom: '1px solid var(--gray-200)',
                                     fontWeight: 600,
                                     fontSize: '0.875rem',
-                                    color: 'var(--gray-600)',
-                                    flexWrap: 'wrap'
+                                    color: 'var(--gray-600)'
                                 }}>
                                     <div style={{ width: '120px' }}>{t('sale_number')}</div>
                                     <div style={{ width: '150px' }}>{t('date')}</div>
@@ -590,7 +590,15 @@ const Sales = () => {
                                 </div>
 
                                 {salesHistory.map(sale => (
-                                    <div key={sale._id} style={{ display: 'flex', gap: 'var(--spacing-4)', padding: 'var(--spacing-3) var(--spacing-4)', borderBottom: '1px solid var(--gray-100)', alignItems: 'center', flexWrap: 'wrap', transition: 'background-color 0.2s' }}
+                                    <div key={sale._id} style={{
+                                        display: 'flex',
+                                        minWidth: '900px',
+                                        gap: 'var(--spacing-4)',
+                                        padding: 'var(--spacing-3) var(--spacing-4)',
+                                        borderBottom: '1px solid var(--gray-100)',
+                                        alignItems: 'center',
+                                        transition: 'background-color 0.2s'
+                                    }}
                                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
                                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                                         <div style={{ width: '120px', fontFamily: 'monospace', fontSize: '0.875rem' }}>{sale.saleNumber}</div>

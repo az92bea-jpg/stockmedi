@@ -85,6 +85,11 @@ input, select, textarea, button {
 .text-right { text-align: right; }
 .text-left { text-align: left; }
 
+/* ========== FOND HISTORIQUE DES VENTES ========== */
+.sales-history-container {
+    background-color: #DBEAFE;
+}
+
 /* ========== SCROLLBAR STYLÉE - UNIVERSELLE ========== */
 *::-webkit-scrollbar {
     width: 10px;
