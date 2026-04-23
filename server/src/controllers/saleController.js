@@ -12,15 +12,19 @@ const mongoose = require('mongoose');
 
 // ==================== FONCTIONS UTILITAIRES ====================
 
-// Fonction pour générer le numéro de vente (ATOMIQUE)
+// Fonction pour générer le numéro de vente (ATOMIQUE) avec préfixe paramétrable
 async function generateSaleNumber(companyId) {
+    // Récupérer l'entreprise pour obtenir le préfixe configuré
+    const company = await Company.findById(companyId).select('settings.invoicePrefix');
+    const invoicePrefix = company?.settings?.invoicePrefix || 'SALE';
+    
     const date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    const prefix = `${year}${month}${day}`;
+    const datePrefix = `${year}${month}${day}`;
     
-    const counterId = `sale-${prefix}-${companyId}`;
+    const counterId = `sale-${datePrefix}-${companyId}`;
     
     const counter = await Counter.findOneAndUpdate(
         { _id: counterId },
@@ -29,7 +33,7 @@ async function generateSaleNumber(companyId) {
     );
     
     const sequence = String(counter.seq).padStart(4, '0');
-    return `SALE-${prefix}-${sequence}`;
+    return `${invoicePrefix}-${datePrefix}-${sequence}`;
 }
 
 // Créer une vente avec retry automatique en cas de doublon

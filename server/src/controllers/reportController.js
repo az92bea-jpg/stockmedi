@@ -1,5 +1,8 @@
 /**
  * CONTRÔLEUR RAPPORTS - Génération PDF et Excel
+ * Correction devise dynamique
+ * Correction colonne Établissement
+ * Correction colonne Princeps/Générique
  */
 
 const PDFDocument = require('pdfkit');
@@ -10,12 +13,12 @@ const Company = require('../models/Company');
 const Establishment = require('../models/Establishment');
 
 /**
- * Formate un nombre en devise (sans espaces parasites)
+ * Formate un nombre en devise (dynamique selon la configuration)
  */
-const formatCurrency = (value) => {
-    if (value === undefined || value === null) return '0 GNF';
+const formatCurrency = (value, currency) => {
+    if (value === undefined || value === null) return `0 ${currency}`;
     const formatted = Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    return `${formatted} GNF`;
+    return `${formatted} ${currency}`;
 };
 
 /**
@@ -24,6 +27,42 @@ const formatCurrency = (value) => {
 const formatNumber = (value) => {
     if (value === undefined || value === null) return '0';
     return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+};
+
+/**
+ * Traduit le type de produit
+ */
+const getTypeLabel = (type, language) => {
+    if (!type) return '';
+    const typeLower = type.toLowerCase();
+    if (typeLower === 'princeps') return language === 'fr' ? 'Princeps' : 'Princeps';
+    if (typeLower === 'générique' || typeLower === 'generique') return language === 'fr' ? 'Générique' : 'Generic';
+    return type;
+};
+
+/**
+ * Traduit la catégorie de produit
+ */
+const getCategoryLabel = (category, language) => {
+    if (!category) return '';
+    const catLower = category.toLowerCase();
+    
+    if (catLower === 'médicament' || catLower === 'medication') 
+        return language === 'fr' ? 'Médicament' : 'Medication';
+    if (catLower === 'dispositif_médical' || catLower === 'dispositif médical' || catLower === 'medical_device') 
+        return language === 'fr' ? 'Dispositif médical' : 'Medical Device';
+    if (catLower === 'consommable' || catLower === 'consumable') 
+        return language === 'fr' ? 'Consommable' : 'Consumable';
+    if (catLower === 'parapharmacie' || catLower === 'parapharmacy' || catLower === 'parapharmaceutique') 
+        return language === 'fr' ? 'Parapharmacie' : 'Parapharmacy';
+    if (catLower === 'complément alimentaire' || catLower === 'food_supplement') 
+        return language === 'fr' ? 'Complément alimentaire' : 'Food Supplement';
+    if (catLower === 'vitamine' || catLower === 'vitamin') 
+        return language === 'fr' ? 'Vitamine' : 'Vitamin';
+    if (catLower === 'prestation médicale' || catLower === 'medical_service') 
+        return language === 'fr' ? 'Prestation médicale' : 'Medical Service';
+    
+    return category;
 };
 
 /**
@@ -36,10 +75,14 @@ exports.generateInventoryPDF = async (req, res) => {
         const { establishmentId } = req.query;
         const company = await Company.findById(req.user.companyId);
         
+        // Récupérer la devise configurée
+        const currency = company?.settings?.currency || 'GNF';
+        const language = company?.settings?.language || 'fr';
+        
         // Construire la requête produits
         const productQuery = { companyId: req.user.companyId, isActive: true };
         
-        // ⭐ Ajouter le filtre par établissement si fourni
+        // Ajouter le filtre par établissement si fourni
         let establishmentName = 'Tous les établissements';
         if (establishmentId) {
             productQuery.establishmentId = establishmentId;
@@ -75,8 +118,8 @@ exports.generateInventoryPDF = async (req, res) => {
         doc.fontSize(12).text('RÉSUMÉ', { underline: true });
         doc.fontSize(10);
         doc.text(`Nombre total de produits: ${formatNumber(products.length)}`);
-        doc.text(`Valeur totale du stock (achat): ${formatCurrency(totalValue)}`);
-        doc.text(`Valeur totale du stock (vente): ${formatCurrency(totalSellingValue)}`);
+        doc.text(`Valeur totale du stock (achat): ${formatCurrency(totalValue, currency)}`);
+        doc.text(`Valeur totale du stock (vente): ${formatCurrency(totalSellingValue, currency)}`);
         doc.text(`Produits en rupture: ${formatNumber(outOfStock)}`);
         doc.text(`Produits en stock faible: ${formatNumber(lowStock)}`);
         doc.text(`Produits expirés: ${formatNumber(expired)}`);
@@ -86,48 +129,55 @@ exports.generateInventoryPDF = async (req, res) => {
         doc.fontSize(12).text('LISTE DES PRODUITS', { underline: true });
         doc.moveDown(0.5);
 
-        // En-têtes du tableau
+        // En-têtes du tableau - Largeurs optimisées
         let y = doc.y;
         const startX = 50;
-        const colWidths = [130, 60, 70, 70, 70, 80];
-        
-        doc.fontSize(8).font('Helvetica-Bold');
+        const colWidths = [120, 60, 70, 50, 70, 70, 70]; // Plus d'espace entre les colonnes
+
+        doc.fontSize(7).font('Helvetica-Bold');
         doc.text('Produit', startX, y);
-        doc.text('Établissement', startX + colWidths[0], y);
-        doc.text('Stock', startX + colWidths[0] + colWidths[1], y);
-        doc.text('Prix achat', startX + colWidths[0] + colWidths[1] + colWidths[2], y);
-        doc.text('Prix vente', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], y);
-        doc.text('Expiration', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4], y);
+        doc.text('Type', startX + colWidths[0], y);
+        doc.text('Établissement', startX + colWidths[0] + colWidths[1], y);
+        doc.text('Stock', startX + colWidths[0] + colWidths[1] + colWidths[2], y);
+        doc.text('Prix achat U', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], y);
+        doc.text('Prix vente U', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4], y);
+        doc.text('Expiration', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5], y);
         
-        y += 20;
+        y += 18;
         doc.font('Helvetica');
         
         for (const product of products) {
             if (y > 700) {
                 doc.addPage();
                 y = 50;
-                doc.fontSize(8).font('Helvetica-Bold');
+                doc.fontSize(7).font('Helvetica-Bold');
                 doc.text('Produit', startX, y);
-                doc.text('Établissement', startX + colWidths[0], y);
-                doc.text('Stock', startX + colWidths[0] + colWidths[1], y);
-                doc.text('Prix achat', startX + colWidths[0] + colWidths[1] + colWidths[2], y);
-                doc.text('Prix vente', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], y);
-                doc.text('Expiration', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4], y);
-                y += 20;
+                doc.text('Type', startX + colWidths[0], y);
+                doc.text('Établissement', startX + colWidths[0] + colWidths[1], y);
+                doc.text('Stock', startX + colWidths[0] + colWidths[1] + colWidths[2], y);
+                doc.text('Prix achat', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], y);
+                doc.text('Prix vente', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4], y);
+                doc.text('Expiration', startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5], y);
+                y += 18;
                 doc.font('Helvetica');
             }
             
-            const establishmentName_product = product.establishmentId?.name || 'N/A';
+            // Établissement : nom ou "Non rattaché"
+            const establishmentName_product = product.establishmentId?.name || 'Non rattaché';
             
-            doc.fontSize(7);
-            doc.text(product.name.substring(0, 35), startX, y);
-            doc.text(establishmentName_product.substring(0, 20), startX + colWidths[0], y);
-            doc.text(`${formatNumber(product.quantity)} ${product.unit}`, startX + colWidths[0] + colWidths[1], y);
-            doc.text(formatCurrency(product.purchasePrice), startX + colWidths[0] + colWidths[1] + colWidths[2], y);
-            doc.text(formatCurrency(product.sellingPrice), startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], y);
+            // Type du produit (Princeps/Générique)
+            const productType = getTypeLabel(product.type, language);
+            
+            doc.fontSize(6);
+            doc.text(product.name.substring(0, 30), startX, y);
+            doc.text(productType.substring(0, 12), startX + colWidths[0], y);
+            doc.text(establishmentName_product.substring(0, 15), startX + colWidths[0] + colWidths[1], y);
+            doc.text(`${formatNumber(product.quantity)} ${product.unit}`, startX + colWidths[0] + colWidths[1] + colWidths[2], y);
+            doc.text(formatCurrency(product.purchasePrice, currency), startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], y);
+            doc.text(formatCurrency(product.sellingPrice, currency), startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4], y);
             doc.text(product.expirationDate ? new Date(product.expirationDate).toLocaleDateString('fr-FR') : 'N/A', 
-                startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4], y);
-            y += 16;
+                startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5], y);
+            y += 14;
         }
 
         doc.end();
@@ -151,10 +201,14 @@ exports.generateInventoryExcel = async (req, res) => {
         const { establishmentId } = req.query;
         const company = await Company.findById(req.user.companyId);
         
+        // Récupérer la devise et la langue configurées
+        const currency = company?.settings?.currency || 'GNF';
+        const language = company?.settings?.language || 'fr';
+        
         // Construire la requête produits
         const productQuery = { companyId: req.user.companyId, isActive: true };
         
-        // ⭐ Ajouter le filtre par établissement si fourni
+        // Ajouter le filtre par établissement si fourni
         let establishmentName = 'Tous les établissements';
         if (establishmentId) {
             productQuery.establishmentId = establishmentId;
@@ -171,14 +225,14 @@ exports.generateInventoryExcel = async (req, res) => {
 
         worksheet.columns = [
             { header: 'Nom du produit', key: 'name', width: 35 },
+            { header: 'Type', key: 'type', width: 15 },
             { header: 'Établissement', key: 'establishment', width: 25 },
-            { header: 'Générique', key: 'genericName', width: 25 },
-            { header: 'Catégorie', key: 'category', width: 18 },
+            { header: 'Catégorie', key: 'category', width: 22 },
             { header: 'Lot', key: 'batchNumber', width: 15 },
             { header: 'Stock', key: 'quantity', width: 12 },
             { header: 'Unité', key: 'unit', width: 12 },
-            { header: "Prix d'achat", key: 'purchasePrice', width: 18 },
-            { header: 'Prix de vente', key: 'sellingPrice', width: 18 },
+            { header: `Prix d'achat (${currency})`, key: 'purchasePrice', width: 18 },
+            { header: `Prix de vente (${currency})`, key: 'sellingPrice', width: 18 },
             { header: 'Marge (%)', key: 'margin', width: 12 },
             { header: 'Date fabrication', key: 'manufacturingDate', width: 15 },
             { header: 'Date expiration', key: 'expirationDate', width: 15 },
@@ -199,15 +253,21 @@ exports.generateInventoryExcel = async (req, res) => {
             const margin = product.purchasePrice > 0 
                 ? ((product.sellingPrice - product.purchasePrice) / product.purchasePrice * 100).toFixed(1)
                 : 0;
+            
+            // Type du produit
+            const productType = getTypeLabel(product.type, language);
+            
+            // Catégorie traduite
+            const categoryLabel = getCategoryLabel(product.category, language);
+            
+            // Établissement : nom ou "Non rattaché"
+            const establishmentLabel = product.establishmentId?.name || 'Non rattaché';
                 
             worksheet.addRow({
                 name: product.name,
-                establishment: product.establishmentId?.name || 'N/A',
-                genericName: product.genericName || '',
-                category: product.category === 'médicament' ? '💊 Médicament' :
-                          product.category === 'dispositif_médical' ? '🩺 DM' :
-                          product.category === 'consommable' ? '🧻 Consommable' : 
-                          product.category === 'parapharmacie' ? '🧴 Parapharmacie' : product.category,
+                type: productType,
+                establishment: establishmentLabel,
+                category: categoryLabel,
                 batchNumber: product.batchNumber || '',
                 quantity: product.quantity,
                 unit: product.unit,
@@ -243,8 +303,8 @@ exports.generateInventoryExcel = async (req, res) => {
         summarySheet.addRow({ metric: 'Établissement', value: establishmentName });
         summarySheet.addRow({ metric: 'Date de génération', value: new Date().toLocaleString('fr-FR') });
         summarySheet.addRow({ metric: 'Nombre total de produits', value: formatNumber(products.length) });
-        summarySheet.addRow({ metric: 'Valeur totale du stock (achat)', value: formatCurrency(totalValue) });
-        summarySheet.addRow({ metric: 'Valeur totale du stock (vente)', value: formatCurrency(totalSellingValue) });
+        summarySheet.addRow({ metric: `Valeur totale du stock (achat)`, value: formatCurrency(totalValue, currency) });
+        summarySheet.addRow({ metric: `Valeur totale du stock (vente)`, value: formatCurrency(totalSellingValue, currency) });
         summarySheet.addRow({ metric: 'Produits en rupture', value: formatNumber(outOfStock) });
         summarySheet.addRow({ metric: 'Produits en stock faible', value: formatNumber(lowStock) });
         summarySheet.addRow({ metric: 'Produits expirés', value: formatNumber(expired) });
@@ -274,9 +334,12 @@ exports.generateSalesExcel = async (req, res) => {
         const { startDate, endDate, establishmentId } = req.query;
         const company = await Company.findById(req.user.companyId);
         
+        // Récupérer la devise configurée
+        const currency = company?.settings?.currency || 'GNF';
+        
         const query = { companyId: req.user.companyId };
         
-        // ⭐ Ajouter le filtre par établissement si fourni
+        // Ajouter le filtre par établissement si fourni
         let establishmentName = 'Tous les établissements';
         if (establishmentId) {
             query.establishmentId = establishmentId;
@@ -304,10 +367,10 @@ exports.generateSalesExcel = async (req, res) => {
             { header: 'Établissement', key: 'establishment', width: 25 },
             { header: 'Client', key: 'customer', width: 25 },
             { header: 'Articles', key: 'items', width: 12 },
-            { header: 'Sous-total', key: 'subtotal', width: 18 },
-            { header: 'Remise', key: 'discount', width: 15 },
-            { header: 'TVA', key: 'tax', width: 15 },
-            { header: 'Total', key: 'total', width: 18 },
+            { header: `Sous-total (${currency})`, key: 'subtotal', width: 18 },
+            { header: `Remise (${currency})`, key: 'discount', width: 15 },
+            { header: `TVA (${currency})`, key: 'tax', width: 15 },
+            { header: `Total (${currency})`, key: 'total', width: 18 },
             { header: 'Paiement', key: 'payment', width: 15 },
             { header: 'Statut', key: 'status', width: 12 }
         ];
@@ -330,10 +393,13 @@ exports.generateSalesExcel = async (req, res) => {
             const totalItems = sale.items.reduce((sum, i) => sum + i.quantity, 0);
             totalSales += sale.total;
             
+            // Établissement : nom ou "Non rattaché"
+            const establishmentLabel = sale.establishmentId?.name || 'Non rattaché';
+            
             worksheet.addRow({
                 saleNumber: sale.saleNumber,
                 date: new Date(sale.createdAt).toLocaleString('fr-FR'),
-                establishment: sale.establishmentId?.name || 'N/A',
+                establishment: establishmentLabel,
                 customer: sale.customerName || '-',
                 items: totalItems,
                 subtotal: sale.subtotal,
@@ -366,7 +432,7 @@ exports.generateSalesExcel = async (req, res) => {
             `${new Date(startDate).toLocaleDateString('fr-FR')} - ${new Date(endDate).toLocaleDateString('fr-FR')}` : 
             'Toutes les ventes' });
         summarySheet.addRow({ metric: 'Nombre de ventes', value: formatNumber(sales.length) });
-        summarySheet.addRow({ metric: 'Chiffre d\'affaires total', value: formatCurrency(totalSales) });
+        summarySheet.addRow({ metric: 'Chiffre d\'affaires total', value: formatCurrency(totalSales, currency) });
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename=ventes_${Date.now()}.xlsx`);
@@ -382,6 +448,7 @@ exports.generateSalesExcel = async (req, res) => {
         });
     }
 };
+
 /**
  * @desc    Rapport d'inventaire par établissement
  * @route   GET /api/reports/inventory/establishment/:establishmentId
@@ -391,7 +458,6 @@ exports.getInventoryByEstablishment = async (req, res) => {
     try {
         const { establishmentId } = req.params;
         
-        // Vérifier l'accès (déjà fait par le middleware, mais double vérification)
         if (!req.user.hasAccessToEstablishment(establishmentId)) {
             return res.status(403).json({
                 success: false,

@@ -376,16 +376,16 @@ const Products = () => {
 
     const getCategoryLabel = (category) => {
         const labels = {
-            'Médicament': `💊 ${t('medication')}`,
-            'Dispositif médical': `🩺 ${t('medical_device')}`,
-            'Parapharmaceutique': `🧴 ${t('parapharmacy')}`,
-            'Complément alimentaire': `💪 ${t('food_supplement')}`,
-            'Vitamine': `🌟 ${t('vitamin')}`,
-            'Prestation médicale': `🏥 ${t('medical_service')}`,
-            'médicament': `💊 ${t('medication')}`,
+            'Médicament': `${t('medication')}`,
+            'Dispositif médical': `${t('medical_device')}`,
+            'Parapharmaceutique': `${t('parapharmacy')}`,
+            'Complément alimentaire': `${t('food_supplement')}`,
+            'Vitamine': `${t('vitamin')}`,
+            'Prestation médicale': `${t('medical_service')}`,
+            'médicament': `${t('medication')}`,
             'dispositif_médical': `🩺 ${t('medical_device')}`,
-            'consommable': `🧻 ${t('consumable') || 'Consommable'}`,
-            'parapharmacie': `🧴 ${t('parapharmacy')}`
+            'consommable': `${t('consumable') || 'Consommable'}`,
+            'parapharmacie': `${t('parapharmacy')}`
         };
         return labels[category] || category;
     };
@@ -445,7 +445,7 @@ const Products = () => {
                                 onChange={handleFilterChange}
                             >
                                 <option value="">{t('all_categories')}</option>
-                                <option value="Médicament">💊 {t('medication')}</option>
+                                <option value="Médicament"> 💊 {t('medication')}</option>
                                 <option value="Dispositif médical">🩺 {t('medical_device')}</option>
                                 <option value="Parapharmaceutique">🧴 {t('parapharmacy')}</option>
                                 <option value="Complément alimentaire">💪 {t('food_supplement')}</option>

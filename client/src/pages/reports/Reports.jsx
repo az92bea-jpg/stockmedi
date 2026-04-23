@@ -1,7 +1,7 @@
 /**
  * PAGE RAPPORTS - Export PDF/Excel
- * ⭐ Support multi-devises dynamique
- * ⭐ Traductions FR/EN complètes
+ * Support multi-devises dynamique
+ * Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';

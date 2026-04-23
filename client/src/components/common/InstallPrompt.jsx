@@ -3,7 +3,7 @@
  * ⭐ Traductions FR/EN complètes
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 
 const InstallPrompt = () => {
@@ -12,21 +12,19 @@ const InstallPrompt = () => {
     const [showPrompt, setShowPrompt] = useState(false);
     const [isInstalled, setIsInstalled] = useState(false);
     const [dismissed, setDismissed] = useState(false);
-    const hasChecked = useRef(false);
 
     useEffect(() => {
-        if (!hasChecked.current) {
-            hasChecked.current = true;
-            if (window.matchMedia('(display-mode: standalone)').matches) {
-                setIsInstalled(true);
-                return;
-            }
+        // Vérifier si déjà installé
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            setIsInstalled(true);
+            return;
         }
 
         const handleBeforeInstallPrompt = (e) => {
             e.preventDefault();
             setDeferredPrompt(e);
             setShowPrompt(true);
+            console.log('🎯 Bannière prête à afficher');
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
