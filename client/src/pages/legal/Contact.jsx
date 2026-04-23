@@ -1,10 +1,12 @@
 /**
  * PAGE CONTACT
+ * ⭐ Icônes SVG avec fallback emoji
  */
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Alert from '../../components/common/Alert';
+import Icon from '../../components/ui/Icon';
 
 const Contact = () => {
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -18,9 +20,30 @@ const Contact = () => {
     };
 
     const socialLinks = [
-        { name: 'Facebook', url: 'https://facebook.com/stockmedi', icon: '📘', color: '#1877F2' },
-        { name: 'WhatsApp', url: 'https://wa.me/224600000000', icon: '💬', color: '#25D366' },
-        { name: 'Telegram', url: 'https://t.me/stockmedi', icon: '✈️', color: '#26A5E4' }
+        { 
+            name: 'Facebook', 
+            url: 'https://facebook.com/stockmedi', 
+            iconName: 'facebook',
+            iconCategory: 'social',
+            fallback: '📘',
+            color: '#1877F2' 
+        },
+        { 
+            name: 'WhatsApp', 
+            url: 'https://wa.me/224600000000', 
+            iconName: 'whatsapp',
+            iconCategory: 'social',
+            fallback: '💬',
+            color: '#25D366' 
+        },
+        { 
+            name: 'Telegram', 
+            url: 'https://t.me/stockmedi', 
+            iconName: 'telegram',
+            iconCategory: 'social',
+            fallback: '✈️',
+            color: '#26A5E4' 
+        }
     ];
 
     return (
@@ -31,7 +54,9 @@ const Contact = () => {
                 </Link>
                 
                 <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                    <div style={{ fontSize: '3rem' }}>📧</div>
+                    <div style={{ fontSize: '3rem' }}>
+                        <Icon name="email" category="status" fallback="📧" style={{ width: '48px', height: '48px' }} />
+                    </div>
                     <h1 style={{ color: '#111827', marginBottom: '8px' }}>Nous contacter</h1>
                     <p style={{ color: '#6B7280' }}>Une question ? Une suggestion ? Écrivez-nous !</p>
                 </div>
@@ -73,7 +98,8 @@ const Contact = () => {
                         />
                     </div>
                     <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-                        📧 Envoyer le message
+                        <Icon name="email" category="status" fallback="📧" style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+                        Envoyer le message
                     </button>
                 </form>
 
@@ -82,9 +108,18 @@ const Contact = () => {
                 <h3 style={{ fontSize: '1rem', marginBottom: '16px' }}>Ou contactez-nous directement</h3>
                 
                 <div style={{ marginBottom: '24px' }}>
-                    <p style={{ margin: '8px 0' }}>📧 <a href="mailto:support@stockmedi.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a></p>
-                    <p style={{ margin: '8px 0' }}>📞 <a href="tel:+224600000000" style={{ color: '#0F6B3A' }}>+224 600 000 000</a></p>
-                    <p style={{ margin: '8px 0' }}>📍 Conakry, Guinée</p>
+                    <p style={{ margin: '8px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Icon name="email" category="status" fallback="📧" style={{ width: '20px', height: '20px' }} />
+                        <a href="mailto:support@stockmedi.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a>
+                    </p>
+                    <p style={{ margin: '8px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Icon name="phone" category="status" fallback="📞" style={{ width: '20px', height: '20px' }} />
+                        <a href="tel:+224600000000" style={{ color: '#0F6B3A' }}>+224 600 000 000</a>
+                    </p>
+                    <p style={{ margin: '8px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Icon name="location" category="status" fallback="📍" style={{ width: '20px', height: '20px' }} />
+                        Conakry, Guinée
+                    </p>
                 </div>
 
                 <h3 style={{ fontSize: '1rem', marginBottom: '16px' }}>Suivez-nous</h3>
@@ -103,8 +138,6 @@ const Contact = () => {
                                 height: '48px',
                                 borderRadius: '50%',
                                 backgroundColor: social.color,
-                                color: 'white',
-                                fontSize: '1.5rem',
                                 textDecoration: 'none',
                                 transition: 'transform 0.2s'
                             }}
@@ -112,7 +145,12 @@ const Contact = () => {
                             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                             title={social.name}
                         >
-                            {social.icon}
+                            <Icon 
+                                name={social.iconName} 
+                                category={social.iconCategory} 
+                                fallback={social.fallback} 
+                                style={{ width: '24px', height: '24px' }} 
+                            />
                         </a>
                     ))}
                 </div>
