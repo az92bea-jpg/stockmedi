@@ -11,7 +11,7 @@ root.render(
     </React.StrictMode>
 );
 
-// ========== SERVICE WORKER AVEC MISE À JOUR SILENCIEUSE ==========
+// ========== SERVICE WORKER AVEC MISE À JOUR ==========
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker
@@ -19,7 +19,15 @@ if ('serviceWorker' in navigator) {
             .then((registration) => {
                 console.log('✅ Service Worker enregistré:', registration.scope);
                 
-                // Détection de mise à jour
+                // Vérifier si une mise à jour est déjà en attente
+                if (registration.waiting) {
+                    console.log('🆕 Mise à jour en attente détectée au chargement');
+                    window.dispatchEvent(new CustomEvent('pwaUpdateAvailable', { 
+                        detail: { registration } 
+                    }));
+                }
+                
+                // Détection de nouvelle mise à jour
                 registration.addEventListener('updatefound', () => {
                     const newWorker = registration.installing;
                     if (!newWorker) return;
@@ -28,10 +36,6 @@ if ('serviceWorker' in navigator) {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                             console.log('🆕 Nouvelle version disponible !');
                             
-                            // Forcer l'activation immédiate
-                            newWorker.postMessage({ type: 'SKIP_WAITING' });
-                            
-                            // Émettre l'événement pour le bandeau vert
                             window.dispatchEvent(new CustomEvent('pwaUpdateAvailable', { 
                                 detail: { registration } 
                             }));
@@ -39,17 +43,17 @@ if ('serviceWorker' in navigator) {
                     });
                 });
                 
-                // Quand le nouveau Service Worker prend le contrôle, recharger
+                // Recharger quand le nouveau Service Worker prend le contrôle
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
                     console.log('🔄 Nouveau contrôleur actif, rechargement...');
                     window.location.reload();
                 });
                 
-                // Vérifier périodiquement les mises à jour (toutes les heures)
+                // Vérifier les mises à jour toutes les heures
                 setInterval(() => {
                     console.log('🔄 Vérification de mise à jour...');
                     registration.update();
-                }, 60 * 60 * 1000); // 1 heure
+                }, 60 * 60 * 1000);
                 
             })
             .catch((error) => {
