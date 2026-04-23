@@ -30,10 +30,14 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response.data,
     (error) => {
+        // ⚠️ Rediriger vers /login UNIQUEMENT si 401 ET qu'on n'est pas déjà sur /login ou /reset-password
         if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
+            const currentPath = window.location.pathname;
+            if (currentPath !== '/login' && currentPath !== '/reset-password') {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }

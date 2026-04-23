@@ -133,20 +133,7 @@ const Employees = () => {
         } finally {
             setLoading(false);
         }
-    }, [t]);  // ⭐ AJOUTER `t` dans les dépendances
-
-    /*const fetchEmployees = useCallback(async () => {
-        try {
-            setLoading(true);
-            const response = await api.get('/employees');
-            setEmployees(response.employees || []);
-        } catch (err) {
-            setError(t('error'));
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    }, [t]);*/
+    }, [t]);  // AJOUTER `t` dans les dépendances
 
     useEffect(() => {
         loadEstablishments();
@@ -219,9 +206,12 @@ const Employees = () => {
             return;
         }
         
-        if (modalMode === 'create' && formData.password.length < 6) {
-            setError(t('password_too_short'));
-            return;
+        if (modalMode === 'create') {
+            const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+            if (!passwordRegex.test(formData.password)) {
+                setError('Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
+                return;
+            }
         }
         
         try {
@@ -488,24 +478,79 @@ const Employees = () => {
                         {modalMode === 'edit' && <div className="form-hint">{t('email_cannot_change')}</div>}
                     </div>
 
+
                     {modalMode === 'create' && (
                         <div className="form-row">
                             <div className="form-group">
                                 <label className="form-label required">{t('password')}</label>
                                 <div style={{ position: 'relative' }}>
-                                    <input type={showPassword ? 'text' : 'password'} name="password" className="form-input" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} required minLength="6" style={{ paddingRight: '40px' }} />
-                                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#6B7280' }}>
-                                        {/* ⚠️ eye.svg et eye-off.svg à créer */}
-                                        {showPassword ? '🙈' : '👁️'}
+                                    <input 
+                                        type={showPassword ? 'text' : 'password'} 
+                                        name="password" 
+                                        className="form-input" 
+                                        value={formData.password} 
+                                        onChange={(e) => setFormData({...formData, password: e.target.value})} 
+                                        required 
+                                        minLength="8"  // ⭐ 8 au lieu de 6
+                                        style={{ paddingRight: '40px' }} 
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowPassword(!showPassword)} 
+                                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#6B7280' }}
+                                    >
+                                        <Icon name={showPassword ? 'eye-off' : 'eye'} category="actions" fallback={showPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
                                     </button>
+                                </div>
+                                {/* ⭐ INDICATIONS MOT DE PASSE FORT */}
+                                <div style={{ 
+                                    marginTop: '8px', 
+                                    padding: '8px 12px', 
+                                    backgroundColor: '#F3F4F6', 
+                                    borderRadius: '6px',
+                                    fontSize: '0.6rem',
+                                    color: '#4B5563',
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    gap: '12px',
+                                    alignItems: 'center'
+                                }}>
+                                    <span style={{ fontWeight: 500 }}>🔒</span>
+                                    <span style={{ color: formData.password.length >= 8 ? '#10B981' : '#6B7280' }}>
+                                        {formData.password.length >= 8 ? '✅' : '○'} 8+ caractères
+                                    </span>
+                                    <span style={{ color: /[A-Z]/.test(formData.password) ? '#10B981' : '#6B7280' }}>
+                                        {/[A-Z]/.test(formData.password) ? '✅' : '○'} Majuscule
+                                    </span>
+                                    <span style={{ color: /[a-z]/.test(formData.password) ? '#10B981' : '#6B7280' }}>
+                                        {/[a-z]/.test(formData.password) ? '✅' : '○'} Minuscule
+                                    </span>
+                                    <span style={{ color: /\d/.test(formData.password) ? '#10B981' : '#6B7280' }}>
+                                        {/\d/.test(formData.password) ? '✅' : '○'} Chiffre
+                                    </span>
+                                    <span style={{ color: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? '#10B981' : '#6B7280' }}>
+                                        {/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? '✅' : '○'} Spécial
+                                    </span>
                                 </div>
                             </div>
                             <div className="form-group">
                                 <label className="form-label required">{t('confirm_password')}</label>
                                 <div style={{ position: 'relative' }}>
-                                    <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" className="form-input" value={formData.confirmPassword} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} required style={{ paddingRight: '40px' }} />
-                                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#6B7280' }}>
-                                        {showConfirmPassword ? '🙈' : '👁️'}
+                                    <input 
+                                        type={showConfirmPassword ? 'text' : 'password'} 
+                                        name="confirmPassword" 
+                                        className="form-input" 
+                                        value={formData.confirmPassword} 
+                                        onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} 
+                                        required 
+                                        style={{ paddingRight: '40px' }} 
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
+                                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#6B7280' }}
+                                    >
+                                        <Icon name={showConfirmPassword ? 'eye-off' : 'eye'} category="actions" fallback={showConfirmPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
                                     </button>
                                 </div>
                             </div>

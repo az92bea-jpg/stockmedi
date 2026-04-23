@@ -11,8 +11,8 @@ root.render(
     </React.StrictMode>
 );
 
-// ========== SERVICE WORKER AVEC MISE À JOUR ==========
-if ('serviceWorker' in navigator) {
+// ========== SERVICE WORKER (PRODUCTION UNIQUEMENT) ==========
+if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
     window.addEventListener('load', () => {
         navigator.serviceWorker
             .register('/service-worker.js')
@@ -35,7 +35,6 @@ if ('serviceWorker' in navigator) {
                     newWorker.addEventListener('statechange', () => {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                             console.log('🆕 Nouvelle version disponible !');
-                            
                             window.dispatchEvent(new CustomEvent('pwaUpdateAvailable', { 
                                 detail: { registration } 
                             }));
@@ -43,18 +42,11 @@ if ('serviceWorker' in navigator) {
                     });
                 });
                 
-                // Recharger quand le nouveau Service Worker prend le contrôle
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    console.log('🔄 Nouveau contrôleur actif, rechargement...');
-                    window.location.reload();
-                });
-                
                 // Vérifier les mises à jour toutes les heures
                 setInterval(() => {
                     console.log('🔄 Vérification de mise à jour...');
                     registration.update();
                 }, 60 * 60 * 1000);
-                
             })
             .catch((error) => {
                 console.error('❌ Erreur Service Worker:', error);

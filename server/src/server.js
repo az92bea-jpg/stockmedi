@@ -1,6 +1,7 @@
 /**
  * STOCKMEDI - SERVEUR PRINCIPAL
  * Point d'entrée de l'application backend
+ * ⭐ Sécurité renforcée : Helmet CSP, Rate Limiting, Sanitization
  */
 
 const express = require('express');
@@ -11,17 +12,49 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const cron = require('node-cron');
 
-
 // Chargement des variables d'environnement
 dotenv.config();
 
 // Initialisation
 const app = express();
 
-// ========== MIDDLEWARES DE BASE ==========
-app.use(helmet());           
-app.use(cors());             
-app.use(morgan('dev'));      
+// ========== MIDDLEWARES DE SÉCURITÉ ==========
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'", "https://api.stripe.com"],
+            frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: []
+        }
+    },
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+    },
+    frameguard: {
+        action: 'deny'
+    },
+    referrerPolicy: {
+        policy: 'strict-origin-when-cross-origin'
+    }
+}));
+
+// CORS restrictif
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(morgan('dev'));
 
 // ========== CONNEXION MONGODB ==========
 mongoose.connect(process.env.MONGODB_URI)
@@ -47,12 +80,6 @@ const quoteRoutes = require('./routes/quoteRoutes');
 const userRoutes = require('./routes/userRoutes');
 const cronRoutes = require('./routes/cronRoutes');
 
-
-
-
-// ⭐ CRON JOBS (notifications email + nettoyage archives)
-/* require('./utils/cronJobs');  // charger resend */
-
 // Import du contrôleur pour le nettoyage automatique
 const { cleanupExpiredArchives } = require('./controllers/archiveController');
 
@@ -61,8 +88,34 @@ app.post('/api/payment/webhook', express.raw({ type: 'application/json' }), (req
     require('./controllers/paymentController').stripeWebhook(req, res);
 });
 
-// ========== PARSER JSON POUR TOUTES LES AUTRES ROUTES ==========
-app.use(express.json());
+// ========== PARSER JSON ==========
+app.use(express.json({ limit: '10kb' }));
+
+// ========== SANITIZATION NOSQL (COMPATIBLE EXPRESS 5) ==========
+app.use((req, res, next) => {
+    const sanitize = (obj) => {
+        if (!obj || typeof obj !== 'object') return;
+        
+        Object.keys(obj).forEach(key => {
+            // Supprimer les caractères dangereux pour MongoDB
+            if (key.startsWith('$') || key.includes('.')) {
+                delete obj[key];
+            } else if (typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+                sanitize(obj[key]);
+            }
+        });
+    };
+    
+    if (req.body) sanitize(req.body);
+    if (req.query) {
+        const sanitizedQuery = { ...req.query };
+        sanitize(sanitizedQuery);
+        req.query = sanitizedQuery;
+    }
+    if (req.params) sanitize(req.params);
+    
+    next();
+});
 
 // ========== TOUTES LES ROUTES API ==========
 app.use('/api/payment', paymentRoutes);
@@ -83,13 +136,15 @@ app.use('/api/quotes', quoteRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/cron', cronRoutes);
 
-
 // ========== NETTOYAGE AUTOMATIQUE DES ARCHIVES (CRON) ==========
-// S'exécute tous les jours à 2h du matin (heure du serveur)
 cron.schedule('0 2 * * *', async () => {
     console.log('🕒 Nettoyage automatique des archives...');
-    const deletedCount = await cleanupExpiredArchives();
-    console.log(`✅ Nettoyage terminé : ${deletedCount} archive(s) supprimée(s)`);
+    try {
+        const deletedCount = await cleanupExpiredArchives();
+        console.log(`✅ Nettoyage terminé : ${deletedCount} archive(s) supprimée(s)`);
+    } catch (error) {
+        console.error('❌ Erreur nettoyage archives:', error);
+    }
 });
 
 // ========== ROUTE DE TEST (health check) ==========

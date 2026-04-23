@@ -1,6 +1,8 @@
 /**
  * PAGE RÉINITIALISATION MOT DE PASSE
- * ⭐ Traductions FR/EN complètes
+ * Traductions FR/EN complètes
+ * Validation mot de passe fort
+ * Indications visuelles mot de passe fort
  */
 
 import React, { useState, useEffect } from 'react';
@@ -73,8 +75,9 @@ const ResetPassword = () => {
             return;
         }
         
-        if (formData.password.length < 6) {
-            setError(t('password_too_short'));
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+        if (!passwordRegex.test(formData.password)) {
+            setError('Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
             return;
         }
 
@@ -158,7 +161,7 @@ const ResetPassword = () => {
                                     onChange={handleChange}
                                     disabled={saving}
                                     required
-                                    minLength="6"
+                                    minLength="8"
                                     style={{ paddingRight: '40px' }}
                                 />
                                 <button
@@ -178,6 +181,36 @@ const ResetPassword = () => {
                                 >
                                     <Icon name={showPassword ? 'eye-off' : 'eye'} category="actions" fallback={showPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
                                 </button>
+                            </div>
+                            {/* INDICATIONS MOT DE PASSE FORT */}
+                            <div style={{ 
+                                marginTop: '8px', 
+                                padding: '8px 12px', 
+                                backgroundColor: '#F3F4F6', 
+                                borderRadius: '6px',
+                                fontSize: '0.4rem',
+                                color: '#4B5563',
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '12px',
+                                alignItems: 'center'
+                            }}>
+                                <span style={{ fontWeight: 500 }}>🔒</span>
+                                <span style={{ color: formData.password.length >= 8 ? '#10B981' : '#6B7280' }}>
+                                    {formData.password.length >= 8 ? '✅' : '○'} 8+ caractères
+                                </span>
+                                <span style={{ color: /[A-Z]/.test(formData.password) ? '#10B981' : '#6B7280' }}>
+                                    {/[A-Z]/.test(formData.password) ? '✅' : '○'} Majuscule
+                                </span>
+                                <span style={{ color: /[a-z]/.test(formData.password) ? '#10B981' : '#6B7280' }}>
+                                    {/[a-z]/.test(formData.password) ? '✅' : '○'} Minuscule
+                                </span>
+                                <span style={{ color: /\d/.test(formData.password) ? '#10B981' : '#6B7280' }}>
+                                    {/\d/.test(formData.password) ? '✅' : '○'} Chiffre
+                                </span>
+                                <span style={{ color: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? '#10B981' : '#6B7280' }}>
+                                    {/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? '✅' : '○'} Spécial
+                                </span>
                             </div>
                         </div>
 
@@ -210,7 +243,7 @@ const ResetPassword = () => {
                                         color: '#6B7280'
                                     }}
                                 >
-                                    <Icon name={null} category={null} fallback={showConfirmPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
+                                    <Icon name={showConfirmPassword ? 'eye-off' : 'eye'} category="actions" fallback={showConfirmPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
                                 </button>
                             </div>
                         </div>

@@ -228,8 +228,10 @@ const Settings = () => {
             return;
         }
         
-        if (passwordData.newPassword.length < 6) {
-            setError(t('password_too_short'));
+        // Validation mot de passe fort
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+        if (!passwordRegex.test(passwordData.newPassword)) {
+            setError('Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
             return;
         }
         
@@ -261,7 +263,7 @@ const Settings = () => {
         }
     };
 
-    // ⭐ Demander la suppression du compte (délai 7 jours)
+    // Demander la suppression du compte (délai 7 jours)
     const handleRequestDeletion = async () => {
     console.log('🔥 Clic sur Confirmer détecté');
     console.log('deleteConfirmed:', deleteConfirmed);
@@ -295,7 +297,7 @@ const Settings = () => {
         }
     };
 
-    // ⭐ Annuler la demande de suppression
+    // Annuler la demande de suppression
     const handleCancelDeletion = async () => {
         setSaving(true);
         setError('');
@@ -675,74 +677,103 @@ const Settings = () => {
                                                 color: '#6B7280'
                                             }}
                                         >
-                                            {showCurrentPassword ? '🙈' : '👁️'}
+                                            <Icon name={showCurrentPassword ? 'eye-off' : 'eye'} category="actions" fallback={showCurrentPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="form-row">
-                                    <div className="form-group">
-                                        <label className="form-label">{t('new_password')}</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <input
-                                                type={showNewPassword ? 'text' : 'password'}
-                                                name="newPassword"
-                                                className="form-input"
-                                                value={passwordData.newPassword}
-                                                onChange={handlePasswordChange}
-                                                required
-                                                minLength="6"
-                                                style={{ paddingRight: '40px' }}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowNewPassword(!showNewPassword)}
-                                                style={{
-                                                    position: 'absolute',
-                                                    right: '10px',
-                                                    top: '50%',
-                                                    transform: 'translateY(-50%)',
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    fontSize: '1rem',
-                                                    color: '#6B7280'
-                                                }}
-                                            >
-                                                {showNewPassword ? '🙈' : '👁️'}
-                                            </button>
-                                        </div>
+                                <div className="form-group">
+                                    <label className="form-label">{t('new_password')}</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type={showNewPassword ? 'text' : 'password'}
+                                            name="newPassword"
+                                            className="form-input"
+                                            value={passwordData.newPassword}
+                                            onChange={handlePasswordChange}
+                                            required
+                                            minLength="8"
+                                            style={{ paddingRight: '40px' }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                            style={{
+                                                position: 'absolute',
+                                                right: '10px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: '1rem',
+                                                color: '#6B7280'
+                                            }}
+                                        >
+                                            <Icon name={showNewPassword ? 'eye-off' : 'eye'} category="actions" fallback={showNewPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
+                                        </button>
                                     </div>
-                                    <div className="form-group">
-                                        <label className="form-label">{t('confirm_password')}</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <input
-                                                type={showConfirmPassword ? 'text' : 'password'}
-                                                name="confirmPassword"
-                                                className="form-input"
-                                                value={passwordData.confirmPassword}
-                                                onChange={handlePasswordChange}
-                                                required
-                                                style={{ paddingRight: '40px' }}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                style={{
-                                                    position: 'absolute',
-                                                    right: '10px',
-                                                    top: '50%',
-                                                    transform: 'translateY(-50%)',
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    fontSize: '1rem',
-                                                    color: '#6B7280'
-                                                }}
-                                            >
-                                                {showConfirmPassword ? '🙈' : '👁️'}
-                                            </button>
-                                        </div>
+                                    {/* INDICATIONS MOT DE PASSE FORT */}
+                                    <div style={{ 
+                                        marginTop: '8px', 
+                                        padding: '8px 12px', 
+                                        backgroundColor: '#F3F4F6', 
+                                        borderRadius: '6px',
+                                        fontSize: '0.6rem',
+                                        color: '#4B5563',
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '12px',
+                                        alignItems: 'center'
+                                    }}>
+                                        <span style={{ fontWeight: 500, marginRight: '4px' }}>🔒</span>
+                                        <span style={{ color: passwordData.newPassword.length >= 8 ? '#10B981' : '#6B7280' }}>
+                                            {passwordData.newPassword.length >= 8 ? '✅' : '○'} 8+ caractères
+                                        </span>
+                                        <span style={{ color: /[A-Z]/.test(passwordData.newPassword) ? '#10B981' : '#6B7280' }}>
+                                            {/[A-Z]/.test(passwordData.newPassword) ? '✅' : '○'} Majuscule
+                                        </span>
+                                        <span style={{ color: /[a-z]/.test(passwordData.newPassword) ? '#10B981' : '#6B7280' }}>
+                                            {/[a-z]/.test(passwordData.newPassword) ? '✅' : '○'} Minuscule
+                                        </span>
+                                        <span style={{ color: /\d/.test(passwordData.newPassword) ? '#10B981' : '#6B7280' }}>
+                                            {/\d/.test(passwordData.newPassword) ? '✅' : '○'} Chiffre
+                                        </span>
+                                        <span style={{ color: /[!@#$%^&*(),.?":{}|<>]/.test(passwordData.newPassword) ? '#10B981' : '#6B7280' }}>
+                                            {/[!@#$%^&*(),.?":{}|<>]/.test(passwordData.newPassword) ? '✅' : '○'} Spécial
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">{t('confirm_password')}</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            name="confirmPassword"
+                                            className="form-input"
+                                            value={passwordData.confirmPassword}
+                                            onChange={handlePasswordChange}
+                                            required
+                                            style={{ paddingRight: '40px' }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            style={{
+                                                position: 'absolute',
+                                                right: '10px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: '1rem',
+                                                color: '#6B7280'
+                                            }}
+                                        >
+                                            <Icon name={showConfirmPassword ? 'eye-off' : 'eye'} category="actions" fallback={showConfirmPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
+                                        </button>
                                     </div>
                                 </div>
 
@@ -753,7 +784,7 @@ const Settings = () => {
                         </div>
                     </div>
 
-                    {/* ⭐ SECTION SUPPRESSION DE COMPTE - UNIQUEMENT POUR OWNER */}
+                    {/* SECTION SUPPRESSION DE COMPTE - UNIQUEMENT POUR OWNER */}
                     {profile.role === 'owner' && (
                         <div className="card" style={{ borderColor: 'var(--danger)' }}>
                             <div className="card-header" style={{ backgroundColor: '#FEF2F2' }}>
@@ -799,7 +830,7 @@ const Settings = () => {
                 </>
             )}
 
-            {/* ⭐ Modale de confirmation de suppression */}
+            {/* Modale de confirmation de suppression */}
             <ConfirmModal
                 isOpen={showDeleteModal}
                 onClose={() => setShowDeleteModal(false)}

@@ -1,37 +1,68 @@
 /**
  * MIDDLEWARE DE SÉCURITÉ
+ * ⭐ Protection complète : Rate Limiting, NoSQL Injection
  */
 
-const xss = require('xss-clean');
-const mongoSanitize = require('express-mongo-sanitize');
-const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
 
-// Protection XSS
-const xssProtection = xss();
+// ==================== RATE LIMITING ====================
 
-// Protection injection MongoDB
-const sanitize = mongoSanitize();
-
-// Rate limiting avancé
-const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100,
-    message: 'Trop de requêtes, veuillez réessayer après 15 minutes',
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: {
+        success: false,
+        message: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.'
+    },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skipSuccessfulRequests: true
 });
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 5,
-    message: 'Trop de tentatives de connexion, veuillez réessayer après 15 minutes',
-    skipSuccessfulRequests: true
+    max: 10,
+    message: {
+        success: false,
+        message: 'Trop de requêtes. Réessayez dans 15 minutes.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false
 });
 
+const apiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 100,
+    message: {
+        success: false,
+        message: 'Trop de requêtes. Ralentissez.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+const strictLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 30,
+    message: {
+        success: false,
+        message: 'Limite de requêtes atteinte. Réessayez dans une minute.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// ==================== PROTECTION INJECTIONS ====================
+
+const sanitize = mongoSanitize();
+
+// ==================== EXPORTS ====================
+
 module.exports = {
-    xssProtection,
-    sanitize,
+    loginLimiter,
+    authLimiter,
     apiLimiter,
-    authLimiter
+    strictLimiter,
+    sanitize
 };

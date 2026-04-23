@@ -9,12 +9,12 @@ const nodemailer = require('nodemailer');
 
 // Configuration email
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: process.env.SMTP_PORT || 587,
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: process.env.EMAIL_PORT || 587,
     secure: false,
     auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     }
 });
 
@@ -46,20 +46,48 @@ exports.forgotPassword = async (req, res) => {
             });
         }
 
+        // Générer le token
         const token = crypto.randomBytes(32).toString('hex');
         const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
+        // Supprimer les anciennes demandes pour cet email
         await PasswordReset.deleteMany({ email });
 
+        // Créer une nouvelle entrée - expiration 15 minutes
         await PasswordReset.create({
             email,
             token: hashedToken,
-            expiresAt: new Date(Date.now() + 60 * 60 * 1000)
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000)
         });
 
+        // Construire le lien
         const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
 
-        console.log('📧 Email de réinitialisation envoyé à:', email);
+        // ENVOYER L'EMAIL
+        try {
+            await transporter.sendMail({
+                from: `"StockMedi" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject: 'Réinitialisation de votre mot de passe',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+                        <h2 style="color: #0F6B3A;">Réinitialisation de mot de passe</h2>
+                        <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
+                        <p>Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe :</p>
+                        <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0F6B3A; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+                            Réinitialiser mon mot de passe
+                        </a>
+                        <p style="font-size: 0.85rem; color: #6B7280;">Ce lien expire dans 15 minutes.</p>
+                        <p style="font-size: 0.85rem; color: #6B7280;">Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>
+                    </div>
+                `
+            });
+            
+            console.log('✅ Email envoyé à:', email);
+        } catch (emailError) {
+            console.error('❌ Erreur envoi email:', emailError);
+        }
+
         console.log('🔗 Lien de réinitialisation:', resetUrl);
 
         res.json({
@@ -133,10 +161,12 @@ exports.resetPassword = async (req, res) => {
             });
         }
 
-        if (password.length < 6) {
+        // Validation mot de passe fort
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+        if (!passwordRegex.test(password)) {
             return res.status(400).json({
                 success: false,
-                message: 'Le mot de passe doit contenir au moins 6 caractères'
+                message: 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'
             });
         }
 
