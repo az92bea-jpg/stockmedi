@@ -41,8 +41,8 @@ const AdminDashboard = () => {
     };
 
     const formatPrice = (price) => {
-        if (!price) return '0 GNF';
-        return `${price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} GNF`;
+        if (!price) return '0 €';
+        return `${price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} €`;
     };
 
     if (loading) return <Loader />;
@@ -122,55 +122,59 @@ const AdminDashboard = () => {
                     <div className="card-header">
                         <h3>📋 Répartition par plan d'abonnement</h3>
                     </div>
-                    <div className="card-body">
-                        <div style={{ display: 'flex', gap: 'var(--spacing-4)', flexWrap: 'wrap' }}>
-                            {advancedStats.companiesByPlan.map(item => (
-                                <div key={item._id} style={{ textAlign: 'center', minWidth: '100px' }}>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
-                                        {formatNumber(item.count)}
+                    <div className="card-body" style={{ overflowX: 'auto' }}>
+                        <div style={{
+                            display: 'flex',
+                            minWidth: '600px',
+                            gap: 'var(--spacing-4)'
+                        }}>
+                            {['trial', 'basic', 'premium', 'enterprise'].map(plan => {
+                                const item = advancedStats.companiesByPlan.find(i => i._id === plan);
+                                return (
+                                    <div key={plan} style={{ textAlign: 'center', minWidth: '120px' }}>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                                            {formatNumber(item?.count || 0)}
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
+                                            {plan === 'trial' ? 'Trial' : plan === 'basic' ? 'Basic' : plan === 'premium' ? 'Premium' : 'Enterprise'}
+                                        </div>
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
-                                        {item._id === 'basic' ? 'Basic' : item._id === 'premium' ? 'Premium' : item._id === 'enterprise' ? 'Enterprise' : 'Trial'}
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
             )}
-
             {/* Abonnements */}
             <div className="card" style={{ marginBottom: 'var(--spacing-6)' }}>
                 <div className="card-header">
                     <h3>📊 Abonnements</h3>
                 </div>
-                <div className="card-body">
-                    <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                            gap: 'var(--spacing-4)'
-                        }}
-                    >
-                        <div>
+                <div className="card-body" style={{ overflowX: 'auto' }}>
+                    <div style={{
+                        display: 'flex',
+                        minWidth: '900px',
+                        gap: 'var(--spacing-4)'
+                    }}>
+                        <div style={{ minWidth: '140px' }}>
                             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>
                                 {formatNumber(stats?.activeSubscriptions)}
                             </div>
                             <div>Abonnements actifs</div>
                         </div>
-                        <div>
+                        <div style={{ minWidth: '140px' }}>
                             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--warning)' }}>
                                 {formatNumber(stats?.trialSubscriptions)}
                             </div>
                             <div>En période d'essai</div>
                         </div>
-                        <div>
+                        <div style={{ minWidth: '140px' }}>
                             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--danger)' }}>
                                 {formatNumber(stats?.expiredSubscriptions)}
                             </div>
                             <div>Abonnements expirés</div>
                         </div>
-                        <div>
+                        <div style={{ minWidth: '140px' }}>
                             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary-500)' }}>
                                 {formatPrice(stats?.totalRevenue)}
                             </div>
@@ -179,42 +183,45 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             </div>
-
             {/* Top entreprises */}
             {stats?.topCompanies?.length > 0 && (
                 <div className="card">
                     <div className="card-header">
                         <h3>🏆 Top entreprises par chiffre d'affaires</h3>
                     </div>
-                    <div className="card-body">
-                        {stats.topCompanies.map((company, index) => (
-                            <div
-                                key={company._id}
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: 'var(--spacing-2) 0',
-                                    borderBottom: '1px solid var(--gray-100)'
-                                }}
-                            >
-                                <div>
-                                    <span style={{ fontWeight: 600, marginRight: 'var(--spacing-2)' }}>
-                                        {index + 1}.
-                                    </span>
-                                    <strong>{company.companyName}</strong>
-                                    <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
-                                        {company.companyEmail}
+                    <div className="card-body" style={{ padding: 0 }}>
+                        <div style={{ overflowX: 'auto' }}>
+                            <div style={{ minWidth: '600px' }}>
+                                {stats.topCompanies.map((company, index) => (
+                                    <div
+                                        key={company._id}
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            padding: 'var(--spacing-2) var(--spacing-4)',
+                                            borderBottom: '1px solid var(--gray-100)'
+                                        }}
+                                    >
+                                        <div>
+                                            <span style={{ fontWeight: 600, marginRight: 'var(--spacing-2)' }}>
+                                                {index + 1}.
+                                            </span>
+                                            <strong>{company.companyName}</strong>
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
+                                                {company.companyEmail}
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                            <div>{formatNumber(company.totalSales)} ventes</div>
+                                            <div style={{ fontWeight: 600, color: 'var(--primary-500)' }}>
+                                                {formatPrice(company.totalRevenue)}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div style={{ textAlign: 'right' }}>
-                                    <div>{formatNumber(company.totalSales)} ventes</div>
-                                    <div style={{ fontWeight: 600, color: 'var(--primary-500)' }}>
-                                        {formatPrice(company.totalRevenue)}
-                                    </div>
-                                </div>
+                                ))}
                             </div>
-                        ))}
+                        </div>
                     </div>
                 </div>
             )}

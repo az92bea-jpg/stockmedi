@@ -1,9 +1,12 @@
 /**
  * PAGE CHARTE DE CONFIDENTIALITÉ - Mentions légales
+ * ⭐ Icônes SVG avec fallback emoji
+ * ⭐ Section Cookies ajoutée
  */
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Icon from '../../components/ui/Icon';
 import { useLanguage } from '../../context/LanguageContext';
 
 const PrivacyPolicy = () => {
@@ -34,7 +37,9 @@ const PrivacyPolicy = () => {
 
                 {/* En-tête */}
                 <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔒</div>
+                    <div style={{ fontSize: '3rem', marginBottom: '16px' }}>
+                        <Icon name="lock" category="actions" fallback="🔒" style={{ width: '48px', height: '48px' }} />
+                    </div>
                     <h1 style={{ fontSize: '1.75rem', color: '#111827', marginBottom: '8px' }}>
                         {t('privacy_title') || 'Charte de confidentialité'}
                     </h1>
@@ -101,9 +106,9 @@ const PrivacyPolicy = () => {
                             {t('privacy_data_sharing_text') || 'Nous ne vendons jamais vos données à des tiers. Vos données peuvent être partagées avec :'}
                         </p>
                         <ul style={{ color: '#4B5563', lineHeight: '1.6', paddingLeft: '24px' }}>
-                            <li>• <strong>Stripe</strong> : {t('privacy_sharing_stripe') || 'pour les paiements (données de carte non stockées)'}</li>
-                            <li>• <strong>MongoDB Atlas</strong> : {t('privacy_sharing_mongodb') || 'pour l\'hébergement sécurisé des données'}</li>
-                            <li>• <strong>Autorités légales</strong> : {t('privacy_sharing_legal') || 'si requis par la loi'}</li>
+                            <li> <strong>Stripe</strong> : {t('privacy_sharing_stripe') || 'pour les paiements (données de carte non stockées)'}</li>  {/* • Point marqueur emoji*/}
+                            <li> <strong>MongoDB Atlas</strong> : {t('privacy_sharing_mongodb') || 'pour l\'hébergement sécurisé des données'}</li>
+                            <li> <strong>Autorités légales</strong> : {t('privacy_sharing_legal') || 'si requis par la loi'}</li>
                         </ul>
                     </section>
 
@@ -116,10 +121,22 @@ const PrivacyPolicy = () => {
                             {t('privacy_security_text') || 'Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles :'}
                         </p>
                         <ul style={{ color: '#4B5563', lineHeight: '1.6', paddingLeft: '24px' }}>
-                            <li>🔐 {t('privacy_security_1') || 'Chiffrement des mots de passe (SHA256)'}</li>
-                            <li>🔐 {t('privacy_security_2') || 'Authentification par token JWT'}</li>
-                            <li>🔐 {t('privacy_security_3') || 'Connexion HTTPS'}</li>
-                            <li>🔐 {t('privacy_security_4') || 'Accès restreint aux données'}</li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="lock" category="actions" fallback="🔐" style={{ width: '16px', height: '16px' }} />
+                                {t('privacy_security_1') || 'Chiffrement des mots de passe (SHA256)'}
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="success" category="status" fallback="✅" style={{ width: '16px', height: '16px' }} />
+                                {t('privacy_security_2') || 'Authentification par token JWT'}
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="lock" category="actions" fallback="🔒" style={{ width: '16px', height: '16px' }} />
+                                {t('privacy_security_3') || 'Connexion HTTPS'}
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="success" category="status" fallback="👥" style={{ width: '16px', height: '16px' }} />
+                                {t('privacy_security_4') || 'Accès restreint aux données'}
+                            </li>
                         </ul>
                     </section>
 
@@ -142,22 +159,62 @@ const PrivacyPolicy = () => {
                             {t('privacy_rights_text') || 'Conformément au RGPD, vous disposez des droits suivants :'}
                         </p>
                         <ul style={{ color: '#4B5563', lineHeight: '1.6', paddingLeft: '24px' }}>
-                            <li>✓ {t('privacy_rights_1') || 'Droit d\'accès à vos données'}</li>
-                            <li>✓ {t('privacy_rights_2') || 'Droit de rectification'}</li>
-                            <li>✓ {t('privacy_rights_3') || 'Droit à l\'effacement'}</li>
-                            <li>✓ {t('privacy_rights_4') || 'Droit à la portabilité'}</li>
-                            <li>✓ {t('privacy_rights_5') || 'Droit d\'opposition'}</li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="success" category="status" fallback="✅" style={{ width: '16px', height: '16px' }} />
+                                {t('privacy_rights_1') || 'Droit d\'accès à vos données'}
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="success" category="status" fallback="✅" style={{ width: '16px', height: '16px' }} />
+                                {t('privacy_rights_2') || 'Droit de rectification'}
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="success" category="status" fallback="✅" style={{ width: '16px', height: '16px' }} />
+                                {t('privacy_rights_3') || 'Droit à l\'effacement'}
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="success" category="status" fallback="✅" style={{ width: '16px', height: '16px' }} />
+                                {t('privacy_rights_4') || 'Droit à la portabilité'}
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="success" category="status" fallback="✅" style={{ width: '16px', height: '16px' }} />
+                                {t('privacy_rights_5') || 'Droit d\'opposition'}
+                            </li>
                         </ul>
                         <p style={{ color: '#4B5563', lineHeight: '1.6', marginTop: '12px' }}>
+                            <Icon name="email" category="status" fallback="📧" style={{ width: '16px', height: '16px', marginRight: '8px' }} />
                             {t('privacy_rights_contact') || 'Pour exercer vos droits, contactez-nous à :'}{' '}
                             <a href="mailto:privacy@stockmedi.com" style={{ color: '#0F6B3A' }}>privacy@stockmedi.com</a>
                         </p>
                     </section>
 
-                    {/* Section 8 - Contact */}
+                    {/* Section 8 - Cookies */}
                     <section>
                         <h2 style={{ fontSize: '1.25rem', color: '#111827', marginBottom: '12px' }}>
-                            8. {t('privacy_contact') || 'Contact'}
+                            8. {t('privacy_cookies') || 'Cookies'}
+                        </h2>
+                        <p style={{ color: '#4B5563', lineHeight: '1.6', marginBottom: '12px' }}>
+                            {t('privacy_cookies_text') || 'StockMedi utilise des cookies strictement nécessaires au fonctionnement du service :'}
+                        </p>
+                        <ul style={{ color: '#4B5563', lineHeight: '1.6', paddingLeft: '24px' }}>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="lock" category="actions" fallback="🔐" style={{ width: '16px', height: '16px' }} />
+                                <strong>{t('privacy_cookie_auth') || 'Authentification'}</strong> : {t('privacy_cookie_auth_text') || 'pour maintenir votre connexion sécurisée'}
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="success" category="status" fallback="✅" style={{ width: '16px', height: '16px' }} />
+                                <strong>{t('privacy_cookie_stripe') || 'Paiement Stripe'}</strong> : {t('privacy_cookie_stripe_text') || 'cookies gérés par Stripe pour la sécurité des transactions'}
+                            </li>
+                        </ul>
+                        <p style={{ color: '#4B5563', lineHeight: '1.6', marginTop: '12px' }}>
+                            <Icon name="mobile" category="social" fallback="📱" style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+                            {t('privacy_cookies_no_tracking') || 'Nous n\'utilisons aucun cookie publicitaire ou de tracking. Aucun consentement n\'est requis pour les cookies essentiels.'}
+                        </p>
+                    </section>
+
+                    {/* Section 9 - Contact */}
+                    <section>
+                        <h2 style={{ fontSize: '1.25rem', color: '#111827', marginBottom: '12px' }}>
+                            9. {t('privacy_contact') || 'Contact'}
                         </h2>
                         <p style={{ color: '#4B5563', lineHeight: '1.6' }}>
                             {t('privacy_contact_text') || 'Pour toute question concernant cette charte de confidentialité, vous pouvez nous contacter :'}
@@ -168,17 +225,29 @@ const PrivacyPolicy = () => {
                             borderRadius: '8px',
                             marginTop: '12px'
                         }}>
-                            <p style={{ margin: '4px 0' }}>📧 <strong>Email</strong> : <a href="mailto:support@stockmedi.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a></p>
-                            <p style={{ margin: '4px 0' }}>📧 <strong>DPO (Délégué à la protection des données)</strong> : <a href="mailto:dpo@stockmedi.com" style={{ color: '#0F6B3A' }}>dpo@stockmedi.com</a></p>
-                            <p style={{ margin: '4px 0' }}>📞 <strong>{t('phone') || 'Téléphone'}</strong> : +224 600 000 000</p>
-                            <p style={{ margin: '4px 0' }}>📍 <strong>{t('address') || 'Adresse'}</strong> : Conakry, Guinée</p>
+                            <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="email" category="status" fallback="📧" style={{ width: '16px', height: '16px' }} />
+                                <strong>Email</strong> : <a href="mailto:support@stockmedi.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a>
+                            </p>
+                            <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="email" category="status" fallback="📧" style={{ width: '16px', height: '16px' }} />
+                                <strong>DPO (Délégué à la protection des données)</strong> : <a href="mailto:dpo@stockmedi.com" style={{ color: '#0F6B3A' }}>dpo@stockmedi.com</a>
+                            </p>
+                            <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="mobile" category="social" fallback="📞" style={{ width: '16px', height: '16px' }} />
+                                <strong>{t('phone') || 'Téléphone'}</strong> : +224 600 000 000
+                            </p>
+                            <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="location" category="status" fallback="📍" style={{ width: '16px', height: '16px' }} />
+                                <strong>{t('address') || 'Adresse'}</strong> : Conakry, Guinée
+                            </p>
                         </div>
                     </section>
 
-                    {/* Section 9 - Modifications */}
+                    {/* Section 10 - Modifications */}
                     <section>
                         <h2 style={{ fontSize: '1.25rem', color: '#111827', marginBottom: '12px' }}>
-                            9. {t('privacy_changes') || 'Modifications de la charte'}
+                            10. {t('privacy_changes') || 'Modifications de la charte'}
                         </h2>
                         <p style={{ color: '#4B5563', lineHeight: '1.6' }}>
                             {t('privacy_changes_text') || 'Nous pouvons modifier cette charte de confidentialité. Les modifications seront publiées sur cette page avec une date de mise à jour. Nous vous informerons des changements importants par email.'}

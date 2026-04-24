@@ -1,6 +1,6 @@
 /**
  * PAGE DE CONNEXION - StockMedi
- * ⭐ Traductions FR/EN complètes
+ * Traductions FR/EN complètes
  */
 
 import React, { useState } from 'react';
@@ -55,7 +55,8 @@ const Login = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#F9FAFB',
+                //backgroundColor: '#F9FAFB',
+                background: 'linear-gradient(135deg, #E8F3EF 0%, #DBEAFE 50%, #F3F4F6 100%)', 
                 padding: '16px'
             }}>
                 <div style={{
