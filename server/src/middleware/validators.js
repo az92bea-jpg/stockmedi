@@ -40,7 +40,6 @@ const validatePasswordStrength = (password) => {
 const validateRegister = [
     body('email')
         .isEmail().withMessage('Email invalide')
-        .normalizeEmail()
         .notEmpty().withMessage('Email requis'),
     
     body('password')
