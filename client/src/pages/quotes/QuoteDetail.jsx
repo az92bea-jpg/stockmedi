@@ -1,7 +1,7 @@
 /**
  * PAGE DÉTAIL DEVIS - Visualisation et actions
- * ⭐ Support multi-devises dynamique
- * ⭐ Traductions FR/EN complètes
+ * Support multi-devises dynamique
+ * Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -13,13 +13,15 @@ import Alert from '../../components/common/Alert';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import html2pdf from 'html2pdf.js';
 import { useLanguage } from '../../context/LanguageContext';
+import Icon from '../../components/ui/Icon';
+
 
 const QuoteDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { t } = useLanguage();
     
-    // ⭐ État pour la devise configurée
+    // État pour la devise configurée
     const [currency, setCurrency] = useState('GNF');
     const [loading, setLoading] = useState(true);
     const [converting, setConverting] = useState(false);
@@ -121,11 +123,13 @@ const QuoteDetail = () => {
                         ← {t('back')}
                     </button>
                     <button className="btn btn-primary" onClick={handlePrintPDF}>
-                        📄 {t('download_pdf')}
+                        <Icon name="pdf" category="actions" fallback="📄" style={{ width: '16px', height: '16px', marginRight: '4px' }} />
+                        {t('download_pdf')}
                     </button>
                     {quote.canBeConverted && (
                         <button className="btn btn-success" onClick={() => setShowConvertConfirm(true)} disabled={converting}>
-                            💰 {t('convert_to_sale')}
+                            <Icon name="sales" category="nav" fallback="💰" style={{ width: '16px', height: '16px', marginRight: '4px' }} />
+                            {t('convert_to_sale')}
                         </button>
                     )}
                 </div>

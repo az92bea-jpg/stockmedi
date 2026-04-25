@@ -1,7 +1,7 @@
 /**
  * PAGE CHARTE DE CONFIDENTIALITÉ - Mentions légales
- * ⭐ Icônes SVG avec fallback emoji
- * ⭐ Section Cookies ajoutée
+ * Icônes SVG avec fallback emoji
+ * Section Cookies ajoutée
  */
 
 import React from 'react';
@@ -88,12 +88,12 @@ const PrivacyPolicy = () => {
                         <p style={{ color: '#4B5563', lineHeight: '1.6', marginBottom: '12px' }}>
                             {t('privacy_data_usage_text') || 'Vos données sont utilisées pour :'}
                         </p>
-                        <ul style={{ color: '#4B5563', lineHeight: '1.6', paddingLeft: '24px' }}>
-                            <li>✓ {t('privacy_usage_1') || 'Gérer votre compte et votre abonnement'}</li>
-                            <li>✓ {t('privacy_usage_2') || 'Traiter vos ventes et votre stock'}</li>
-                            <li>✓ {t('privacy_usage_3') || 'Générer vos rapports'}</li>
-                            <li>✓ {t('privacy_usage_4') || 'Améliorer nos services'}</li>
-                            <li>✓ {t('privacy_usage_5') || 'Vous contacter concernant votre abonnement'}</li>
+                        <ul style={{ color: '#4B5563', lineHeight: '1.6', paddingLeft: '24px' }}>                  {/* ✓ Valider en cas de besoin marqueur emoji*/}
+                            <li> {t('privacy_usage_1') || 'Gérer votre compte et votre abonnement'}</li>
+                            <li> {t('privacy_usage_2') || 'Traiter vos ventes et votre stock'}</li>
+                            <li> {t('privacy_usage_3') || 'Générer vos rapports'}</li>
+                            <li> {t('privacy_usage_4') || 'Améliorer nos services'}</li>
+                            <li> {t('privacy_usage_5') || 'Vous contacter concernant votre abonnement'}</li>
                         </ul>
                     </section>
 
@@ -189,61 +189,143 @@ const PrivacyPolicy = () => {
 
                     {/* Section 8 - Cookies */}
                     <section>
-                        <h2 style={{ fontSize: '1.25rem', color: '#111827', marginBottom: '12px' }}>
+                        <h2 style={{ fontSize: '1.25rem', color: '#111827', marginBottom: '16px' }}>
+                            <Icon name="lock" category="actions" fallback="🔐" style={{ width: '20px', height: '20px', marginRight: '8px', verticalAlign: 'middle' }} />
                             8. {t('privacy_cookies') || 'Cookies'}
                         </h2>
-                        <p style={{ color: '#4B5563', lineHeight: '1.6', marginBottom: '12px' }}>
+                        
+                        <p style={{ color: '#4B5563', lineHeight: '1.6', marginBottom: '16px' }}>
                             {t('privacy_cookies_text') || 'StockMedi utilise des cookies strictement nécessaires au fonctionnement du service :'}
                         </p>
-                        <ul style={{ color: '#4B5563', lineHeight: '1.6', paddingLeft: '24px' }}>
-                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Icon name="lock" category="actions" fallback="🔐" style={{ width: '16px', height: '16px' }} />
-                                <strong>{t('privacy_cookie_auth') || 'Authentification'}</strong> : {t('privacy_cookie_auth_text') || 'pour maintenir votre connexion sécurisée'}
-                            </li>
-                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Icon name="success" category="status" fallback="✅" style={{ width: '16px', height: '16px' }} />
-                                <strong>{t('privacy_cookie_stripe') || 'Paiement Stripe'}</strong> : {t('privacy_cookie_stripe_text') || 'cookies gérés par Stripe pour la sécurité des transactions'}
-                            </li>
-                        </ul>
-                        <p style={{ color: '#4B5563', lineHeight: '1.6', marginTop: '12px' }}>
-                            <Icon name="mobile" category="social" fallback="📱" style={{ width: '16px', height: '16px', marginRight: '8px' }} />
-                            {t('privacy_cookies_no_tracking') || 'Nous n\'utilisons aucun cookie publicitaire ou de tracking. Aucun consentement n\'est requis pour les cookies essentiels.'}
-                        </p>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+                            
+                            <div style={{ 
+                                backgroundColor: '#F0FDF4', 
+                                padding: '14px 16px', 
+                                borderRadius: '8px', 
+                                display: 'flex', 
+                                alignItems: 'flex-start', 
+                                gap: '10px',
+                                flexWrap: 'wrap'
+                            }}>
+                                <Icon name="lock" category="actions" fallback="🔐" style={{ width: '20px', height: '20px', flexShrink: 0, marginTop: '1px' }} />
+                                <div style={{ flex: 1, minWidth: '200px' }}>
+                                    <strong style={{ display: 'block', marginBottom: '2px' }}>
+                                        {t('privacy_cookie_auth') || 'Authentification'}
+                                    </strong>
+                                    <span style={{ fontSize: '0.85rem', color: '#4B5563' }}>
+                                        {t('privacy_cookie_auth_text') || 'pour maintenir votre connexion sécurisée'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div style={{ 
+                                backgroundColor: '#EFF6FF', 
+                                padding: '14px 16px', 
+                                borderRadius: '8px', 
+                                display: 'flex', 
+                                alignItems: 'flex-start', 
+                                gap: '10px',
+                                flexWrap: 'wrap'
+                            }}>
+                                <Icon name="success" category="status" fallback="✅" style={{ width: '20px', height: '20px', flexShrink: 0, marginTop: '1px' }} />
+                                <div style={{ flex: 1, minWidth: '200px' }}>
+                                    <strong style={{ display: 'block', marginBottom: '2px' }}>
+                                        {t('privacy_cookie_stripe') || 'Paiement Stripe'}
+                                    </strong>
+                                    <span style={{ fontSize: '0.85rem', color: '#4B5563' }}>
+                                        {t('privacy_cookie_stripe_text') || 'cookies gérés par Stripe pour la sécurité des transactions'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ 
+                            backgroundColor: '#F3F4F6', 
+                            padding: '12px 16px', 
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '10px',
+                            flexWrap: 'wrap'
+                        }}>
+                            <Icon name="mobile" category="social" fallback="📱" style={{ width: '20px', height: '20px', flexShrink: 0, marginTop: '1px' }} />
+                            <span style={{ fontSize: '0.85rem', color: '#4B5563', lineHeight: '1.6' }}>
+                                {t('privacy_cookies_no_tracking') || 'Nous n\'utilisons aucun cookie publicitaire ou de tracking. Aucun consentement n\'est requis pour les cookies essentiels.'}
+                            </span>
+                        </div>
                     </section>
 
                     {/* Section 9 - Contact */}
                     <section>
-                        <h2 style={{ fontSize: '1.25rem', color: '#111827', marginBottom: '12px' }}>
+                        <h2 style={{ fontSize: '1.25rem', color: '#111827', marginBottom: '16px' }}>
+                            <Icon name="email" category="status" fallback="📧" style={{ width: '20px', height: '20px', marginRight: '8px', verticalAlign: 'middle' }} />
                             9. {t('privacy_contact') || 'Contact'}
                         </h2>
-                        <p style={{ color: '#4B5563', lineHeight: '1.6' }}>
-                            {t('privacy_contact_text') || 'Pour toute question concernant cette charte de confidentialité, vous pouvez nous contacter :'}
+                        <p style={{ color: '#4B5563', lineHeight: '1.6', marginBottom: '16px' }}>
+                            {t('privacy_contact_text') || 'Pour toute question concernant cette politique de confidentialité, vous pouvez nous joindre:'}
                         </p>
-                        <div style={{
-                            backgroundColor: '#F3F4F6',
-                            padding: '16px',
-                            borderRadius: '8px',
-                            marginTop: '12px'
-                        }}>
-                            <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Icon name="email" category="status" fallback="📧" style={{ width: '16px', height: '16px' }} />
-                                <strong>Email</strong> : <a href="mailto:support@stockmedi.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a>
-                            </p>
-                            <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Icon name="email" category="status" fallback="📧" style={{ width: '16px', height: '16px' }} />
-                                <strong>DPO (Délégué à la protection des données)</strong> : <a href="mailto:dpo@stockmedi.com" style={{ color: '#0F6B3A' }}>dpo@stockmedi.com</a>
-                            </p>
-                            <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Icon name="mobile" category="social" fallback="📞" style={{ width: '16px', height: '16px' }} />
-                                <strong>{t('phone') || 'Téléphone'}</strong> : +224 600 000 000
-                            </p>
-                            <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Icon name="location" category="status" fallback="📍" style={{ width: '16px', height: '16px' }} />
-                                <strong>{t('address') || 'Adresse'}</strong> : Conakry, Guinée
-                            </p>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            
+                            <div style={{ 
+                                backgroundColor: '#F3F4F6', 
+                                padding: '12px 16px', 
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                flexWrap: 'wrap'
+                            }}>
+                                <Icon name="email" category="status" fallback="📧" style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+                                <strong style={{ whiteSpace: 'nowrap' }}>Email :</strong>
+                                <a href="mailto:azbea.lomagui@gmail.com" style={{ color: '#0F6B3A', wordBreak: 'break-all' }}>support@stockmedi.com</a>
+                            </div>
+
+                            <div style={{ 
+                                backgroundColor: '#F3F4F6', 
+                                padding: '12px 16px', 
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                flexWrap: 'wrap'
+                            }}>
+                                <Icon name="email" category="status" fallback="📧" style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+                                <strong style={{ whiteSpace: 'nowrap' }}>DPO :</strong>
+                                <a href="mailto:azbea.lomagui@gmail.com" style={{ color: '#0F6B3A', wordBreak: 'break-all' }}>dpo@stockmedi.com</a>
+                            </div>
+
+                            <div style={{ 
+                                backgroundColor: '#F3F4F6', 
+                                padding: '12px 16px', 
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                flexWrap: 'wrap'
+                            }}>
+                                <Icon name="mobile" category="social" fallback="📞" style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+                                <strong style={{ whiteSpace: 'nowrap' }}>{t('phone') || 'Téléphone'} :</strong>
+                                <span>+224 600 000 000</span>
+                            </div>
+
+                            <div style={{ 
+                                backgroundColor: '#F3F4F6', 
+                                padding: '12px 16px', 
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                flexWrap: 'wrap'
+                            }}>
+                                <Icon name="location" category="status" fallback="📍" style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+                                <strong style={{ whiteSpace: 'nowrap' }}>{t('address') || 'Adresse'} :</strong>
+                                <span>Conakry, Guinée</span>
+                            </div>
                         </div>
                     </section>
-
                     {/* Section 10 - Modifications */}
                     <section>
                         <h2 style={{ fontSize: '1.25rem', color: '#111827', marginBottom: '12px' }}>

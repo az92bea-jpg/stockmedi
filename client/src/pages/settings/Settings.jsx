@@ -21,7 +21,7 @@ const Settings = () => {
     
     const [activeTab, setActiveTab] = useState('company');
     
-    // ⭐ États pour la suppression de compte
+    // États pour la suppression de compte
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deletePassword, setDeletePassword] = useState('');
     const [deleteConfirmed, setDeleteConfirmed] = useState(false);
@@ -82,7 +82,7 @@ const Settings = () => {
             const response = await api.get('/settings/profile');
             setProfile(response.profile);
             
-            // ⭐ Vérifier si une demande de suppression est en cours
+            // Vérifier si une demande de suppression est en cours
             const userResponse = await api.get('/auth/me');
             if (userResponse.user?.deletionRequestedAt) {
                 setDeletionRequested(true);
@@ -348,10 +348,14 @@ const Settings = () => {
                         fontWeight: 500,
                         color: activeTab === 'company' ? 'var(--primary-500)' : 'var(--gray-500)',
                         borderBottom: activeTab === 'company' ? '2px solid var(--primary-500)' : 'none',
-                        transition: 'all var(--transition-fast)'
+                        transition: 'all var(--transition-fast)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
                     }}
                 >
-                    🏢 {t('company')}
+                    <Icon name="establishment" category="nav" fallback="🏢" style={{ width: '16px', height: '16px' }} />
+                    {t('company')}
                 </button>
                 <button
                     onClick={() => setActiveTab('profile')}
@@ -364,10 +368,14 @@ const Settings = () => {
                         fontWeight: 500,
                         color: activeTab === 'profile' ? 'var(--primary-500)' : 'var(--gray-500)',
                         borderBottom: activeTab === 'profile' ? '2px solid var(--primary-500)' : 'none',
-                        transition: 'all var(--transition-fast)'
+                        transition: 'all var(--transition-fast)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
                     }}
                 >
-                    👤 {t('profile')}
+                    <Icon name="user" category="nav" fallback="👤" style={{ width: '16px', height: '16px' }} />
+                    {t('profile')}
                 </button>
             </div>
 

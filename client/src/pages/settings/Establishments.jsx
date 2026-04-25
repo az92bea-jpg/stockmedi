@@ -1,6 +1,6 @@
 /**
  * PAGE ÉTABLISSEMENTS - Gestion multi-sites (Plan Enterprise)
- * ⭐ Traductions FR/EN complètes
+ * Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect } from 'react';
@@ -133,7 +133,7 @@ const Establishments = () => {
         const estResponse = await getEstablishments();
         setEstablishments(estResponse.establishments || []);
         
-        // ⭐ Migration : proposer si c'est le PREMIER établissement créé
+        // Migration : proposer si c'est le PREMIER établissement créé
         if (modalMode === 'create' && establishments.length === 0 && newEstablishmentId) {
             // Compter les produits sans établissement
             const productsResponse = await api.get('/products');

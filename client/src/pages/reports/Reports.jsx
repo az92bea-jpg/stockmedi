@@ -12,6 +12,7 @@ import Alert from '../../components/common/Alert';
 import { useLanguage } from '../../context/LanguageContext';
 import { authService } from '../../services/authService';
 import EstablishmentSelector from '../../components/establishment/EstablishmentSelector';
+import Icon from '../../components/ui/Icon';
 
 const Reports = () => {
     const { t } = useLanguage();
@@ -189,15 +190,17 @@ const Reports = () => {
                             <ul style={{ margin: 'var(--spacing-2) 0 0 var(--spacing-4)', color: 'var(--gray-600)' }}>
                                 <li>{t('info_pdf')}</li>
                                 <li>{t('info_excel')}</li>
-                                {isEnterprise && <li>🏢 {t('filterable_by_establishment')}</li>}
+                                {isEnterprise && <li> {t('filterable_by_establishment')}</li>}
                             </ul>
                         </div>
                         <div style={{ display: 'flex', gap: 'var(--spacing-3)', flexWrap: 'wrap' }}>
                             <button className="btn btn-primary" onClick={downloadInventoryPDF} disabled={loading}>
-                                📄 {t('download_pdf')}
+                                <Icon name="pdf" category="actions" fallback="📄" style={{ width: '16px', height: '16px', marginRight: '4px' }} />
+                                {t('download_pdf')}
                             </button>
                             <button className="btn btn-secondary" onClick={downloadInventoryExcel} disabled={loading}>
-                                📊 {t('download_excel')}
+                                <Icon name="excel" category="actions" fallback="📊" style={{ width: '16px', height: '16px', marginRight: '4px' }} />
+                                {t('download_excel')}
                             </button>
                         </div>
                     </div>
@@ -221,8 +224,8 @@ const Reports = () => {
                             <strong>{t('info_title')}</strong>
                             <ul style={{ margin: 'var(--spacing-2) 0 0 var(--spacing-4)', color: 'var(--gray-600)' }}>
                                 <li>{t('info_filter')}</li>
-                                <li>💵 {t('info_currency').replace('GNF', currency)}</li>
-                                {isEnterprise && <li>🏢 {t('filterable_by_establishment')}</li>}
+                                <li> {t('info_currency').replace('GNF', currency)}</li>
+                                {isEnterprise && <li> {t('filterable_by_establishment')}</li>}
                             </ul>
                         </div>
                         
@@ -238,7 +241,8 @@ const Reports = () => {
                         </div>
                         
                         <button className="btn btn-primary" onClick={downloadSalesExcel} disabled={loading} style={{ width: '100%' }}>
-                            📊 {t('download_excel')}
+                            <Icon name="excel" category="actions" fallback="📊" style={{ width: '16px', height: '16px', marginRight: '4px' }} />
+                            {t('download_excel')}
                         </button>
                         <div className="form-hint" style={{ marginTop: 'var(--spacing-2)', textAlign: 'center' }}>
                             {t('leave_empty')}
@@ -252,14 +256,29 @@ const Reports = () => {
                     <h3>ℹ️ {t('info_title')}</h3>
                 </div>
                 <div className="card-body">
-                    <ul style={{ margin: 0, paddingLeft: 'var(--spacing-4)', color: 'var(--gray-600)', lineHeight: '1.8' }}>
-                        <li>📄 <strong>{t('info_pdf')}</strong></li>
-                        <li>📊 <strong>{t('info_excel')}</strong></li>
-                        <li>📅 <strong>{t('info_filter')}</strong></li>
-                        <li>💵 <strong>{t('info_currency').replace('(GNF)', `(${currency})`)}</strong></li>
-                        {isEnterprise && <li>🏢 <strong>{t('reports_filterable_by_establishment')}</strong> (plan Enterprise)</li>}
-                    </ul>
-                </div>
+                <ul style={{ margin: 0, paddingLeft: 'var(--spacing-4)', color: 'var(--gray-600)', lineHeight: '1.8' }}>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Icon name="pdf" category="actions" fallback="📄" style={{ width: '16px', height: '30px' }} />
+                        <strong>{t('info_pdf')}</strong>
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Icon name="excel" category="actions" fallback="📊" style={{ width: '16px', height: '30px' }} />
+                        <strong>{t('info_excel')}</strong>
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Icon name="calendar" category="status" fallback="📅" style={{ width: '16px', height: '30px' }} />
+                        <strong>{t('info_filter')}</strong>
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Icon name="money" category="status" fallback="💵" style={{ width: '16px', height: '30px' }} />
+                        <strong>{t('info_currency').replace('(GNF)', `(${currency})`)}</strong>
+                    </li>
+                    {isEnterprise && <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Icon name="enterprise" category="establishment" fallback="🏢" style={{ width: '16px', height: '30px' }} />
+                        <strong>{t('reports_filterable_by_establishment')}</strong> (plan Enterprise)
+                    </li>}
+                </ul>
+            </div>
             </div>
 
             <div style={{ marginTop: 'var(--spacing-6)', textAlign: 'center' }}>

@@ -1,6 +1,6 @@
 /**
  * COMPOSANT SIDEBAR - Menu de navigation latéral
- * ⭐ Traductions FR/EN complètes
+ * Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -82,7 +82,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         navItems.push({
             path: '/settings/establishments',
             name: t('establishments_title'),
-            iconName: 'settings',
+            iconName: 'establishment',
             fallback: '🏢'
         });
     }

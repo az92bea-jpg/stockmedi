@@ -1,7 +1,7 @@
 /**
  * PAGE À PROPOS - Présentation de StockMedi
- * ⭐ Icônes SVG avec fallback emoji
- * ⭐ Traductions FR/EN
+ * Icônes SVG avec fallback emoji
+ * Traductions FR/EN
  */
 
 import React from 'react';
@@ -68,47 +68,47 @@ const About = () => {
                     </section>
 
                     {/* {/* Valeurs */}
-<section>
-    <h2 style={{ fontSize: '1.25rem', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Icon name="success" category="status" fallback="⭐" style={{ width: '20px', height: '20px' }} />
-        {t('about_values_title') || 'Nos valeurs'}
-    </h2>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-        
-        <div style={{ backgroundColor: '#F0FDF4', padding: '16px', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <Icon name="lock" category="actions" fallback="🔒" style={{ width: '22px', height: '22px', flexShrink: 0, marginTop: '2px' }} />
-            <div>
-                <strong style={{ display: 'block', marginBottom: '4px' }}>{t('about_value_security') || 'Sécurité'}</strong>
-                <span style={{ fontSize: '0.85rem', color: '#4B5563' }}>{t('about_value_security_text') || 'Protection des données sensibles'}</span>
-            </div>
-        </div>
+                    <section>
+                        <h2 style={{ fontSize: '1.25rem', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Icon name="success" category="status" fallback="⭐" style={{ width: '20px', height: '20px' }} />
+                            {t('about_values_title') || 'Nos valeurs'}
+                        </h2>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                            
+                            <div style={{ backgroundColor: '#F0FDF4', padding: '16px', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                                <Icon name="lock" category="actions" fallback="🔒" style={{ width: '22px', height: '22px', flexShrink: 0, marginTop: '2px' }} />
+                                <div>
+                                    <strong style={{ display: 'block', marginBottom: '4px' }}>{t('about_value_security') || 'Sécurité'}</strong>
+                                    <span style={{ fontSize: '0.85rem', color: '#4B5563' }}>{t('about_value_security_text') || 'Protection des données sensibles'}</span>
+                                </div>
+                            </div>
 
-        <div style={{ backgroundColor: '#EFF6FF', padding: '16px', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <Icon name="globe" category="actions" fallback="🌍" style={{ width: '22px', height: '22px', flexShrink: 0, marginTop: '2px' }} />
-            <div>
-                <strong style={{ display: 'block', marginBottom: '4px' }}>{t('about_value_accessibility') || 'Accessibilité'}</strong>
-                <span style={{ fontSize: '0.85rem', color: '#4B5563' }}>{t('about_value_accessibility_text') || 'Solution adaptée aux besoins africains'}</span>
-            </div>
-        </div>
+                            <div style={{ backgroundColor: '#EFF6FF', padding: '16px', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                                <Icon name="globe" category="actions" fallback="🌍" style={{ width: '22px', height: '22px', flexShrink: 0, marginTop: '2px' }} />
+                                <div>
+                                    <strong style={{ display: 'block', marginBottom: '4px' }}>{t('about_value_accessibility') || 'Accessibilité'}</strong>
+                                    <span style={{ fontSize: '0.85rem', color: '#4B5563' }}>{t('about_value_accessibility_text') || 'Solution adaptée aux besoins africains'}</span>
+                                </div>
+                            </div>
 
-        <div style={{ backgroundColor: '#FFF7ED', padding: '16px', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <Icon name="idea" category="actions" fallback="💡" style={{ width: '22px', height: '22px', flexShrink: 0, marginTop: '2px' }} />
-            <div>
-                <strong style={{ display: 'block', marginBottom: '4px' }}>{t('about_value_innovation') || 'Innovation'}</strong>
-                <span style={{ fontSize: '0.85rem', color: '#4B5563' }}>{t('about_value_innovation_text') || 'Technologies modernes au service de la santé'}</span>
-            </div>
-        </div>
+                            <div style={{ backgroundColor: '#FFF7ED', padding: '16px', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                                <Icon name="idea" category="actions" fallback="💡" style={{ width: '22px', height: '22px', flexShrink: 0, marginTop: '2px' }} />
+                                <div>
+                                    <strong style={{ display: 'block', marginBottom: '4px' }}>{t('about_value_innovation') || 'Innovation'}</strong>
+                                    <span style={{ fontSize: '0.85rem', color: '#4B5563' }}>{t('about_value_innovation_text') || 'Technologies modernes au service de la santé'}</span>
+                                </div>
+                            </div>
 
-        <div style={{ backgroundColor: '#FEF2F2', padding: '16px', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <Icon name="handshake" category="actions" fallback="🤝" style={{ width: '22px', height: '22px', flexShrink: 0, marginTop: '2px' }} />
-            <div>
-                <strong style={{ display: 'block', marginBottom: '4px' }}>{t('about_value_proximity') || 'Proximité'}</strong>
-                <span style={{ fontSize: '0.85rem', color: '#4B5563' }}>{t('about_value_proximity_text') || 'Support et accompagnement personnalisés'}</span>
-            </div>
-        </div>
+                            <div style={{ backgroundColor: '#FEF2F2', padding: '16px', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                                <Icon name="handshake" category="actions" fallback="🤝" style={{ width: '22px', height: '22px', flexShrink: 0, marginTop: '2px' }} />
+                                <div>
+                                    <strong style={{ display: 'block', marginBottom: '4px' }}>{t('about_value_proximity') || 'Proximité'}</strong>
+                                    <span style={{ fontSize: '0.85rem', color: '#4B5563' }}>{t('about_value_proximity_text') || 'Support et accompagnement personnalisés'}</span>
+                                </div>
+                            </div>
 
-    </div>
-</section>
+                        </div>
+                    </section>
 
                     {/* Contact */}
                     <section>
@@ -119,11 +119,11 @@ const About = () => {
                         <div style={{ backgroundColor: '#F3F4F6', padding: '16px', borderRadius: '8px' }}>
                             <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Icon name="email" category="status" fallback="📧" style={{ width: '20px', height: '20px' }} />
-                                <a href="mailto:support@stockmedi.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a>
+                                <a href="mailto:azbea.lomagui@gmail.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a>
                             </p>
                             <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Icon name="mobile" category="social" fallback="📞" style={{ width: '20px', height: '20px' }} />
-                                <a href="tel:+224600000000" style={{ color: '#0F6B3A' }}>+224 600 000 000</a>
+                                <a href="tel:+224623679567" style={{ color: '#0F6B3A' }}>+224 600 000 000</a>
                             </p>
                             <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Icon name="location" category="status" fallback="📍" style={{ width: '20px', height: '20px' }} />
@@ -135,7 +135,7 @@ const About = () => {
                                 <a href="https://facebook.com/stockmedi" target="_blank" rel="noopener noreferrer" style={{ color: '#0F6B3A', marginLeft: '8px' }}>
                                     <Icon name="facebook" category="social" fallback="📘" style={{ width: '20px', height: '20px' }} />
                                 </a>
-                                <a href="https://wa.me/224600000000" target="_blank" rel="noopener noreferrer" style={{ color: '#0F6B3A', marginLeft: '8px' }}>
+                                <a href="https://wa.me/224623679567" target="_blank" rel="noopener noreferrer" style={{ color: '#0F6B3A', marginLeft: '8px' }}>
                                     <Icon name="whatsapp" category="social" fallback="💬" style={{ width: '20px', height: '20px' }} />
                                 </a>
                                 <a href="https://t.me/stockmedi" target="_blank" rel="noopener noreferrer" style={{ color: '#0F6B3A', marginLeft: '8px' }}>

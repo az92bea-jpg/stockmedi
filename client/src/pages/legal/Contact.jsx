@@ -1,6 +1,6 @@
 /**
  * PAGE CONTACT
- * ⭐ Icônes SVG avec fallback emoji
+ * Icônes SVG avec fallback emoji
  */
 
 import React, { useState } from 'react';
@@ -69,7 +69,7 @@ const Contact = () => {
                         <input
                             type="text"
                             className="form-input"
-                            placeholder="Jean Dupont"
+                            placeholder="Dr Jean Koïkoï Béavogui"
                             value={formData.name}
                             onChange={(e) => setFormData({...formData, name: e.target.value})}
                             required
@@ -80,7 +80,7 @@ const Contact = () => {
                         <input
                             type="email"
                             className="form-input"
-                            placeholder="jean@exemple.com"
+                            placeholder="drjeankoikoi@exemple.com"
                             value={formData.email}
                             onChange={(e) => setFormData({...formData, email: e.target.value})}
                             required
@@ -110,11 +110,11 @@ const Contact = () => {
                 <div style={{ marginBottom: '24px' }}>
                     <p style={{ margin: '8px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Icon name="email" category="status" fallback="📧" style={{ width: '20px', height: '20px' }} />
-                        <a href="mailto:support@stockmedi.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a>
+                        <a href="mailto:azbea.lomagui@gmail.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a>
                     </p>
                     <p style={{ margin: '8px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Icon name="phone" category="status" fallback="📞" style={{ width: '20px', height: '20px' }} />
-                        <a href="tel:+224600000000" style={{ color: '#0F6B3A' }}>+224 600 000 000</a>
+                        <a href="tel:+224623679567" style={{ color: '#0F6B3A' }}>+224 600 000 000</a>
                     </p>
                     <p style={{ margin: '8px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Icon name="location" category="status" fallback="📍" style={{ width: '20px', height: '20px' }} />

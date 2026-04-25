@@ -1,6 +1,6 @@
 /**
  * PAGE CONDITIONS D'UTILISATION
- * ⭐ Version renforcée - Protection juridique complète
+ * Version renforcée - Protection juridique complète
  */
 
 import React from 'react';
@@ -70,10 +70,10 @@ const Terms = () => {
                             {t('terms_account_text') || 'Lors de la création de votre compte, vous vous engagez à :'}
                         </p>
                         <ul style={{ color: '#4B5563', lineHeight: '1.6', paddingLeft: '24px' }}>
-                            <li>✓ {t('terms_account_1') || 'Fournir des informations exactes et complètes'}</li>
-                            <li>✓ {t('terms_account_2') || 'Maintenir la confidentialité de vos identifiants de connexion'}</li>
-                            <li>✓ {t('terms_account_3') || 'Être responsable de toute activité effectuée sous votre compte'}</li>
-                            <li>✓ {t('terms_account_4') || 'Nous informer immédiatement de toute utilisation non autorisée de votre compte'}</li>
+                            <li> {t('terms_account_1') || 'Fournir des informations exactes et complètes'}</li>
+                            <li> {t('terms_account_2') || 'Maintenir la confidentialité de vos identifiants de connexion'}</li>
+                            <li> {t('terms_account_3') || 'Être responsable de toute activité effectuée sous votre compte'}</li>
+                            <li> {t('terms_account_4') || 'Nous informer immédiatement de toute utilisation non autorisée de votre compte'}</li>
                         </ul>
                     </section>
 
@@ -87,10 +87,10 @@ const Terms = () => {
                             {t('terms_subscription_text') || 'StockMedi propose des abonnements mensuels via Stripe. En souscrivant, vous acceptez que :'}
                         </p>
                         <ul style={{ color: '#4B5563', lineHeight: '1.6', paddingLeft: '24px' }}>
-                            <li>✓ {t('terms_sub_1') || 'Les frais d\'abonnement sont facturés mensuellement et non remboursables'}</li>
-                            <li>✓ {t('terms_sub_2') || 'Aucun remboursement partiel n\'est accordé pour les périodes non utilisées'}</li>
-                            <li>✓ {t('terms_sub_3') || 'Vous pouvez annuler votre abonnement à tout moment, l\'accès reste valide jusqu\'à la fin de la période payée'}</li>
-                            <li>✓ {t('terms_sub_4') || 'Les prix peuvent être modifiés avec un préavis de 30 jours'}</li>
+                            <li> {t('terms_sub_1') || 'Les frais d\'abonnement sont facturés mensuellement et non remboursables'}</li>
+                            <li> {t('terms_sub_2') || 'Aucun remboursement partiel n\'est accordé pour les périodes non utilisées'}</li>
+                            <li> {t('terms_sub_3') || 'Vous pouvez annuler votre abonnement à tout moment, l\'accès reste valide jusqu\'à la fin de la période payée'}</li>
+                            <li> {t('terms_sub_4') || 'Les prix peuvent être modifiés avec un préavis de 30 jours'}</li>
                         </ul>
                     </section>
 
@@ -104,11 +104,11 @@ const Terms = () => {
                             {t('terms_liability_text') || 'StockMedi ne peut être tenu responsable :'}
                         </p>
                         <ul style={{ color: '#4B5563', lineHeight: '1.6', paddingLeft: '24px' }}>
-                            <li>• {t('terms_lia_1') || 'Des erreurs de saisie commises par l\'utilisateur'}</li>
-                            <li>• {t('terms_lia_2') || 'De la perte de données résultant d\'une mauvaise utilisation du service'}</li>
-                            <li>• {t('terms_lia_3') || 'Des interruptions de service temporaires pour maintenance'}</li>
-                            <li>• {t('terms_lia_4') || 'Des conséquences de décisions prises sur la base des rapports générés'}</li>
-                            <li>• {t('terms_lia_5') || 'Des dommages indirects (perte de clientèle, manque à gagner)'}</li>
+                            <li> {t('terms_lia_1') || 'Des erreurs de saisie commises par l\'utilisateur'}</li>
+                            <li> {t('terms_lia_2') || 'De la perte de données résultant d\'une mauvaise utilisation du service'}</li>
+                            <li> {t('terms_lia_3') || 'Des interruptions de service temporaires pour maintenance'}</li>
+                            <li> {t('terms_lia_4') || 'Des conséquences de décisions prises sur la base des rapports générés'}</li>
+                            <li> {t('terms_lia_5') || 'Des dommages indirects (perte de clientèle, manque à gagner)'}</li>
                         </ul>
                     </section>
 
@@ -122,9 +122,9 @@ const Terms = () => {
                             {t('terms_health_data_text') || 'StockMedi peut contenir des données liées aux patients (noms, téléphones, numéros d\'ordonnance). En tant que professionnel de santé, vous êtes responsable de :'}
                         </p>
                         <ul style={{ color: '#4B5563', lineHeight: '1.6', paddingLeft: '24px' }}>
-                            <li>• {t('terms_health_1') || 'Obtenir le consentement de vos patients pour le traitement de leurs données'}</li>
-                            <li>• {t('terms_health_2') || 'Respecter le secret médical et les réglementations locales'}</li>
-                            <li>• {t('terms_health_3') || 'Supprimer ou anonymiser les données patients avant suppression de votre compte'}</li>
+                            <li> {t('terms_health_1') || 'Obtenir le consentement de vos patients pour le traitement de leurs données'}</li>
+                            <li> {t('terms_health_2') || 'Respecter le secret médical et les réglementations locales'}</li>
+                            <li> {t('terms_health_3') || 'Supprimer ou anonymiser les données patients avant suppression de votre compte'}</li>
                         </ul>
                     </section>
 
@@ -138,9 +138,9 @@ const Terms = () => {
                             {t('terms_ip_text') || 'Tous les éléments de StockMedi sont protégés par les droits d\'auteur et la propriété intellectuelle :'}
                         </p>
                         <ul style={{ color: '#4B5563', lineHeight: '1.6', paddingLeft: '24px' }}>
-                            <li>• {t('terms_ip_1') || 'Le code source, l\'interface, le design et la marque StockMedi'}</li>
-                            <li>• {t('terms_ip_2') || 'La copie, reproduction ou réutilisation du service est strictement interdite'}</li>
-                            <li>• {t('terms_ip_3') || 'Vous ne pouvez pas revendre, sous-licencier ou louer l\'accès à StockMedi'}</li>
+                            <li> {t('terms_ip_1') || 'Le code source, l\'interface, le design et la marque StockMedi'}</li>
+                            <li> {t('terms_ip_2') || 'La copie, reproduction ou réutilisation du service est strictement interdite'}</li>
+                            <li> {t('terms_ip_3') || 'Vous ne pouvez pas revendre, sous-licencier ou louer l\'accès à StockMedi'}</li>
                         </ul>
                     </section>
 
@@ -165,9 +165,9 @@ const Terms = () => {
                             {t('terms_termination_text') || 'StockMedi se réserve le droit de :'}
                         </p>
                         <ul style={{ color: '#4B5563', lineHeight: '1.6', paddingLeft: '24px' }}>
-                            <li>• {t('terms_term_1') || 'Suspendre ou résilier un compte en cas de non-respect des présentes conditions'}</li>
-                            <li>• {t('terms_term_2') || 'Supprimer les comptes inactifs depuis plus de 12 mois'}</li>
-                            <li>• {t('terms_term_3') || 'L\'utilisateur peut demander la suppression de son compte à tout moment avec un délai de rétractation de 7 jours'}</li>
+                            <li> {t('terms_term_1') || 'Suspendre ou résilier un compte en cas de non-respect des présentes conditions'}</li>
+                            <li> {t('terms_term_2') || 'Supprimer les comptes inactifs depuis plus de 12 mois'}</li>
+                            <li> {t('terms_term_3') || 'L\'utilisateur peut demander la suppression de son compte à tout moment avec un délai de rétractation de 7 jours'}</li>
                         </ul>
                     </section>
 
@@ -205,7 +205,7 @@ const Terms = () => {
                         <div style={{ backgroundColor: '#F3F4F6', padding: '16px', borderRadius: '8px', marginTop: '12px' }}>
                             <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Icon name="email" category="status" fallback="📧" style={{ width: '16px', height: '16px' }} />
-                                <strong>Email</strong> : <a href="mailto:support@stockmedi.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a>
+                                <strong>Email</strong> : <a href="mailto:azbea.lomagui@gmail.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a>
                             </p>
                             <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Icon name="mobile" category="social" fallback="📞" style={{ width: '16px', height: '16px' }} />

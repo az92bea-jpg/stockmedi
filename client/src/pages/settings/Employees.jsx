@@ -9,7 +9,7 @@ import { getEstablishments } from '../../services/establishmentService';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import Modal from '../../components/common/Modal';
-import Icon from '../../components/ui/Icon'; // ⭐ Import du composant Icon
+import Icon from '../../components/ui/Icon';
 import { useLanguage } from '../../context/LanguageContext';
 
 // Mapping des disciplines - Utilisation de Icon avec fallback emoji
@@ -56,10 +56,10 @@ const getPermissionLabel = (permission, t) => {
         view_reports: { icon: 'reports', category: 'nav', fallback: '📊', label: t('view_reports') },
         manage_users: { icon: 'employees', category: 'nav', fallback: '👥', label: t('manage_employees') },
         manage_settings: { icon: 'settings', category: 'nav', fallback: '⚙️', label: t('manage_settings') },
-        manage_establishments: { icon: null, category: null, fallback: '🏢', label: t('manage_establishments') }, // ⚠️ establishment.svg à créer
+        manage_establishments: { icon: 'establishment', category: 'nav', fallback: '🏢', label: t('manage_establishments') },
         view_dashboard: { icon: 'dashboard', category: 'nav', fallback: '📊', label: t('view_dashboard') },
-        view_products: { icon: null, category: null, fallback: '👁️', label: t('view_products') }, // ⚠️ eye.svg à créer
-        cancel_sales: { icon: null, category: null, fallback: '❌', label: t('cancel_sales') } // ⚠️ cancel.svg ou utiliser error ?
+        view_products: { icon: 'eye', category: 'actions', fallback: '👁️', label: t('view_products') },
+        cancel_sales: { icon: 'delete', category: 'actions', fallback: '❌', label: t('cancel_sales') }
     };
     const item = labels[permission];
     if (!item) return permission;
@@ -102,16 +102,6 @@ const Employees = () => {
         permissions: ['make_sales'],
         establishments: []
     });
-
-    // ⭐ Charger les établissements
-    /* {
-        try {
-            const response = await getEstablishments();
-            setEstablishments(response.establishments || []);
-        } catch (err) {
-            console.error('Erreur chargement établissements:', err);
-        }
-    }, []);*/
 
     const loadEstablishments = useCallback(async () => {
         try {
@@ -181,7 +171,7 @@ const Employees = () => {
         setModalOpen(true);
     };
 
-    // ⭐ Gérer la sélection des établissements
+    // Gérer la sélection des établissements
     const handleEstablishmentToggle = (establishmentId) => {
         const current = formData.establishments || [];
         if (current.includes(establishmentId)) {
@@ -408,7 +398,7 @@ const Employees = () => {
                                             {emp.establishments?.length > 0 ? (
                                                 emp.establishments.map(e => (
                                                     <div key={e._id}>
-                                                        <Icon name={null} category={null} fallback="🏢" style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+                                                        <Icon name="establishment" category="nav" fallback="🏢" style={{ width: '12px', height: '12px', marginRight: '4px' }} />
                                                         {e.name}
                                                     </div>
                                                 ))
@@ -435,7 +425,7 @@ const Employees = () => {
                                                 title={emp.isActive ? t('deactivate') : t('activate')} 
                                                 style={{ color: emp.isActive ? 'var(--warning)' : 'var(--success)' }}
                                             >
-                                                <Icon name={null} category={null} fallback={emp.isActive ? '🔒' : '🔓'} style={{ width: '16px', height: '16px' }} />
+                                                <Icon name={emp.isActive ? 'lock' : 'unlock'} category="actions" fallback={emp.isActive ? '🔒' : '🔓'} style={{ width: '16px', height: '16px' }} />
                                             </button>
                                             <button 
                                                 className="btn btn-sm btn-outline" 
@@ -502,7 +492,7 @@ const Employees = () => {
                                         <Icon name={showPassword ? 'eye-off' : 'eye'} category="actions" fallback={showPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
                                     </button>
                                 </div>
-                                {/* ⭐ INDICATIONS MOT DE PASSE FORT */}
+                                {/* INDICATIONS MOT DE PASSE FORT */}
                                 <div style={{ 
                                     marginTop: '8px', 
                                     padding: '8px 12px', 
@@ -632,7 +622,7 @@ const Employees = () => {
                         </div>
                     </div>
 
-                    {/* ⭐ Sélecteur d'établissements (visible uniquement si plan Enterprise) */}
+                    {/* Sélecteur d'établissements (visible uniquement si plan Enterprise) */}
                     {establishments.length > 0 && (
                         <div className="form-group">
                             <label className="form-label">{t('establishments_access')}</label>

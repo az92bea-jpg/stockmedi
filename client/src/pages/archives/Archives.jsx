@@ -1,7 +1,7 @@
 /**
  * PAGE ARCHIVES - Consultation des historiques
- * ⭐ Support multi-devises dynamique
- * ⭐ Traductions FR/EN complètes
+ * Support multi-devises dynamique
+ * Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -11,6 +11,8 @@ import Alert from '../../components/common/Alert';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import api from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
+import Icon from '../../components/ui/Icon';
+
 
 const Archives = () => {
     const { t } = useLanguage();
@@ -116,7 +118,10 @@ const Archives = () => {
                 marginBottom: 'var(--spacing-6)'
             }}>
                 <div>
-                    <h2>📋 {t('dashboard_archives')}</h2>
+                    <h2>
+                        <Icon name="archives" category="nav" fallback="📋" style={{ width: '24px', height: '24px', marginRight: '8px' }} />
+                        {t('dashboard_archives')}
+                    </h2>
                     <p style={{ color: 'var(--gray-500)' }}>
                         {t('archives_subtitle')}
                     </p>
@@ -209,7 +214,7 @@ const Archives = () => {
                                                     style={{ color: 'var(--danger)' }}
                                                     title={t('delete_permanently')}
                                                 >
-                                                    🗑️
+                                                    <Icon name="delete" category="actions" fallback="🗑️" style={{ width: '16px', height: '16px' }} />
                                                 </button>
                                             </td>
                                         </tr>

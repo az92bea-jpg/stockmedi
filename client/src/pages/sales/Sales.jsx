@@ -18,6 +18,8 @@ import EstablishmentSelector from '../../components/establishment/EstablishmentS
 import api from '../../services/api';
 import { authService } from '../../services/authService';
 import '../../styles/pages/Sales.css';
+import Icon from '../../components/ui/Icon';
+
 
 const Sales = () => {
     const { t } = useLanguage();
@@ -303,8 +305,18 @@ const Sales = () => {
                     <h2>{t('sales_title')}</h2>
                     <p style={{ color: 'var(--gray-500)' }}>{t('sales_subtitle')}</p>
                 </div>
-                <button className="btn btn-secondary" onClick={() => setShowHistory(!showHistory)}>
-                    {showHistory ? `← ${t('back_to_pos')}` : `📋 ${t('history')}`}
+                <button className="btn btn-secondary" onClick={() => setShowHistory(!showHistory)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {showHistory ? (
+                        <>
+                            <Icon name="back" category="actions" fallback="←" style={{ width: '14px', height: '14px' }} />
+                            {t('back_to_pos')}
+                        </>
+                    ) : (
+                        <>
+                            <Icon name="history" category="nav" fallback="📋" style={{ width: '14px', height: '14px' }} />
+                            {t('history')}
+                        </>
+                    )}
                 </button>
             </div>
 
@@ -327,8 +339,9 @@ const Sales = () => {
                         )}
 
                         {establishments.length === 0 && user?.role === 'owner' && (
-                            <div className="alert alert-info" style={{ marginBottom: 'var(--spacing-4)' }}>
-                                💡 {t('enterprise_plan_promo')} <Link to="/subscription">Enterprise</Link>.
+                            <div className="alert alert-info" style={{ marginBottom: 'var(--spacing-4)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Icon name="idea" category="actions" fallback="💡" style={{ width: '16px', height: '16px' }} />
+                                {t('enterprise_plan_promo')} <Link to="/subscription">Enterprise</Link>.
                             </div>
                         )}
 
@@ -377,8 +390,9 @@ const Sales = () => {
                                                 <div className="search-result-price">
                                                     {formatPrice(product.sellingPrice)} {currency}
                                                     {product.prescriptionRequired && (
-                                                        <div className="search-result-prescription">
-                                                            📋 {t('prescription_required')}
+                                                        <div className="search-result-prescription" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                            <Icon name="prescription" category="actions" fallback="📋" style={{ width: '12px', height: '12px' }} />
+                                                            {t('prescription_required')}
                                                         </div>
                                                     )}
                                                 </div>

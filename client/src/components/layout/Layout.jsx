@@ -58,7 +58,7 @@ const Layout = () => {
             }} />*/}
             <div style={{ 
                 borderTop: '1px dashed #D1D5DB',
-                marginTop: '300px',
+                marginTop: '600px',
                 marginBottom: '18px',
                 marginLeft: '24px',
                 marginRight: '24px'

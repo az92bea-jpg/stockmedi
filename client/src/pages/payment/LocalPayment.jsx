@@ -1,7 +1,7 @@
 /**
  * PAGE PAIEMENT LOCAL / MOBILE MONEY
  * Formulaire de demande de paiement pour les pays non supportés par Stripe
- * ⭐ Traductions FR/EN complètes
+ * Traductions FR/EN complètes
  */
 
 import React, { useState } from 'react';
@@ -163,15 +163,6 @@ const LocalPayment = () => {
                 boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
                 padding: '32px'
             }}>
-                {/* <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                    <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>
-                        <Icon name="pill" category="nav" fallback="💊" style={{ width: '48px', height: '48px' }} />
-                    </div>
-                    <h1 style={{ color: '#0F6B3A', marginBottom: '8px' }}>StockMedi</h1>
-                    <p style={{ color: '#6B7280', fontSize: '0.875rem' }}>
-                        {t('local_payment_title')}
-                    </p>
-                </div> */}
 
                 <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                     <div style={{ marginBottom: '8px' }}>

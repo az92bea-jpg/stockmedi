@@ -1,8 +1,8 @@
 /**
  * PAGE DEVIS - Liste des devis
  * Accessible à tous les plans
- * ⭐ Support multi-devises dynamique
- * ⭐ Traductions FR/EN complètes
+ * Support multi-devises dynamique
+ * Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -114,18 +114,18 @@ const Quotes = () => {
         const isExpired = new Date(quote.validUntil) < new Date();
         
         if (quote.status === 'converted') {
-            return <span className="badge-success">✅ {t('quote_status_converted')}</span>;
+            return <span className="badge-success"><Icon name="success" category="status" fallback="✅" style={{ width: '12px', height: '12px', marginRight: '4px' }} />{t('quote_status_converted')}</span>;
         }
         if (quote.status === 'cancelled') {
-            return <span className="badge-danger">❌ {t('quote_status_cancelled')}</span>;
+            return <span className="badge-danger"><Icon name="error" category="status" fallback="❌" style={{ width: '12px', height: '12px', marginRight: '4px' }} />{t('quote_status_cancelled')}</span>;
         }
         if (isExpired) {
-            return <span className="badge-warning">⏰ {t('quote_status_expired')}</span>;
+            return <span className="badge-warning"><Icon name="clock" category="status" fallback="⏰" style={{ width: '12px', height: '12px', marginRight: '4px' }} />{t('quote_status_expired')}</span>;
         }
         if (quote.status === 'sent') {
-            return <span className="badge-info">📤 {t('quote_status_sent')}</span>;
+            return <span className="badge-info"><Icon name="send" category="actions" fallback="📤" style={{ width: '12px', height: '12px', marginRight: '4px' }} />{t('quote_status_sent')}</span>;
         }
-        return <span className="badge-secondary">📝 {t('quote_status_draft')}</span>;
+        return <span className="badge-secondary"><Icon name="edit" category="actions" fallback="📝" style={{ width: '12px', height: '12px', marginRight: '4px' }} />{t('quote_status_draft')}</span>;
     };
 
     if (loading && quotes.length === 0) return <Loader />;
@@ -216,16 +216,16 @@ const Quotes = () => {
                                             <td>
                                                 <div style={{ display: 'flex', gap: '4px' }}>
                                                     <button className="btn btn-sm btn-outline" onClick={() => navigate(`/quotes/${quote._id}`)} title={t('view')}>
-                                                        👁️
+                                                        <Icon name="eye" category="actions" fallback="👁️" style={{ width: '16px', height: '16px' }} />
                                                     </button>
                                                     {quote.canBeConverted && (
                                                         <button className="btn btn-sm btn-success" onClick={() => handleConvertToSale(quote)} title={t('convert_to_sale')}>
-                                                            💰
+                                                            <Icon name="sales" category="nav" fallback="💰" style={{ width: '16px', height: '16px' }} />
                                                         </button>
                                                     )}
                                                     {quote.status !== 'converted' && (
                                                         <button className="btn btn-sm btn-outline" onClick={() => handleDeleteClick(quote)} style={{ color: 'var(--danger)' }} title={t('delete')}>
-                                                            🗑️
+                                                            <Icon name="delete" category="actions" fallback="🗑️" style={{ width: '16px', height: '16px' }} />
                                                         </button>
                                                     )}
                                                 </div>
