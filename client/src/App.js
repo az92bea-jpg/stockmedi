@@ -1,6 +1,6 @@
 /**
  * APPLICATION PRINCIPALE - StockMedi
- * ⭐ Support PWA - Bandeau de mise à jour automatique
+ * Support PWA - Bandeau de mise à jour automatique
  */
 
 import React, { useState, useEffect } from 'react';
@@ -31,6 +31,7 @@ import Subscription from './pages/settings/Subscription';
 import Archives from './pages/archives/Archives';
 import Establishments from './pages/settings/Establishments';
 import LocalPayment from './pages/payment/LocalPayment';
+import PatientRecords from './pages/patients/PatientRecords';
 
 // Pages Admin
 import AdminDashboard from './components/admin/AdminDashboard';
@@ -88,12 +89,12 @@ const OwnerRoute = ({ children }) => {
 // ==================== APPLICATION ====================
 
 function App() {
-    // ⭐ États pour la mise à jour PWA
+    // États pour la mise à jour PWA
     const [updateAvailable, setUpdateAvailable] = useState(false);
     const [updateRegistration, setUpdateRegistration] = useState(null);
 
     useEffect(() => {
-        // ⭐ Écouter l'événement de mise à jour PWA
+        // Écouter l'événement de mise à jour PWA
         const handleUpdateAvailable = (event) => {
             console.log('🆕 [App] Mise à jour PWA détectée');
             setUpdateAvailable(true);
@@ -109,7 +110,7 @@ function App() {
 
     const handleUpdate = () => {
         if (updateRegistration && updateRegistration.waiting) {
-            // ⭐ Envoyer SKIP_WAITING au service worker en attente
+            // Envoyer SKIP_WAITING au service worker en attente
             updateRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
             setUpdateAvailable(false);
         } else {
@@ -136,7 +137,7 @@ function App() {
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/contact" element={<Contact />} />
                     
-                    {/* ⭐ Route de paiement local (accessible sans Layout) */}
+                    {/* Route de paiement local (accessible sans Layout) */}
                     <Route path="/local-payment" element={
                         <ProtectedRoute>
                             <LocalPayment />
@@ -158,6 +159,7 @@ function App() {
                         <Route path="quotes" element={<Quotes />} />
                         <Route path="quotes/new" element={<NewQuote />} />
                         <Route path="quotes/:id" element={<QuoteDetail />} />
+                        <Route path="patients" element={<PatientRecords />} />
                         
                         {/* Routes réservées au propriétaire */}
                         <Route path="employees" element={
@@ -209,10 +211,10 @@ function App() {
                 </Routes>
             </Router>
             
-            {/* ⭐ Composants PWA */}
+            {/* Composants PWA */}
             <InstallPrompt />
             
-            {/* ⭐ Bandeau de mise à jour PWA */}
+            {/* Bandeau de mise à jour PWA */}
             {updateAvailable && (
                 <UpdateBanner 
                     onUpdate={handleUpdate} 

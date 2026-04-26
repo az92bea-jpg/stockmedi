@@ -216,6 +216,74 @@ exports.cancelSubscription = async (req, res) => {
 };
 
 /**
+ * @desc    Abonnement test dev à 1€ (super-admin uniquement)
+ * @route   POST /api/subscription/dev-subscribe
+ * @access  Super-admin only
+ */
+exports.devSubscribe = async (req, res) => {
+    try {
+        const { plan } = req.body;
+        const DEV_EMAIL = 'azbea.lomagui@gmail.com';
+        
+        // Vérifier que c'est bien toi
+        if (req.user.email !== DEV_EMAIL && req.user.role !== 'super-admin') {
+            return res.status(403).json({
+                success: false,
+                message: 'Accès refusé'
+            });
+        }
+        
+        if (!PLANS[plan] || plan === 'trial') {
+            return res.status(400).json({
+                success: false,
+                message: 'Plan invalide'
+            });
+        }
+        
+        // Créer une session Stripe Checkout à 1€
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'subscription',
+            line_items: [{
+                price_data: {
+                    currency: 'eur',
+                    product_data: {
+                        name: `[TEST DEV] Plan ${PLANS[plan].name}`,
+                        description: 'Abonnement test développeur - 1€'
+                    },
+                    unit_amount: 100, // 1€ en centimes
+                    recurring: {
+                        interval: 'month'
+                    }
+                },
+                quantity: 1
+            }],
+            metadata: {
+                companyId: req.user.companyId.toString(),
+                plan: plan,
+                isDevTest: 'true'
+            },
+            success_url: `${process.env.FRONTEND_URL}/subscription?dev_success=true`,
+            cancel_url: `${process.env.FRONTEND_URL}/subscription?dev_cancelled=true`
+        });
+        
+        res.json({
+            success: true,
+            url: session.url
+        });
+    } catch (error) {
+        console.error('❌ Erreur dev-subscribe:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors de la création de la session test'
+        });
+    }
+};
+
+
+/**
  * @desc    Vérifier les limites (middleware)
  */
 exports.checkLimits = (type) => {

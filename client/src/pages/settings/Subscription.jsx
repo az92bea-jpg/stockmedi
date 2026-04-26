@@ -74,9 +74,11 @@ const Subscription = () => {
         setError('');
         
         try {
-            const response = await api.post('/payment/create-checkout-session', {
-                plan: planId
-            });
+            const endpoint = devMode 
+                ? '/subscription/dev-subscribe' 
+                : '/payment/create-checkout-session';
+            
+            const response = await api.post(endpoint, { plan: planId });
             
             if (response.success && response.url) {
                 window.location.href = response.url;
@@ -90,6 +92,12 @@ const Subscription = () => {
             setLoadingPayment(false);
         }
     };
+
+
+    const DEV_EMAIL = 'azbea.lomagui@gmail.com';
+    const [devMode, setDevMode] = useState(false);
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const isDev = user?.email === DEV_EMAIL || user?.role === 'super-admin';
 
     // Rediriger vers le paiement local
     const handleLocalPayment = (planId) => {
@@ -150,6 +158,31 @@ const Subscription = () => {
                                 )}
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/*  MODE TEST DEV - Visible uniquement pour toi */}
+            {isDev && (
+                <div className="card" style={{ marginBottom: 'var(--spacing-4)', backgroundColor: '#FEF3C7', border: '1px dashed #F59E0B' }}>
+                    <div className="card-body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Icon name="warning" category="status" fallback="⚠️" style={{ width: '20px', height: '20px' }} />
+                            <div>
+                                <strong style={{ color: '#92400E' }}>Mode Test Développeur</strong>
+                                <p style={{ margin: 0, fontSize: '0.8rem', color: '#92400E' }}>
+                                    {devMode ? '🟢 Activé - Paiements à 1€' : '⚪ Inactif'}
+                                </p>
+                            </div>
+                        </div>
+                        <button 
+                            className={devMode ? 'btn btn-danger btn-sm' : 'btn btn-warning btn-sm'}
+                            onClick={() => setDevMode(!devMode)}
+                            style={{ backgroundColor: devMode ? 'var(--danger)' : '#F59E0B', color: 'white' }}
+                        >
+                            <Icon name={devMode ? 'error' : 'success'} category="status" fallback={devMode ? '❌' : '✅'} style={{ width: '14px', height: '14px', marginRight: '4px' }} />
+                            {devMode ? 'Désactiver' : 'Activer Test 1€'}
+                        </button>
                     </div>
                 </div>
             )}

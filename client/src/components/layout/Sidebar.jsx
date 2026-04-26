@@ -47,6 +47,16 @@ const Sidebar = ({ isOpen, onClose }) => {
         { path: '/reports', name: t('nav_reports'), iconName: 'reports', fallback: '📄' }
     ];
 
+    // Ajouter Patients (plan Enterprise uniquement)
+    if (subscription?.plan === 'enterprise') {
+        navItems.push({ 
+            path: '/patients', 
+            name: t('nav_patients') || 'Patients', 
+            iconName: 'patients', 
+            fallback: '🩺' 
+        });
+    }
+
     // Ajouter Employés uniquement si owner
     if (user?.role === 'owner') {
         navItems.push({ 

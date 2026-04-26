@@ -79,6 +79,9 @@ const establishmentRoutes = require('./routes/establishmentRoutes');
 const quoteRoutes = require('./routes/quoteRoutes');
 const userRoutes = require('./routes/userRoutes');
 const cronRoutes = require('./routes/cronRoutes');
+const patientRecordRoutes = require('./routes/patientRecordRoutes');
+
+
 
 // Import du contrôleur pour le nettoyage automatique
 const { cleanupExpiredArchives } = require('./controllers/archiveController');
@@ -134,7 +137,10 @@ app.use('/api/admin/logs', logsRoutes);
 app.use('/api/establishments', establishmentRoutes);
 app.use('/api/quotes', quoteRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/patients', patientRecordRoutes);
 app.use('/api/cron', cronRoutes);
+
+
 
 // ========== NETTOYAGE AUTOMATIQUE DES ARCHIVES (CRON) ==========
 cron.schedule('0 2 * * *', async () => {
