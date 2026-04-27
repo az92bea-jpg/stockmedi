@@ -1,6 +1,6 @@
 /**
  * PAGE MOT DE PASSE OUBLIÉ - Demande de réinitialisation
- * ⭐ Traductions FR/EN complètes
+ * Traductions FR/EN complètes
  */
 
 import React, { useState } from 'react';
@@ -9,6 +9,8 @@ import api from '../../services/api';
 import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import { useLanguage } from '../../context/LanguageContext';
+import Icon from '../../components/ui/Icon';
+
 
 const ForgotPassword = () => {
     const { t } = useLanguage();
@@ -63,8 +65,9 @@ const ForgotPassword = () => {
                 animation: 'fadeIn var(--transition-normal)'
             }}>
                 <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-6)' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-2)' }}>💊</div>
-                    <h1 style={{ color: 'var(--primary-500)', marginBottom: 'var(--spacing-2)' }}>StockMedi</h1>
+                    <div style={{ marginBottom: 'var(--spacing-2)' }}>
+                        <Icon name="logo" category="nav" fallback="💊 StockMedi" style={{ width: 'auto', height: '60px' }} />
+                    </div>
                     <p style={{ color: 'var(--gray-500)', fontSize: '0.875rem' }}>
                         {t('reset_password_title')}
                     </p>

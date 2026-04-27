@@ -265,10 +265,10 @@ const Subscription = () => {
                                     else if (feature === 'reports_basic') featureText = t('reports_basic');
                                     else if (feature === 'reports_advanced') featureText = t('reports_advanced');
                                     else if (feature === 'pdf_exports') featureText = t('pdf_exports');
-                                    else if (feature === 'employees') featureText = t('employees');
+                                    else if (feature === 'employees_management') featureText = t('employees_management');
                                     else if (feature === 'advanced_stats') featureText = t('advanced_stats');
                                     else if (feature === 'multiple_locations') featureText = t('multiple_locations');
-                                    else if (feature === 'api_access') featureText = t('api_access');
+                                    else if (feature === 'manage_patients') featureText = t('manage_patients');                       // 'api_access'
                                     else if (feature === 'priority_support') featureText = t('priority_support');
                                     else if (feature === 'quotes') featureText = t('quotes_feature');
                                     else if (feature === 'receipt') featureText = t('receipt_feature');

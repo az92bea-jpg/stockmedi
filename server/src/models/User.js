@@ -60,11 +60,12 @@ const UserSchema = new mongoose.Schema({
             'view_reports',
             'manage_employees',
             'manage_establishments',
+            'manage_patients',
             'manage_settings'
         ],
         default: [] 
     },
-    // ⭐ Établissements auxquels l'employé a accès (plan Enterprise uniquement)
+    // Établissements auxquels l'employé a accès (plan Enterprise uniquement)
     establishments: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Establishment'
@@ -82,7 +83,7 @@ const UserSchema = new mongoose.Schema({
         type: Date, 
         default: null 
     },
-    // ⭐ CHAMPS RGPD (DOIVENT ÊTRE DANS LE SCHEMA)
+    // CHAMPS RGPD (DOIVENT ÊTRE DANS LE SCHEMA)
     deletionRequestedAt: {
         type: Date,
         default: null
@@ -158,7 +159,7 @@ UserSchema.methods.isAdmin = function() {
     return this.role === 'owner' || this.role === 'super-admin';
 };
 
-/*// ⭐ Middleware pour mettre à jour lastActivity
+/*// Middleware pour mettre à jour lastActivity
 UserSchema.pre('save', function(next) {
     this.lastActivity = new Date();
     next();

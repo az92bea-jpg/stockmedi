@@ -59,7 +59,8 @@ const getPermissionLabel = (permission, t) => {
         manage_establishments: { icon: 'establishment', category: 'nav', fallback: '🏢', label: t('manage_establishments') },
         view_dashboard: { icon: 'dashboard', category: 'nav', fallback: '📊', label: t('view_dashboard') },
         view_products: { icon: 'eye', category: 'actions', fallback: '👁️', label: t('view_products') },
-        cancel_sales: { icon: 'delete', category: 'actions', fallback: '❌', label: t('cancel_sales') }
+        cancel_sales: { icon: 'delete', category: 'actions', fallback: '❌', label: t('cancel_sales') },
+        manage_patients: { icon: 'patients', category: 'nav', fallback: '🩺', label: t('manage_patients') || 'Patients' },
     };
     const item = labels[permission];
     if (!item) return permission;
@@ -618,6 +619,11 @@ const Employees = () => {
                                 <input type="checkbox" checked={formData.permissions.includes('manage_settings')} onChange={() => handlePermissionToggle('manage_settings')} />
                                 <Icon name="settings" category="nav" fallback="⚙️" style={{ width: '14px', height: '14px', marginRight: '4px' }} />
                                 {t('manage_settings')}
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+                                <input type="checkbox" checked={formData.permissions.includes('manage_patients')} onChange={() => handlePermissionToggle('manage_patients')} />
+                                <Icon name="patients" category="nav" fallback="🩺" style={{ width: '14px', height: '14px', marginRight: '4px' }} />
+                                {t('manage_patients') || 'Gérer les patients'}
                             </label>
                         </div>
                     </div>

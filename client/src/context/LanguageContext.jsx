@@ -564,6 +564,7 @@ const translations = {
         products_migrated_success: 'Produits migrés avec succès',
         error_migrating_products: 'Erreur lors de la migration des produits',
         restock_transfer_etc: 'Réapprovisionnement, mutation, etc.',
+        manage_patients: 'Gestion et suivi des patients',
 
         // ---------- TRANSFERT DE STOCK ----------
         transfer: 'Transférer',
@@ -1345,6 +1346,8 @@ const translations = {
         products_migrated_success: 'Products migrated successfully',
         error_migrating_products: 'Error migrating products',
         restock_transfer_etc: 'Restock, transfer, etc.',
+        manage_patients: 'Patients management + monitoring',
+    
 
         // ---------- STOCK TRANSFER ----------
         transfer: 'Transfer',

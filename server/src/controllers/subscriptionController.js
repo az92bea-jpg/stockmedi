@@ -43,7 +43,7 @@ const PLANS = {
         duration: 30,
         maxProducts: 999999, //10000,
         maxEmployees: 999, //100,
-        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees_management', 'advanced_stats', 'multiple_locations', 'api_access', 'priority_support', 'quotes', 'receipt']
+        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees_management', 'advanced_stats', 'multiple_locations', 'manage_patients', 'priority_support', 'quotes', 'receipt'] // 'api_access'
     }
 };
 
@@ -69,7 +69,7 @@ exports.getSubscription = async (req, res) => {
 
         const planDetails = subscription.getPlanDetails();
 
-        // ⭐ Envoyer les prix en centimes d'euros pour le frontend
+        // Envoyer les prix en centimes d'euros pour le frontend
         res.json({
             success: true,
             subscription: {
@@ -88,7 +88,7 @@ exports.getSubscription = async (req, res) => {
             plans: Object.keys(PLANS).map(key => ({
                 id: key,
                 name: PLANS[key].name,
-                price: PLANS[key].price, // ⭐ Déjà en centimes d'euros
+                price: PLANS[key].price, // Déjà en centimes d'euros
                 duration: PLANS[key].duration,
                 maxProducts: PLANS[key].maxProducts,
                 maxEmployees: PLANS[key].maxEmployees,
@@ -156,7 +156,7 @@ exports.changePlan = async (req, res) => {
         company.subscription.endDate = subscription.endDate;
         await company.save();
 
-        /* // ⭐ NOTIFICATION EMAIL: Changement d'abonnement (système)
+        /* // NOTIFICATION EMAIL: Changement d'abonnement (système)
         //await notifySubscriptionChanged({
         //    companyId: company._id,
         //    newPlan: plan,

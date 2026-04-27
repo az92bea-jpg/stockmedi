@@ -10,6 +10,7 @@ import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import Footer from '../../components/layout/Footer';
 import { useLanguage } from '../../context/LanguageContext';
+import Icon from '../../components/ui/Icon';
 
 const Login = () => {
     const { t } = useLanguage();
@@ -142,7 +143,8 @@ const Login = () => {
                                         color: '#6B7280'
                                     }}
                                 >
-                                    {showPassword ? '🙈' : '👁️'}
+                                    <Icon name={showPassword ? 'eye-off' : 'eye'} category="actions" fallback={showPassword ? '🙈' : '👁️'} style={{ width: '20px', height: '20px' }} />
+                                    {/* {showPassword ? '🙈' : '👁️'} */}
                                 </button>
                             </div>
                         </div>

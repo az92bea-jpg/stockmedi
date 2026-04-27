@@ -1,5 +1,6 @@
 /**
  * ROUTES DOSSIER PHARMACEUTIQUE PATIENT (DPP)
+ * Réservé au plan Enterprise
  */
 
 const express = require('express');
@@ -14,10 +15,22 @@ const {
     getArchivedRecords,
     exportPatientRecord
 } = require('../controllers/patientRecordController');
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 
 // Toutes les routes sont protégées
 router.use(protect);
+router.use(authorize('owner', 'super-admin'));
+
+// Vérifier le plan Enterprise
+router.use(async (req, res, next) => {
+    if (req.user.role === 'super-admin') return next();
+    const Subscription = require('../models/Subscription');
+    const sub = await Subscription.findOne({ companyId: req.user.companyId });
+    if (sub?.plan !== 'enterprise') {
+        return res.status(403).json({ success: false, message: 'Fonctionnalité réservée au plan Enterprise' });
+    }
+    next();
+});
 
 // CRUD
 router.post('/', createPatientRecord);

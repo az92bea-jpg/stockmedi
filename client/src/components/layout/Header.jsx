@@ -143,14 +143,17 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
                         <Icon name="sales" category="nav" fallback="💰" style={{ width: '1rem', height: '1rem' }} />
                         {t('nav_sales')}
                     </a>
+                    {/* 
                     <a href="/reports" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Icon name="reports" category="nav" fallback="📄" style={{ width: '1rem', height: '1rem' }} />
                         {t('nav_reports')}
                     </a>
+                    */}
                     <a href="/employees" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Icon name="employees" category="nav" fallback="👥" style={{ width: '1rem', height: '1rem' }} />
                         {t('nav_employees')}
                     </a>
+                    {/*
                     <a href="/settings" style={{ color: '#4B5563', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Icon name="settings" category="nav" fallback="⚙️" style={{ width: '1rem', height: '1rem' }} />
                         {t('nav_settings')}
@@ -159,6 +162,7 @@ const Header = ({ onMenuClick, isSidebarOpen }) => {
                         <Icon name="subscription" category="nav" fallback="💎" style={{ width: '1rem', height: '1rem' }} />
                         {t('nav_subscription')}
                     </a>
+                    */}
                     {user?.role === 'super-admin' && (
                         <a href="/admin" style={{ color: '#EF4444', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <Icon name="settings" category="nav" fallback="👑" style={{ width: '1rem', height: '1rem' }} />

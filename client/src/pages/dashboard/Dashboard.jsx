@@ -149,34 +149,6 @@ const Dashboard = () => {
         }
     }, [isOwner, isEmployee, user?._id, t]);
 
-
-
-    /*useEffect(() => {
-        const init = async () => {
-            await loadCompanySettings();
-            await loadSubscription();
-            
-            if (isEmployee) {
-                checkAndResetEmployeeDashboard();
-            }
-            
-            if (isOwner) {
-                await loadEstablishments();
-            }
-            
-            await fetchDashboardData('');
-        };
-        
-        init();
-    }, [
-        isOwner, 
-        isEmployee, 
-        loadCompanySettings, 
-        loadSubscription, 
-        loadEstablishments, 
-        fetchDashboardData, 
-        checkAndResetEmployeeDashboard
-    ]);*/
     const hasInitialized = useRef(false);
 
         useEffect(() => {
@@ -254,8 +226,9 @@ const Dashboard = () => {
                 
                 {isOwner && (
                     <div style={{ display: 'flex', gap: 'var(--spacing-3)' }}>
-                        <Link to="/archives" className="btn btn-secondary">
-                            📋 {t('view_archives')}
+                        <Link to="/archives" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Icon name="archives" category="nav" fallback="📋" style={{ width: '16px', height: '16px' }} />
+                            {t('view_archives')}
                         </Link>
                         <button 
                             className="btn btn-warning" 
@@ -263,7 +236,12 @@ const Dashboard = () => {
                             disabled={archiving}
                             style={{ backgroundColor: '#F59E0B', color: 'white' }}
                         >
-                            {archiving ? <Loader size="sm" /> : `📦 ${t('archive_and_reset')}`}
+                            {archiving ? <Loader size="sm" /> : (
+                                <>
+                                    <Icon name="warning" category="status" fallback="📦" style={{ width: '16px', height: '16px', marginRight: '6px' }} />
+                                    {t('archive_and_reset')}
+                                </>
+)}
                         </button>
                     </div>
                 )}
@@ -414,7 +392,8 @@ const Dashboard = () => {
                     <div style={{ display: 'flex', gap: 'var(--spacing-3)', flexWrap: 'wrap' }}>
                         {isEmployee && canMakeSales && (
                             <Link to="/sales" className="btn btn-primary">
-                                💰 {t('new_sale')}
+                                <Icon name="money" category="status" fallback="💰" style={{ marginRight: '0.5rem' }} />
+                                {t('new_sale')}
                             </Link>
                         )}
                         
@@ -435,10 +414,14 @@ const Dashboard = () => {
                                     + {t('add_product')}
                                 </Link>
                                 <Link to="/sales" className="btn btn-primary">
-                                    💰 {t('new_sale')}
+
+                                    <Icon name="money" category="status" fallback="💰" style={{ marginRight: '0.5rem' }} />
+                                    {t('new_sale')}
                                 </Link>
                                 <Link to="/reports" className="btn btn-secondary">
-                                    📊 {t('export_report')}
+
+                                    <Icon name="report" category="status" fallback="📊" style={{ marginRight: '0.5rem' }} />
+                                    {t('export_report')}
                                 </Link>
                             </>
                         )}
