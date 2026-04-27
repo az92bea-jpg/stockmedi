@@ -77,8 +77,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         });
     }
 
-    // Ajouter Abonnement uniquement si owner
-    if (user?.role === 'owner') {
+    // Ajouter Abonnement uniquement si owner ou super-admin
+    if (user?.role === 'owner' || user?.role === 'super-admin') {
         navItems.push({ 
             path: '/subscription', 
             name: t('nav_subscription'), 
