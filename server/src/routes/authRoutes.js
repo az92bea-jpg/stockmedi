@@ -1,6 +1,6 @@
 /**
  * ROUTES D'AUTHENTIFICATION
- * ⭐ Sécurité renforcée : Rate Limiting + Validation
+ * ⭐ Sécurité renforcée : Rate Limiting + Validation + 2FA
  */
 
 const express = require('express');
@@ -11,7 +11,9 @@ const {
     registerOwner, 
     login, 
     getMe, 
-    addEmployee 
+    addEmployee,
+    send2FACode,
+    verify2FACode
 } = require('../controllers/authController');
 
 const { 
@@ -27,23 +29,19 @@ const { validateRegister } = require('../middleware/validators');
 
 // ==================== ROUTES PUBLIQUES ====================
 
-// Inscription avec validation du mot de passe fort
 router.post('/register', validateRegister, registerOwner);
-
-// Connexion avec rate limiting (anti force brute)
 router.post('/login', loginLimiter, login);
-
-// Mot de passe oublié
 router.post('/forgot-password', forgotPassword);
 router.get('/reset-password/:token', verifyResetToken);
 router.post('/reset-password', resetPassword);
 
 // ==================== ROUTES PRIVÉES ====================
 
-// Profil utilisateur connecté
 router.get('/me', protect, getMe);
-
-// Ajout d'employé (owner uniquement)
 router.post('/employee', protect, authorize('owner'), addEmployee);
+
+// 2FA
+router.post('/2fa/send', send2FACode);
+router.post('/2fa/verify', verify2FACode);
 
 module.exports = router;

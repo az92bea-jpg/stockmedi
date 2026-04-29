@@ -29,7 +29,11 @@ const Settings = () => {
     const [deleting, setDeleting] = useState(false);
     const [deletionRequested, setDeletionRequested] = useState(false);
     const [deletionDate, setDeletionDate] = useState(null);
-    
+    const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+    const [twoFADuration, setTwoFADuration] = useState(60);
+
+
+
     const [companySettings, setCompanySettings] = useState({
         company: {
             name: '',
@@ -103,6 +107,17 @@ const Settings = () => {
         fetchProfile();
     }, [fetchSettings, fetchProfile]);
 
+
+    useEffect(() => {
+    const load2FAConfig = async () => {
+        try {
+            const res = await api.get('/settings/2fa');
+            setTwoFAEnabled(res.twoFAEnabled || false);
+            setTwoFADuration(res.twoFADuration || 60);
+        } catch (err) {}
+    };
+    load2FAConfig();
+}, []);
     const handleCompanyChange = (e) => {
         const { name, value } = e.target;
         setCompanySettings({
@@ -792,6 +807,57 @@ const Settings = () => {
                         </div>
                     </div>
 
+                    {/* Section 2FA */}
+                    <div className="card" style={{ marginBottom: 'var(--spacing-6)' }}>
+                        <div className="card-header">
+                            <h3>🔐 Authentification à deux facteurs (2FA)</h3>
+                        </div>
+                        <div className="card-body">
+                            <p style={{ color: 'var(--gray-500)', marginBottom: 'var(--spacing-4)' }}>
+                                Ajoutez une couche de sécurité supplémentaire. Un code sera envoyé par email à chaque connexion depuis un nouvel appareil.
+                            </p>
+                            
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-4)', marginBottom: 'var(--spacing-3)' }}>
+                                <label style={{ fontWeight: 500 }}>Activer la 2FA :</label>
+                                <button 
+                                    className={twoFAEnabled ? 'btn btn-danger' : 'btn btn-primary'}
+                                    onClick={async () => {
+                                        try {
+                                            await api.put('/settings/2fa', { enabled: !twoFAEnabled });
+                                            setTwoFAEnabled(!twoFAEnabled);
+                                            setSuccess(twoFAEnabled ? '2FA désactivé' : '2FA activé');
+                                        } catch (err) {
+                                            setError('Erreur');
+                                        }
+                                    }}
+                                >
+                                    {twoFAEnabled ? 'Désactiver' : 'Activer'}
+                                </button>
+                            </div>
+
+                            {twoFAEnabled && (
+                                <div className="form-group">
+                                    <label className="form-label">Durée de mémorisation des appareils</label>
+                                    <select 
+                                        className="form-select"
+                                        value={twoFADuration}
+                                        onChange={(e) => {
+                                            setTwoFADuration(e.target.value);
+                                            api.put('/settings/2fa-duration', { duration: e.target.value });
+                                        }}
+                                        style={{ maxWidth: '200px' }}
+                                    >
+                                        <option value="30">30 jours</option>
+                                        <option value="60">60 jours</option>
+                                    </select>
+                                    <div className="form-hint">
+                                        Les utilisateurs n'auront pas à ressaisir le code sur le même appareil pendant cette durée.
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     {/* SECTION SUPPRESSION DE COMPTE - UNIQUEMENT POUR OWNER */}
                     {profile.role === 'owner' && (
                         <div className="card" style={{ borderColor: 'var(--danger)' }}>
@@ -891,6 +957,12 @@ const Settings = () => {
             </ConfirmModal>
         </div>
     );
+
+    
 };
+
+
+
+
 
 export default Settings;

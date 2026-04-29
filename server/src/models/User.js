@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const { encryptData, decryptData } = require('../services/encryptionService');
 
 function hashPassword(password) {
     return crypto.createHash('sha256').update(password).digest('hex');
@@ -65,7 +66,6 @@ const UserSchema = new mongoose.Schema({
         ],
         default: [] 
     },
-    // Établissements auxquels l'employé a accès (plan Enterprise uniquement)
     establishments: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Establishment'
@@ -83,7 +83,6 @@ const UserSchema = new mongoose.Schema({
         type: Date, 
         default: null 
     },
-    // CHAMPS RGPD (DOIVENT ÊTRE DANS LE SCHEMA)
     deletionRequestedAt: {
         type: Date,
         default: null
@@ -91,23 +90,35 @@ const UserSchema = new mongoose.Schema({
     lastActivity: {
         type: Date,
         default: Date.now
-    }
+    },
+    // ⭐ DOUBLE AUTHENTIFICATION (2FA)
+    twoFactorEnabled: {
+        type: Boolean,
+        default: false
+    },
+    twoFactorCode: {
+        type: String,
+        default: null
+    },
+    twoFactorCodeExpires: {
+        type: Date,
+        default: null
+    },
+    twoFactorVerifiedDevices: [{
+        deviceId: String,
+        verifiedAt: Date,
+        expiresAt: Date
+    }]
 }, { 
     timestamps: true 
 });
 
 // ==================== MÉTHODES ====================
 
-/**
- * Comparer le mot de passe fourni avec le hash stocké
- */
 UserSchema.methods.matchPassword = function(enteredPassword) {
     return hashPassword(enteredPassword) === this.password;
 };
 
-/**
- * Vérifier si l'utilisateur a une permission spécifique
- */
 UserSchema.methods.hasPermission = function(permission) {
     if (this.role === 'owner' || this.role === 'super-admin') {
         return true;
@@ -115,54 +126,47 @@ UserSchema.methods.hasPermission = function(permission) {
     return this.permissions && this.permissions.includes(permission);
 };
 
-/**
- * Vérifier si l'utilisateur a accès à un établissement
- */
 UserSchema.methods.hasAccessToEstablishment = function(establishmentId) {
-    // Owner et super-admin ont accès à tout
     if (this.role === 'owner' || this.role === 'super-admin') {
         return true;
     }
-    
-    // Si l'employé n'a pas de restriction, accès à tout
     if (!this.establishments || this.establishments.length === 0) {
         return true;
     }
-    
-    // Vérifier si l'établissement est dans la liste
     return this.establishments.some(id => id.toString() === establishmentId.toString());
 };
 
-/**
- * Récupérer les IDs des établissements accessibles
- * @returns {Array|null} - null = tous les établissements, [] = aucun, [id1, id2] = liste
- */
 UserSchema.methods.getAccessibleEstablishmentIds = function() {
-    // Owner et super-admin : tous les établissements
     if (this.role === 'owner' || this.role === 'super-admin') {
-        return null; // null signifie "tous"
+        return null;
     }
-    
-    // Employé avec restrictions : retourner la liste
     if (this.establishments && this.establishments.length > 0) {
         return this.establishments;
     }
-    
-    // Employé sans restriction : tous les établissements
     return null;
 };
 
-/**
- * Vérifier si l'utilisateur est admin (owner ou super-admin)
- */
 UserSchema.methods.isAdmin = function() {
     return this.role === 'owner' || this.role === 'super-admin';
 };
 
-/*// Middleware pour mettre à jour lastActivity
+/*
 UserSchema.pre('save', function(next) {
-    this.lastActivity = new Date();
+    if (this.isModified('email')) {
+        this.email = encryptData(this.email);
+    }
+    if (this.isModified('phone')) {
+        this.phone = encryptData(this.phone);
+    }
     next();
-});*/
+});
+*/
+
+UserSchema.methods.decryptSensitiveData = function() {
+    const user = this.toObject();
+    if (user.email) user.email = decryptData(user.email);
+    if (user.phone) user.phone = decryptData(user.phone);
+    return user;
+};
 
 module.exports = mongoose.model('User', UserSchema);

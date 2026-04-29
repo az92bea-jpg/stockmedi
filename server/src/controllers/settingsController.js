@@ -224,3 +224,49 @@ exports.updateProfile = async (req, res) => {
         });
     }
 };
+
+/**
+ * Activer/Désactiver la 2FA pour l'entreprise
+ * @route PUT /api/settings/2fa
+ */
+exports.toggle2FA = async (req, res) => {
+    try {
+        const { enabled } = req.body;
+        const company = await Company.findById(req.user.companyId);
+        if (!company) return res.status(404).json({ success: false, message: 'Entreprise non trouvée' });
+
+        company.twoFactorEnabled = enabled;
+        await company.save();
+
+        res.json({ success: true, message: enabled ? '2FA activé' : '2FA désactivé' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Récupérer la config 2FA
+ * @route GET /api/settings/2fa
+ */
+exports.get2FAConfig = async (req, res) => {
+    try {
+        const company = await Company.findById(req.user.companyId);
+        res.json({ success: true, twoFAEnabled: company?.twoFactorEnabled || false, twoFADuration: company?.twoFactorDuration || 60 });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+exports.toggle2FADuration = async (req, res) => {
+    try {
+        const { duration } = req.body;
+        const company = await Company.findById(req.user.companyId);
+        if (!company) return res.status(404).json({ success: false, message: 'Entreprise non trouvée' });
+
+        company.twoFactorDuration = duration;
+        await company.save();
+
+        res.json({ success: true, message: 'Durée 2FA mise à jour' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

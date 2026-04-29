@@ -537,10 +537,10 @@ const Sales = () => {
                                         value={paymentMethod} 
                                         onChange={(e) => setPaymentMethod(e.target.value)}
                                     >
-                                        <option value="cash">💰 {t('cash')}</option>
-                                        <option value="card">💳 {t('card')}</option>
-                                        <option value="mobile_money">📱 {t('mobile_money')}</option>
-                                        <option value="mixed">🔀 {t('mixed')}</option>
+                                        <option value="cash">{t('cash')}</option>
+                                        <option value="card">{t('card')}</option>
+                                        <option value="mobile_money">{t('mobile_money')}</option>
+                                        <option value="mixed">{t('mixed')}</option>
                                     </select>
                                 </div>
 

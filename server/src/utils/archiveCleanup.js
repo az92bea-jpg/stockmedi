@@ -5,8 +5,10 @@
  * 
  * Commande à ajouter dans Render cron-job.org ou via node-cron :
  * node server/src/utils/archiveCleanup.js
- */
+ *  fait déjà le même travail directement dans l'application.il fait doublon avec ce qui est déjà dans server.js
+ * /
 
+/*
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
@@ -28,4 +30,4 @@ async function runCleanup() {
     }
 }
 
-runCleanup();
+runCleanup();*/

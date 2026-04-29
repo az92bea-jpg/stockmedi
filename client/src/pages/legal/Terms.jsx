@@ -205,11 +205,11 @@ const Terms = () => {
                         <div style={{ backgroundColor: '#F3F4F6', padding: '16px', borderRadius: '8px', marginTop: '12px' }}>
                             <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Icon name="email" category="status" fallback="📧" style={{ width: '16px', height: '16px' }} />
-                                <strong>Email</strong> : <a href="mailto:azbea.lomagui@gmail.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a>
+                                <strong>Email</strong> : <a href="mailto:stockmedi.contact@gmail.com" style={{ color: '#0F6B3A' }}>stockmedi.contact@gmail.com</a>
                             </p>
                             <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Icon name="mobile" category="social" fallback="📞" style={{ width: '16px', height: '16px' }} />
-                                <strong>{t('phone') || 'Téléphone'}</strong> : +224 600 000 000
+                                <strong>{t('phone') || 'Téléphone'}</strong> : +224 623 679 567
                             </p>
                             <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Icon name="location" category="status" fallback="📍" style={{ width: '16px', height: '16px' }} />

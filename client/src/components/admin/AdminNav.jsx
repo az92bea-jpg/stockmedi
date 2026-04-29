@@ -25,53 +25,34 @@ const AdminNav = () => {
             flexWrap: 'wrap',
             alignItems: 'center'
         }}>
-            <NavLink 
-                to="/admin" 
-                className={({ isActive }) => isActive ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'}
-                end
-            >
-                <Icon name="dashboard" category="nav" fallback="👑" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
+            <NavLink to="/admin" className={({ isActive }) => isActive ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'} end>
+                <Icon name="dashboard" category="nav" fallback="📊" style={{ marginRight: '6px', width: '14px', height: '14px' }} />
                 Dashboard Admin
             </NavLink>
-            <NavLink 
-                to="/admin/companies" 
-                className={({ isActive }) => isActive ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'}
-            >
-                <Icon name="settings" category="nav" fallback="🏢" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
+            <NavLink to="/admin/companies" className={({ isActive }) => isActive ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'}>
+                <Icon name="establishment" category="nav" fallback="🏢" style={{ marginRight: '6px', width: '14px', height: '14px' }} />
                 Entreprises
             </NavLink>
-            <NavLink 
-                to="/admin/users" 
-                className={({ isActive }) => isActive ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'}
-            >
-                <Icon name="employees" category="nav" fallback="👥" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
+            <NavLink to="/admin/users" className={({ isActive }) => isActive ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'}>
+                <Icon name="employees" category="nav" fallback="👥" style={{ marginRight: '6px', width: '14px', height: '14px' }} />
                 Utilisateurs
             </NavLink>
-            <NavLink 
-                to="/admin/logs" 
-                className={({ isActive }) => isActive ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'}
-            >
-                <Icon name="reports" category="nav" fallback="📋" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
+            <NavLink to="/admin/logs" className={({ isActive }) => isActive ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'}>
+                <Icon name="reports" category="nav" fallback="📋" style={{ marginRight: '6px', width: '14px', height: '14px' }} />
                 Logs
             </NavLink>
+            <NavLink to="/admin/security" className={({ isActive }) => isActive ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'}>
+                <Icon name="lock" category="actions" fallback="🔐" style={{ marginRight: '6px', width: '14px', height: '14px' }} />
+                Sécurité
+            </NavLink>
             
-            {/* ⭐ Lien vers le dashboard normal */}
-            <NavLink 
-                to="/dashboard" 
-                className="btn btn-sm btn-outline"
-                style={{ marginLeft: 'auto' }}
-            >
-                <Icon name="dashboard" category="nav" fallback="🏠" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
+            <NavLink to="/dashboard" className="btn btn-sm btn-outline" style={{ marginLeft: 'auto' }}>
+                <Icon name="dashboard" category="nav" fallback="🏠" style={{ marginRight: '6px', width: '14px', height: '14px' }} />
                 Dashboard
             </NavLink>
             
-            {/* ⭐ Bouton déconnexion */}
-            <button 
-                className="btn btn-sm btn-danger" 
-                onClick={handleLogout}
-                style={{ backgroundColor: '#EF4444', color: 'white', border: 'none' }}
-            >
-                <Icon name="logout" category="actions" fallback="🚪" style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
+            <button className="btn btn-sm btn-danger" onClick={handleLogout} style={{ backgroundColor: '#EF4444', color: 'white', border: 'none' }}>
+                <Icon name="logout" category="actions" fallback="🚪" style={{ marginRight: '6px', width: '14px', height: '14px' }} />
                 Déconnexion
             </button>
         </div>

@@ -1,10 +1,11 @@
 /**
  * CONTRÔLEUR DOSSIER PHARMACEUTIQUE PATIENT (DPP)
- * CRUD complet + Archivage + Export PDF/Excel
+ * CRUD complet + Archivage + Export + Audit Trail
  */
 
 const PatientRecord = require('../models/PatientRecord');
 const Counter = require('../models/Counter');
+const { auditLog } = require('../services/auditService');
 
 // ==================== CRUD ====================
 
@@ -27,7 +28,6 @@ exports.createPatientRecord = async (req, res) => {
             });
         }
 
-        // Générer le numéro de dossier unique
         const recordNumber = await Counter.getNextNumber('DPP', 'patientrecord');
 
         const record = await PatientRecord.create({
@@ -44,6 +44,18 @@ exports.createPatientRecord = async (req, res) => {
             pharmacistNotes: pharmacistNotes || '',
             companyId: req.user.companyId,
             createdBy: req.user.id
+        });
+
+        // ⭐ Audit trail
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'create',
+            documentType: 'patient',
+            documentId: record._id,
+            documentName: `${record.lastName} ${record.firstName}`,
+            description: `Dossier patient créé : ${record.recordNumber}`
         });
 
         res.status(201).json({
@@ -73,7 +85,6 @@ exports.getPatientRecords = async (req, res) => {
             isArchived: false 
         };
 
-        // Recherche par nom ou prénom
         if (search) {
             const regex = new RegExp(search, 'i');
             query.$or = [
@@ -167,7 +178,16 @@ exports.updatePatientRecord = async (req, res) => {
             });
         }
 
-        // Mettre à jour les champs
+        // Sauvegarder l'ancien état pour l'audit
+        const oldData = {
+            lastName: record.lastName,
+            firstName: record.firstName,
+            dateOfBirth: record.dateOfBirth,
+            phone: record.phone,
+            email: record.email,
+            address: record.address
+        };
+
         if (lastName) record.lastName = lastName;
         if (firstName) record.firstName = firstName;
         if (dateOfBirth !== undefined) record.dateOfBirth = dateOfBirth;
@@ -180,8 +200,20 @@ exports.updatePatientRecord = async (req, res) => {
         if (pharmacistNotes !== undefined) record.pharmacistNotes = pharmacistNotes;
         
         record.updatedBy = req.user.id;
-
         await record.save();
+
+        // ⭐ Audit trail
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'update',
+            documentType: 'patient',
+            documentId: record._id,
+            documentName: `${record.lastName} ${record.firstName}`,
+            description: `Dossier patient modifié : ${record.recordNumber}`,
+            changes: { avant: oldData, apres: req.body }
+        });
 
         res.json({
             success: true,
@@ -204,7 +236,7 @@ exports.updatePatientRecord = async (req, res) => {
  */
 exports.deletePatientRecord = async (req, res) => {
     try {
-        const record = await PatientRecord.findOneAndDelete({
+        const record = await PatientRecord.findOne({
             _id: req.params.id,
             companyId: req.user.companyId
         });
@@ -215,6 +247,20 @@ exports.deletePatientRecord = async (req, res) => {
                 message: 'Dossier patient non trouvé'
             });
         }
+
+        // ⭐ Audit trail avant suppression
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'delete',
+            documentType: 'patient',
+            documentId: record._id,
+            documentName: `${record.lastName} ${record.firstName}`,
+            description: `Dossier patient supprimé : ${record.recordNumber}`
+        });
+
+        await PatientRecord.findOneAndDelete({ _id: req.params.id });
 
         res.json({
             success: true,
@@ -231,11 +277,6 @@ exports.deletePatientRecord = async (req, res) => {
 
 // ==================== ARCHIVAGE ====================
 
-/**
- * @desc    Archiver un dossier patient
- * @route   PUT /api/patients/:id/archive
- * @access  Private
- */
 exports.archivePatientRecord = async (req, res) => {
     try {
         const record = await PatientRecord.findOne({
@@ -244,90 +285,58 @@ exports.archivePatientRecord = async (req, res) => {
         });
 
         if (!record) {
-            return res.status(404).json({
-                success: false,
-                message: 'Dossier patient non trouvé'
-            });
+            return res.status(404).json({ success: false, message: 'Dossier patient non trouvé' });
         }
 
         record.isArchived = true;
         record.archivedAt = new Date();
-        // Suppression automatique après 1 an
         record.archiveAutoDeleteAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
         await record.save();
 
-        res.json({
-            success: true,
-            message: 'Dossier patient archivé avec succès'
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'archive',
+            documentType: 'patient',
+            documentId: record._id,
+            documentName: `${record.lastName} ${record.firstName}`,
+            description: `Dossier patient archivé : ${record.recordNumber}`
         });
+
+        res.json({ success: true, message: 'Dossier patient archivé avec succès' });
     } catch (error) {
         console.error('❌ Erreur archivage dossier:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Erreur lors de l\'archivage du dossier'
-        });
+        res.status(500).json({ success: false, message: 'Erreur lors de l\'archivage du dossier' });
     }
 };
 
-/**
- * @desc    Récupérer les dossiers archivés
- * @route   GET /api/patients/archives
- * @access  Private
- */
 exports.getArchivedRecords = async (req, res) => {
     try {
-        const records = await PatientRecord.find({
-            companyId: req.user.companyId,
-            isArchived: true
-        })
+        const records = await PatientRecord.find({ companyId: req.user.companyId, isArchived: true })
             .sort({ archivedAt: -1 })
             .populate('createdBy', 'firstName lastName');
 
-        res.json({
-            success: true,
-            records
-        });
+        res.json({ success: true, records });
     } catch (error) {
         console.error('❌ Erreur récupération archives:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Erreur lors de la récupération des archives'
-        });
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des archives' });
     }
 };
 
-// ==================== EXPORT ====================
-
-/**
- * @desc    Exporter un dossier en JSON (pour PDF/Excel côté frontend)
- * @route   GET /api/patients/:id/export
- * @access  Private
- */
 exports.exportPatientRecord = async (req, res) => {
     try {
-        const record = await PatientRecord.findOne({
-            _id: req.params.id,
-            companyId: req.user.companyId
-        })
+        const record = await PatientRecord.findOne({ _id: req.params.id, companyId: req.user.companyId })
             .populate('createdBy', 'firstName lastName')
             .populate('updatedBy', 'firstName lastName');
 
         if (!record) {
-            return res.status(404).json({
-                success: false,
-                message: 'Dossier patient non trouvé'
-            });
+            return res.status(404).json({ success: false, message: 'Dossier patient non trouvé' });
         }
 
-        res.json({
-            success: true,
-            record
-        });
+        res.json({ success: true, record });
     } catch (error) {
         console.error('❌ Erreur export dossier:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Erreur lors de l\'export du dossier'
-        });
+        res.status(500).json({ success: false, message: 'Erreur lors de l\'export du dossier' });
     }
 };

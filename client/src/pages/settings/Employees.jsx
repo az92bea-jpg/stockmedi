@@ -16,11 +16,11 @@ import { useLanguage } from '../../context/LanguageContext';
 const getDisciplineLabel = (discipline, t) => {
     const labels = {
         'pharmacien': { icon: 'pill', category: 'nav', fallback: '💊', label: t('pharmacist') },
-        'médecin': { icon: null, category: null, fallback: '🩺', label: t('doctor') },
-        'infirmier': { icon: null, category: null, fallback: '🩹', label: t('nurse') },
-        'assistant': { icon: null, category: null, fallback: '📋', label: t('assistant') },
-        'comptable': { icon: null, category: null, fallback: '💰', label: t('accountant') },
-        'autre': { icon: null, category: null, fallback: '📁', label: t('other') }
+        'médecin': { icon: 'doctor', category: 'establishment', fallback: '🩺', label: t('doctor') },
+        'infirmier': { icon: 'nurse', category: 'establishment', fallback: '🩹', label: t('nurse') },
+        'assistant': { icon: 'assistant', category: 'actions', fallback: '📋', label: t('assistant') },
+        'comptable': { icon: 'accountant', category: 'actions', fallback: '💰', label: t('accountant') },
+        'autre': { icon: 'other', category: 'actions', fallback: '📁', label: t('other') }
     };
     const item = labels[discipline];
     if (!item) return discipline;
@@ -482,7 +482,7 @@ const Employees = () => {
                                         value={formData.password} 
                                         onChange={(e) => setFormData({...formData, password: e.target.value})} 
                                         required 
-                                        minLength="8"  // ⭐ 8 au lieu de 6
+                                        minLength="8"  // 8 au lieu de 6
                                         style={{ paddingRight: '40px' }} 
                                     />
                                     <button 
@@ -556,14 +556,14 @@ const Employees = () => {
                     <div className="form-group">
                         <label className="form-label required">{t('discipline_label')}</label>
                         <select name="discipline" className="form-select" value={formData.discipline} onChange={(e) => setFormData({...formData, discipline: e.target.value})} required>
-                            <option value="pharmacien">💊 {t('pharmacist')}</option>
-                            <option value="médecin">🩺 {t('doctor')}</option>
-                            <option value="infirmier">🩹 {t('nurse')}</option>
-                            <option value="assistant">📋 {t('assistant')}</option>
-                            <option value="comptable">💰 {t('accountant')}</option>
-                            <option value="gestionnaire">📊 {t('manager')}</option>
-                            <option value="caissier">💰 {t('cashier')}</option>
-                            <option value="autre">📁 {t('other')}</option>
+                            <option value="pharmacien">{t('pharmacist')}</option>
+                            <option value="médecin">{t('doctor')}</option>
+                            <option value="infirmier">{t('nurse')}</option>
+                            <option value="assistant">{t('assistant')}</option>
+                            <option value="comptable">{t('accountant')}</option>
+                            <option value="gestionnaire">{t('manager')}</option>
+                            <option value="caissier">{t('cashier')}</option>
+                            <option value="autre">{t('other')}</option>
                         </select>
                     </div>
 

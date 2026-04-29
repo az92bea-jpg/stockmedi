@@ -1,6 +1,6 @@
 /**
  * COMPOSANT TRANSFERT DE STOCK
- * ⭐ Traductions FR/EN complètes
+ * Traductions FR/EN complètes
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';

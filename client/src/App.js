@@ -55,6 +55,12 @@ import Quotes from './pages/quotes/Quotes';
 import NewQuote from './pages/quotes/NewQuote';
 import QuoteDetail from './pages/quotes/QuoteDetail';
 
+// Fournisseur
+import Suppliers from './pages/stock/Suppliers';
+import SecurityLogs from './components/admin/SecurityLogs';
+// Guide User
+import UserGuide from './pages/help/UserGuide';
+
 // ==================== COMPOSANTS DE PROTECTION ====================
 
 const ProtectedRoute = ({ children }) => {
@@ -160,6 +166,8 @@ function App() {
                         <Route path="quotes/new" element={<NewQuote />} />
                         <Route path="quotes/:id" element={<QuoteDetail />} />
                         <Route path="patients" element={<PatientRecords />} />
+                        <Route path="suppliers" element={<Suppliers />} />
+                        <Route path="/guide" element={<UserGuide />} />
                         
                         {/* Routes réservées au propriétaire */}
                         <Route path="employees" element={
@@ -203,6 +211,12 @@ function App() {
                     <Route path="/admin/logs" element={
                         <SuperAdminRoute>
                             <AdminLogs />
+                        </SuperAdminRoute>
+                    } />
+                    {/* Dans les routes super-admin */}
+                    <Route path="/admin/security" element={
+                        <SuperAdminRoute>
+                            <SecurityLogs />
                         </SuperAdminRoute>
                     } />
                     

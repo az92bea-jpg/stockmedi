@@ -1,7 +1,7 @@
 /**
  * STOCKMEDI - SERVEUR PRINCIPAL
  * Point d'entrée de l'application backend
- * ⭐ Sécurité renforcée : Helmet CSP, Rate Limiting, Sanitization
+ * Sécurité renforcée : Helmet CSP, Rate Limiting, Sanitization
  */
 
 const express = require('express');
@@ -11,8 +11,11 @@ const dotenv = require('dotenv');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cron = require('node-cron');
-
+require('./cron/cronjobs'); // Activer les notifications automatiques
 // Chargement des variables d'environnement
+
+
+
 dotenv.config();
 
 // Initialisation
@@ -26,10 +29,14 @@ app.use(helmet({
             scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            imgSrc: ["'self'", "data:", "https:"],
+            imgSrc: ["'self'", "data:", "https:", "blob:"],
             connectSrc: ["'self'", "https://api.stripe.com"],
             frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
             objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            workerSrc: ["'self'", "blob:"],
+            formAction: ["'self'"],
+            baseUri: ["'self'"],
             upgradeInsecureRequests: []
         }
     },
@@ -38,12 +45,13 @@ app.use(helmet({
         includeSubDomains: true,
         preload: true
     },
-    frameguard: {
-        action: 'deny'
-    },
-    referrerPolicy: {
-        policy: 'strict-origin-when-cross-origin'
-    }
+    frameguard: { action: 'deny' },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    crossOriginEmbedderPolicy: true,
+    crossOriginOpenerPolicy: { policy: 'same-origin' },
+    crossOriginResourcePolicy: { policy: 'same-origin' },
+    dnsPrefetchControl: { allow: false },
+    permittedCrossDomainPolicies: { permittedPolicies: 'none' }
 }));
 
 // CORS restrictif
@@ -80,7 +88,7 @@ const quoteRoutes = require('./routes/quoteRoutes');
 const userRoutes = require('./routes/userRoutes');
 const cronRoutes = require('./routes/cronRoutes');
 const patientRecordRoutes = require('./routes/patientRecordRoutes');
-
+const supplierRoutes = require('./routes/supplierRoutes');
 
 
 // Import du contrôleur pour le nettoyage automatique
@@ -139,7 +147,7 @@ app.use('/api/quotes', quoteRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/patients', patientRecordRoutes);
 app.use('/api/cron', cronRoutes);
-
+app.use('/api/suppliers', supplierRoutes);
 
 
 // ========== NETTOYAGE AUTOMATIQUE DES ARCHIVES (CRON) ==========

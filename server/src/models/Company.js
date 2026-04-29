@@ -122,10 +122,13 @@ const CompanySchema = new mongoose.Schema({
             default: 0 
         }
     },
-    isActive: { 
+        isActive: { 
         type: Boolean, 
         default: true 
-    }
+    },
+    // ⭐ 2FA
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorDuration: { type: Number, default: 60 }
 }, { 
     timestamps: true 
 });

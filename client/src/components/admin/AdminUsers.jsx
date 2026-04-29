@@ -1,5 +1,6 @@
 /**
  * PAGE ADMIN - Gestion des utilisateurs
+ * ⭐ Icônes SVG avec fallback emoji
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -7,6 +8,7 @@ import api from '../../services/api';
 import Loader from '../common/Loader';
 import Alert from '../common/Alert';
 import Modal from '../common/Modal';
+import Icon from '../ui/Icon';
 import AdminNav from './AdminNav';
 
 const AdminUsers = () => {
@@ -24,121 +26,54 @@ const AdminUsers = () => {
     const fetchUsers = useCallback(async () => {
         try {
             setLoading(true);
-            const params = new URLSearchParams({
-                page: pagination.page,
-                ...(filters.search && { search: filters.search }),
-                ...(filters.role && { role: filters.role })
-            });
+            const params = new URLSearchParams({ page: pagination.page, ...(filters.search && { search: filters.search }), ...(filters.role && { role: filters.role }) });
             const response = await api.get(`/admin/users?${params}`);
             setUsers(response.users);
-            setPagination({
-                page: response.page,
-                total: response.total,
-                pages: response.pages
-            });
+            setPagination({ page: response.page, total: response.total, pages: response.pages });
         } catch (err) {
             setError('Erreur lors du chargement des utilisateurs');
-            console.error(err);
         } finally {
             setLoading(false);
         }
-    }, [pagination.page, filters.search, filters.role]); // ⭐ Dépendances primitives
+    }, [pagination.page, filters.search, filters.role]);
 
-    useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
+    useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-    const openEditModal = (user) => {
-        setSelectedUser(user);
-        setModalOpen(true);
-    };
-
-    const openRoleModal = (user) => {
-        setSelectedUser(user);
-        setNewRole(user.role);
-        setRoleModalOpen(true);
-    };
+    const openEditModal = (user) => { setSelectedUser(user); setModalOpen(true); };
+    const openRoleModal = (user) => { setSelectedUser(user); setNewRole(user.role); setRoleModalOpen(true); };
 
     const handleRoleUpdate = async () => {
         if (!selectedUser) return;
-        if (selectedUser.role === 'super-admin' && newRole !== 'super-admin') {
-            setError('Le rôle super-admin ne peut pas être modifié');
-            return;
-        }
-        try {
-            await api.put(`/admin/users/${selectedUser._id}`, { role: newRole });
-            setSuccess(`Rôle de ${selectedUser.firstName} ${selectedUser.lastName} mis à jour`);
-            fetchUsers();
-            setRoleModalOpen(false);
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de la mise à jour du rôle');
-        }
+        if (selectedUser.role === 'super-admin' && newRole !== 'super-admin') { setError('Le rôle super-admin ne peut pas être modifié'); return; }
+        try { await api.put(`/admin/users/${selectedUser._id}`, { role: newRole }); setSuccess(`Rôle mis à jour`); fetchUsers(); setRoleModalOpen(false); setTimeout(() => setSuccess(''), 3000); }
+        catch (err) { setError(err.response?.data?.message || 'Erreur'); }
     };
 
     const handleUpdate = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const data = {
-            firstName: formData.get('firstName'),
-            lastName: formData.get('lastName'),
-            phone: formData.get('phone'),
-            role: formData.get('role'),
-            isActive: formData.get('isActive') === 'true',
-            discipline: formData.get('discipline')
-        };
-
-        try {
-            await api.put(`/admin/users/${selectedUser._id}`, data);
-            setSuccess('Utilisateur mis à jour avec succès');
-            fetchUsers();
-            setModalOpen(false);
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de la mise à jour');
-        }
+        const data = { firstName: formData.get('firstName'), lastName: formData.get('lastName'), phone: formData.get('phone'), role: formData.get('role'), isActive: formData.get('isActive') === 'true', discipline: formData.get('discipline') };
+        try { await api.put(`/admin/users/${selectedUser._id}`, data); setSuccess('Utilisateur mis à jour'); fetchUsers(); setModalOpen(false); setTimeout(() => setSuccess(''), 3000); }
+        catch (err) { setError(err.response?.data?.message || 'Erreur'); }
     };
 
     const toggleStatus = async (user) => {
-        try {
-            await api.put(`/admin/users/${user._id}/toggle`);
-            setSuccess(user.isActive ? 'Utilisateur désactivé' : 'Utilisateur activé');
-            fetchUsers();
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de la modification');
-        }
+        try { await api.put(`/admin/users/${user._id}/toggle`); setSuccess(user.isActive ? 'Utilisateur désactivé' : 'Utilisateur activé'); fetchUsers(); setTimeout(() => setSuccess(''), 3000); }
+        catch (err) { setError(err.response?.data?.message || 'Erreur'); }
     };
 
     const handleDelete = async (user) => {
-        if (user.role === 'super-admin') {
-            setError('Impossible de supprimer le compte super-admin');
-            return;
-        }
+        if (user.role === 'super-admin') { setError('Impossible de supprimer le compte super-admin'); return; }
         if (!window.confirm(`Supprimer définitivement ${user.firstName} ${user.lastName} ?`)) return;
-        
-        try {
-            await api.delete(`/admin/users/${user._id}`);
-            setSuccess('Utilisateur supprimé avec succès');
-            fetchUsers();
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de la suppression');
-        }
+        try { await api.delete(`/admin/users/${user._id}`); setSuccess('Utilisateur supprimé'); fetchUsers(); setTimeout(() => setSuccess(''), 3000); }
+        catch (err) { setError(err.response?.data?.message || 'Erreur'); }
     };
 
     const getRoleBadge = (role) => {
-        const colors = {
-            'super-admin': '#F59E0B',
-            owner: '#0F6B3A',
-            employee: '#3B82F6'
-        };
-        const labels = {
-            'super-admin': '👑 Super Admin',
-            owner: '🏢 Propriétaire',
-            employee: '👥 Employé'
-        };
-        return { backgroundColor: colors[role] || '#6B7280', color: 'white', label: labels[role] || role };
+        const colors = { 'super-admin': '#F59E0B', owner: '#0F6B3A', employee: '#3B82F6' };
+        const labels = { 'super-admin': 'Super Admin', owner: 'Propriétaire', employee: 'Employé' };
+        const icons = { 'super-admin': { icon: 'settings', fallback: '👑' }, owner: { icon: 'establishment', fallback: '🏢' }, employee: { icon: 'employees', fallback: '👥' } };
+        return { backgroundColor: colors[role] || '#6B7280', color: 'white', label: labels[role] || role, icon: icons[role] || { icon: 'info', fallback: '📋' } };
     };
 
     if (loading) return <Loader />;
@@ -146,131 +81,52 @@ const AdminUsers = () => {
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>
             <AdminNav />
-
-            <h2>Gestion des utilisateurs</h2>
-            <p style={{ color: 'var(--gray-500)', marginBottom: 'var(--spacing-6)' }}>
-                Gérez tous les utilisateurs de la plateforme
-            </p>
-
+            <h2><Icon name="employees" category="nav" fallback="👥" style={{ width: '24px', height: '24px', marginRight: '8px' }} />Gestion des utilisateurs</h2>
+            <p style={{ color: 'var(--gray-500)', marginBottom: 'var(--spacing-6)' }}>Gérez tous les utilisateurs de la plateforme</p>
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
             {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
-            {/* Filtres */}
             <div className="card" style={{ marginBottom: 'var(--spacing-6)' }}>
                 <div className="card-body">
                     <div style={{ display: 'flex', gap: 'var(--spacing-4)', flexWrap: 'wrap' }}>
-                        <div style={{ flex: 2 }}>
-                            <input
-                                type="text"
-                                className="form-input"
-                                placeholder="Rechercher par nom, prénom ou email..."
-                                value={filters.search}
-                                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                            />
-                        </div>
-                        <div style={{ width: '150px' }}>
-                            <select
-                                className="form-select"
-                                value={filters.role}
-                                onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-                            >
-                                <option value="">Tous les rôles</option>
-                                <option value="super-admin">Super Admin</option>
-                                <option value="owner">Propriétaire</option>
-                                <option value="employee">Employé</option>
-                            </select>
-                        </div>
-                        <button className="btn btn-primary" onClick={() => fetchUsers()}>
-                            Rechercher
-                        </button>
+                        <div style={{ flex: 2 }}><input type="text" className="form-input" placeholder="Rechercher par nom, prénom ou email..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} /></div>
+                        <div style={{ width: '150px' }}><select className="form-select" value={filters.role} onChange={(e) => setFilters({ ...filters, role: e.target.value })}><option value="">Tous les rôles</option><option value="super-admin">Super Admin</option><option value="owner">Propriétaire</option><option value="employee">Employé</option></select></div>
+                        <button className="btn btn-primary" onClick={() => fetchUsers()}><Icon name="search" category="actions" fallback="🔍" style={{ width: '14px', height: '14px', marginRight: '4px' }} />Rechercher</button>
                     </div>
                 </div>
             </div>
 
-            {/* Liste des utilisateurs */}
             <div className="card">
                 <div className="table-container">
                     <table className="table">
-                        <thead>
-                            <tr>
-                                <th>Utilisateur</th>
-                                <th>Contact</th>
-                                <th>Entreprise</th>
-                                <th>Rôle</th>
-                                <th>Statut</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Utilisateur</th><th>Contact</th><th>Entreprise</th><th>Rôle</th><th>Statut</th><th>Actions</th></tr></thead>
                         <tbody>
                             {users.length === 0 ? (
-                                <tr>
-                                    <td colSpan="6" style={{ textAlign: 'center', padding: 'var(--spacing-8)' }}>
-                                        Aucun utilisateur
-                                    </td>
-                                </tr>
+                                <tr><td colSpan="6" style={{ textAlign: 'center', padding: 'var(--spacing-8)' }}>Aucun utilisateur</td></tr>
                             ) : (
                                 users.map(user => {
                                     const roleBadge = getRoleBadge(user.role);
                                     return (
                                         <tr key={user._id}>
-                                            <td>
-                                                <strong>{user.firstName} {user.lastName}</strong>
-                                                <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>
-                                                    {user.email}
-                                                </div>
-                                            </td>
+                                            <td><strong>{user.firstName} {user.lastName}</strong><div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>{user.email}</div></td>
                                             <td>{user.phone || '-'}</td>
                                             <td>{user.companyId?.name || '-'}</td>
                                             <td>
-                                                <span style={{
-                                                    display: 'inline-block',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '12px',
-                                                    fontSize: '0.7rem',
-                                                    fontWeight: 500,
-                                                    backgroundColor: roleBadge.backgroundColor,
-                                                    color: roleBadge.color
-                                                }}>
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 500, backgroundColor: roleBadge.backgroundColor, color: roleBadge.color }}>
+                                                    <Icon name={roleBadge.icon.icon} category="nav" fallback={roleBadge.icon.fallback} style={{ width: '12px', height: '12px' }} />
                                                     {roleBadge.label}
                                                 </span>
                                             </td>
-                                            <td>
-                                                <span className={user.isActive ? 'badge-success' : 'badge-danger'}>
-                                                    {user.isActive ? 'Actif' : 'Inactif'}
-                                                </span>
-                                            </td>
+                                            <td><span className={user.isActive ? 'badge-success' : 'badge-danger'}>{user.isActive ? 'Actif' : 'Inactif'}</span></td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
-                                                    <button 
-                                                        className="btn btn-sm btn-primary" 
-                                                        onClick={() => openRoleModal(user)}
-                                                        title="Changer le rôle"
-                                                    >
-                                                        👑 Rôle
-                                                    </button>
-                                                    <button 
-                                                        className="btn btn-sm btn-outline" 
-                                                        onClick={() => openEditModal(user)}
-                                                        title="Modifier"
-                                                    >
-                                                        ✏️
-                                                    </button>
-                                                    <button 
-                                                        className="btn btn-sm btn-outline" 
-                                                        onClick={() => toggleStatus(user)} 
-                                                        title={user.isActive ? 'Désactiver' : 'Activer'}
-                                                    >
-                                                        {user.isActive ? '🔒' : '🔓'}
+                                                    <button className="btn btn-sm btn-primary" onClick={() => openRoleModal(user)} title="Changer le rôle"><Icon name="settings" category="nav" fallback="👑" style={{ width: '14px', height: '14px' }} /></button>
+                                                    <button className="btn btn-sm btn-outline" onClick={() => openEditModal(user)} title="Modifier"><Icon name="edit" category="actions" fallback="✏️" style={{ width: '14px', height: '14px' }} /></button>
+                                                    <button className="btn btn-sm btn-outline" onClick={() => toggleStatus(user)} title={user.isActive ? 'Désactiver' : 'Activer'}>
+                                                        <Icon name={user.isActive ? 'lock' : 'unlock'} category="actions" fallback={user.isActive ? '🔒' : '🔓'} style={{ width: '14px', height: '14px' }} />
                                                     </button>
                                                     {user.role !== 'super-admin' && (
-                                                        <button 
-                                                            className="btn btn-sm btn-outline" 
-                                                            onClick={() => handleDelete(user)} 
-                                                            style={{ color: 'var(--danger)' }}
-                                                            title="Supprimer"
-                                                        >
-                                                            🗑️
-                                                        </button>
+                                                        <button className="btn btn-sm btn-outline" onClick={() => handleDelete(user)} style={{ color: 'var(--danger)' }} title="Supprimer"><Icon name="delete" category="actions" fallback="🗑️" style={{ width: '14px', height: '14px' }} /></button>
                                                     )}
                                                 </div>
                                             </td>
@@ -281,103 +137,38 @@ const AdminUsers = () => {
                         </tbody>
                     </table>
                 </div>
-                
-                {/* Pagination */}
                 {pagination.pages > 1 && (
                     <div className="card-footer" style={{ display: 'flex', justifyContent: 'center', gap: 'var(--spacing-2)' }}>
-                        <button 
-                            className="btn btn-sm btn-outline" 
-                            disabled={pagination.page === 1} 
-                            onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
-                        >
-                            ◀ Précédent
-                        </button>
+                        <button className="btn btn-sm btn-outline" disabled={pagination.page === 1} onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}>◀ Précédent</button>
                         <span>Page {pagination.page} / {pagination.pages}</span>
-                        <button 
-                            className="btn btn-sm btn-outline" 
-                            disabled={pagination.page === pagination.pages} 
-                            onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
-                        >
-                            Suivant ▶
-                        </button>
+                        <button className="btn btn-sm btn-outline" disabled={pagination.page === pagination.pages} onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}>Suivant ▶</button>
                     </div>
                 )}
             </div>
 
-            {/* Modal édition utilisateur */}
             <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Modifier l'utilisateur" size="md">
                 {selectedUser && (
                     <form onSubmit={handleUpdate}>
                         <div className="form-row">
-                            <div className="form-group">
-                                <label className="form-label">Prénom</label>
-                                <input type="text" name="firstName" className="form-input" defaultValue={selectedUser.firstName} required />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Nom</label>
-                                <input type="text" name="lastName" className="form-input" defaultValue={selectedUser.lastName} required />
-                            </div>
+                            <div className="form-group"><label className="form-label">Prénom</label><input type="text" name="firstName" className="form-input" defaultValue={selectedUser.firstName} required /></div>
+                            <div className="form-group"><label className="form-label">Nom</label><input type="text" name="lastName" className="form-input" defaultValue={selectedUser.lastName} required /></div>
                         </div>
-                        <div className="form-group">
-                            <label className="form-label">Téléphone</label>
-                            <input type="tel" name="phone" className="form-input" defaultValue={selectedUser.phone || ''} />
-                        </div>
+                        <div className="form-group"><label className="form-label">Téléphone</label><input type="tel" name="phone" className="form-input" defaultValue={selectedUser.phone || ''} /></div>
                         <div className="form-row">
-                            <div className="form-group">
-                                <label className="form-label">Rôle</label>
-                                <select name="role" className="form-select" defaultValue={selectedUser.role}>
-                                    <option value="owner">Propriétaire</option>
-                                    <option value="employee">Employé</option>
-                                </select>
-                                {selectedUser.role === 'super-admin' && (
-                                    <div className="form-hint">Le rôle super-admin ne peut pas être modifié</div>
-                                )}
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Statut</label>
-                                <select name="isActive" className="form-select" defaultValue={selectedUser.isActive}>
-                                    <option value="true">Actif</option>
-                                    <option value="false">Inactif</option>
-                                </select>
-                            </div>
+                            <div className="form-group"><label className="form-label">Rôle</label><select name="role" className="form-select" defaultValue={selectedUser.role}><option value="owner">Propriétaire</option><option value="employee">Employé</option></select></div>
+                            <div className="form-group"><label className="form-label">Statut</label><select name="isActive" className="form-select" defaultValue={selectedUser.isActive}><option value="true">Actif</option><option value="false">Inactif</option></select></div>
                         </div>
                         {selectedUser.role === 'employee' && (
-                            <div className="form-group">
-                                <label className="form-label">Discipline</label>
-                                <select name="discipline" className="form-select" defaultValue={selectedUser.discipline || 'pharmacien'}>
-                                    <option value="pharmacien">Pharmacien</option>
-                                    <option value="médecin">Médecin</option>
-                                    <option value="infirmier">Infirmier</option>
-                                    <option value="assistant">Assistant</option>
-                                    <option value="comptable">Comptable</option>
-                                    <option value="autre">Autre</option>
-                                </select>
-                            </div>
+                            <div className="form-group"><label className="form-label">Discipline</label><select name="discipline" className="form-select" defaultValue={selectedUser.discipline || 'pharmacien'}><option value="pharmacien">Pharmacien</option><option value="médecin">Médecin</option><option value="infirmier">Infirmier</option><option value="assistant">Assistant</option><option value="comptable">Comptable</option><option value="autre">Autre</option></select></div>
                         )}
-                        <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}>
-                            <button type="submit" className="btn btn-primary">Enregistrer</button>
-                            <button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>Annuler</button>
-                        </div>
+                        <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}><button type="submit" className="btn btn-primary">Enregistrer</button><button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>Annuler</button></div>
                     </form>
                 )}
             </Modal>
 
-            {/* Modal changement de rôle */}
             <Modal isOpen={roleModalOpen} onClose={() => setRoleModalOpen(false)} title={`Changer le rôle de ${selectedUser?.firstName} ${selectedUser?.lastName}`} size="sm">
-                <div className="form-group">
-                    <label className="form-label">Nouveau rôle</label>
-                    <select className="form-select" value={newRole} onChange={(e) => setNewRole(e.target.value)}>
-                        <option value="owner">Propriétaire</option>
-                        <option value="employee">Employé</option>
-                    </select>
-                    {selectedUser?.role === 'super-admin' && (
-                        <div className="form-hint" style={{ color: 'var(--danger)' }}>⚠️ Le rôle super-admin ne peut pas être modifié</div>
-                    )}
-                </div>
-                <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}>
-                    <button className="btn btn-primary" onClick={handleRoleUpdate}>Enregistrer</button>
-                    <button className="btn btn-secondary" onClick={() => setRoleModalOpen(false)}>Annuler</button>
-                </div>
+                <div className="form-group"><label className="form-label">Nouveau rôle</label><select className="form-select" value={newRole} onChange={(e) => setNewRole(e.target.value)}><option value="owner">Propriétaire</option><option value="employee">Employé</option></select></div>
+                <div style={{ display: 'flex', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}><button className="btn btn-primary" onClick={handleRoleUpdate}>Enregistrer</button><button className="btn btn-secondary" onClick={() => setRoleModalOpen(false)}>Annuler</button></div>
             </Modal>
         </div>
     );

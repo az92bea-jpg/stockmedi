@@ -111,6 +111,7 @@ const About = () => {
                     </section>
 
                     {/* Contact */}
+                    {/* Contact */}
                     <section>
                         <h2 style={{ fontSize: '1.25rem', color: '#111827', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Icon name="email" category="status" fallback="📧" style={{ width: '20px', height: '20px' }} />
@@ -119,11 +120,11 @@ const About = () => {
                         <div style={{ backgroundColor: '#F3F4F6', padding: '16px', borderRadius: '8px' }}>
                             <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Icon name="email" category="status" fallback="📧" style={{ width: '20px', height: '20px' }} />
-                                <a href="mailto:azbea.lomagui@gmail.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a>
+                                <a href="mailto:stockmedi.contact@gmail.com" style={{ color: '#0F6B3A' }}>stockmedi.contact@gmail.com</a>
                             </p>
                             <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Icon name="mobile" category="social" fallback="📞" style={{ width: '20px', height: '20px' }} />
-                                <a href="tel:+224623679567" style={{ color: '#0F6B3A' }}>+224 600 000 000</a>
+                                <a href="tel:+224623679567" style={{ color: '#0F6B3A' }}>+224 623 679 567</a>
                             </p>
                             <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Icon name="location" category="status" fallback="📍" style={{ width: '20px', height: '20px' }} />
@@ -132,14 +133,14 @@ const About = () => {
                             <p style={{ margin: '4px 0', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
                                 <Icon name="globe" category="actions" fallback="🌐" style={{ width: '20px', height: '20px' }} />
                                 {t('about_follow_us') || 'Suivez-nous'} : 
-                                <a href="https://facebook.com/stockmedi" target="_blank" rel="noopener noreferrer" style={{ color: '#0F6B3A', marginLeft: '8px' }}>
+                                <a href="https://www.facebook.com/share/18hseuKpLT/" target="_blank" rel="noopener noreferrer" style={{ color: '#0F6B3A', marginLeft: '8px' }}>
                                     <Icon name="facebook" category="social" fallback="📘" style={{ width: '20px', height: '20px' }} />
                                 </a>
                                 <a href="https://wa.me/224623679567" target="_blank" rel="noopener noreferrer" style={{ color: '#0F6B3A', marginLeft: '8px' }}>
                                     <Icon name="whatsapp" category="social" fallback="💬" style={{ width: '20px', height: '20px' }} />
                                 </a>
-                                <a href="https://t.me/stockmedi" target="_blank" rel="noopener noreferrer" style={{ color: '#0F6B3A', marginLeft: '8px' }}>
-                                    <Icon name="telegram" category="social" fallback="✈️" style={{ width: '20px', height: '20px' }} />
+                                <a href="https://www.linkedin.com/company/116134308" target="_blank" rel="noopener noreferrer" style={{ color: '#0F6B3A', marginLeft: '8px' }}>
+                                    <Icon name="linkedin" category="social" fallback="🔗" style={{ width: '20px', height: '20px' }} />
                                 </a>
                             </p>
                         </div>

@@ -445,12 +445,12 @@ const Products = () => {
                                 onChange={handleFilterChange}
                             >
                                 <option value="">{t('all_categories')}</option>
-                                <option value="Médicament"> 💊 {t('medication')}</option>
-                                <option value="Dispositif médical">🩺 {t('medical_device')}</option>
-                                <option value="Parapharmaceutique">🧴 {t('parapharmacy')}</option>
-                                <option value="Complément alimentaire">💪 {t('food_supplement')}</option>
-                                <option value="Vitamine">🌟 {t('vitamin')}</option>
-                                <option value="Prestation médicale">🏥 {t('medical_service')}</option>
+                                <option value="Médicament">{t('medication')}</option>
+                                <option value="Dispositif médical">{t('medical_device')}</option>
+                                <option value="Parapharmaceutique">{t('parapharmacy')}</option>
+                                <option value="Complément alimentaire">{t('food_supplement')}</option>
+                                <option value="Vitamine">{t('vitamin')}</option>
+                                <option value="Prestation médicale">{t('medical_service')}</option>
                             </select>
                         </div>
                         <div className="form-group" style={{ marginBottom: 0 }}>
@@ -535,7 +535,7 @@ const Products = () => {
                                 </div>
 
                                 <div style={{ width: '100px', fontSize: '0.8rem' }}>
-                                    {product.type === 'Princeps' ? `💊 ${t('princeps')}` : `💊 ${t('generique')}`}
+                                    {product.type === 'Princeps' ? `${t('princeps')}` : `${t('generique')}`}
                                 </div>
 
                                 <div style={{ width: '120px', fontSize: '0.75rem' }}>
@@ -622,8 +622,8 @@ const Products = () => {
                         <div className="form-group">
                             <label className="form-label">{t('type')}</label>
                             <select name="type" className="form-select" value={formData.type} onChange={handleChange}>
-                                <option value="Princeps">💊 {t('princeps')}</option>
-                                <option value="Générique">💊 {t('generique')}</option>
+                                <option value="Princeps">{t('princeps')}</option>
+                                <option value="Générique">{t('generique')}</option>
                             </select>
                         </div>
                     </div>
@@ -632,12 +632,12 @@ const Products = () => {
                         <div className="form-group">
                             <label className="form-label">{t('category')}</label>
                             <select name="category" className="form-select" value={formData.category} onChange={handleChange}>
-                                <option value="Médicament">💊 {t('medication')}</option>
-                                <option value="Dispositif médical">🩺 {t('medical_device')}</option>
-                                <option value="Parapharmaceutique">🧴 {t('parapharmacy')}</option>
-                                <option value="Complément alimentaire">💪 {t('food_supplement')}</option>
-                                <option value="Vitamine">🌟 {t('vitamin')}</option>
-                                <option value="Prestation médicale">🏥 {t('medical_service')}</option>
+                                <option value="Médicament">{t('medication')}</option>
+                                <option value="Dispositif médical">{t('medical_device')}</option>
+                                <option value="Parapharmaceutique">{t('parapharmacy')}</option>
+                                <option value="Complément alimentaire">{t('food_supplement')}</option>
+                                <option value="Vitamine">{t('vitamin')}</option>
+                                <option value="Prestation médicale">{t('medical_service')}</option>
                             </select>
                         </div>
                         {formData.category === 'Prestation médicale' && (
@@ -645,12 +645,12 @@ const Products = () => {
                                 <label className="form-label">{t('service_type')}</label>
                                 <select name="subCategory" className="form-select" value={formData.subCategory} onChange={handleChange}>
                                     <option value="">{t('select')}</option>
-                                    <option value="Prise de tension">❤️ {t('blood_pressure')}</option>
-                                    <option value="Prise de poids">⚖️ {t('weight')}</option>
-                                    <option value="Prise de taille">📏 {t('height')}</option>
-                                    <option value="Prise de rythme">💓 {t('heart_rate')}</option>
-                                    <option value="Test de glycémie rapide">🩸 {t('glycemia_test')}</option>
-                                    <option value="Vaccination">💉 {t('vaccination')}</option>
+                                    <option value="Prise de tension">{t('blood_pressure')}</option>
+                                    <option value="Prise de poids">{t('weight')}</option>
+                                    <option value="Prise de taille">{t('height')}</option>
+                                    <option value="Prise de rythme">{t('heart_rate')}</option>
+                                    <option value="Test de glycémie rapide">{t('glycemia_test')}</option>
+                                    <option value="Vaccination">{t('vaccination')}</option>
                                 </select>
                             </div>
                         )}
@@ -686,12 +686,12 @@ const Products = () => {
                         <div className="form-group">
                             <label className="form-label">{t('unit_label')}</label>
                             <select name="unit" className="form-select" value={formData.unit} onChange={handleChange}>
-                                <option value="Comprimés">💊 {t('tablets')}</option>
-                                <option value="Capsules">💊 {t('capsules')}</option>
-                                <option value="Plaquettes">📦 {t('blisters') || 'Plaquettes'}</option>
-                                <option value="Ampoules">🧪 {t('ampoules')}</option>
-                                <option value="Boîtes">📦 {t('boxes')}</option>
-                                <option value="Bouteille">🍾 {t('bottle')}</option>
+                                <option value="Comprimés">{t('tablets')}</option>
+                                <option value="Capsules">{t('capsules')}</option>
+                                <option value="Plaquettes">{t('blisters') || 'Plaquettes'}</option>
+                                <option value="Ampoules">{t('ampoules')}</option>
+                                <option value="Boîtes">{t('boxes')}</option>
+                                <option value="Bouteille">{t('bottle')}</option>
                             </select>
                         </div>
                     </div>

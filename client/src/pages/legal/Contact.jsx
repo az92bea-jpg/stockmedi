@@ -1,49 +1,40 @@
 /**
  * PAGE CONTACT
  * Icônes SVG avec fallback emoji
+ * ⭐ Envoi d'email automatique
  */
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Alert from '../../components/common/Alert';
 import Icon from '../../components/ui/Icon';
+import api from '../../services/api';
 
 const Contact = () => {
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
     const [success, setSuccess] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setSuccess('✅ Message envoyé ! Nous vous répondrons dans les plus brefs délais.');
-        setFormData({ name: '', email: '', message: '' });
-        setTimeout(() => setSuccess(''), 5000);
+        setLoading(true);
+        setSuccess('');
+        try {
+            await api.post('/companies/contact', formData);
+            setSuccess('✅ Message envoyé ! Nous vous répondrons dans les plus brefs délais.');
+            setFormData({ name: '', email: '', message: '' });
+            setTimeout(() => setSuccess(''), 5000);
+        } catch (err) {
+            setSuccess('❌ Erreur lors de l\'envoi. Veuillez réessayer.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const socialLinks = [
-        { 
-            name: 'Facebook', 
-            url: 'https://facebook.com/stockmedi', 
-            iconName: 'facebook',
-            iconCategory: 'social',
-            fallback: '📘',
-            color: '#1877F2' 
-        },
-        { 
-            name: 'WhatsApp', 
-            url: 'https://wa.me/224600000000', 
-            iconName: 'whatsapp',
-            iconCategory: 'social',
-            fallback: '💬',
-            color: '#25D366' 
-        },
-        { 
-            name: 'Telegram', 
-            url: 'https://t.me/stockmedi', 
-            iconName: 'telegram',
-            iconCategory: 'social',
-            fallback: '✈️',
-            color: '#26A5E4' 
-        }
+        { name: 'Facebook', url: 'https://www.facebook.com/share/18hseuKpLT/', iconName: 'facebook', iconCategory: 'social', fallback: '📘', color: '#1877F2' },
+        { name: 'WhatsApp', url: 'https://wa.me/224623679567', iconName: 'whatsapp', iconCategory: 'social', fallback: '💬', color: '#25D366' },
+        { name: 'LinkedIn', url: 'https://www.linkedin.com/company/116134308', iconName: 'linkedin', iconCategory: 'social', fallback: '🔗', color: '#0A66C2' }
     ];
 
     return (
@@ -66,55 +57,33 @@ const Contact = () => {
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label className="form-label">Nom complet</label>
-                        <input
-                            type="text"
-                            className="form-input"
-                            placeholder="Dr Jean Koïkoï Béavogui"
-                            value={formData.name}
-                            onChange={(e) => setFormData({...formData, name: e.target.value})}
-                            required
-                        />
+                        <input type="text" className="form-input" placeholder="Dr Jean Koïkoï Béavogui" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
                     </div>
                     <div className="form-group">
                         <label className="form-label">Email</label>
-                        <input
-                            type="email"
-                            className="form-input"
-                            placeholder="drjeankoikoi@exemple.com"
-                            value={formData.email}
-                            onChange={(e) => setFormData({...formData, email: e.target.value})}
-                            required
-                        />
+                        <input type="email" className="form-input" placeholder="drjeankoikoi@exemple.com" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} required />
                     </div>
                     <div className="form-group">
                         <label className="form-label">Message</label>
-                        <textarea
-                            className="form-textarea"
-                            rows="5"
-                            placeholder="Votre message..."
-                            value={formData.message}
-                            onChange={(e) => setFormData({...formData, message: e.target.value})}
-                            required
-                        />
+                        <textarea className="form-textarea" rows="5" placeholder="Votre message..." value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} required />
                     </div>
-                    <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
+                    <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
                         <Icon name="email" category="status" fallback="📧" style={{ width: '16px', height: '16px', marginRight: '8px' }} />
-                        Envoyer le message
+                        {loading ? 'Envoi...' : 'Envoyer le message'}
                     </button>
                 </form>
 
                 <hr style={{ margin: '32px 0' }} />
 
                 <h3 style={{ fontSize: '1rem', marginBottom: '16px' }}>Ou contactez-nous directement</h3>
-                
                 <div style={{ marginBottom: '24px' }}>
                     <p style={{ margin: '8px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Icon name="email" category="status" fallback="📧" style={{ width: '20px', height: '20px' }} />
-                        <a href="mailto:azbea.lomagui@gmail.com" style={{ color: '#0F6B3A' }}>support@stockmedi.com</a>
+                        <a href="mailto:stockmedi.contact@gmail.com" style={{ color: '#0F6B3A' }}>stockmedi.contact@gmail.com</a>
                     </p>
                     <p style={{ margin: '8px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Icon name="phone" category="status" fallback="📞" style={{ width: '20px', height: '20px' }} />
-                        <a href="tel:+224623679567" style={{ color: '#0F6B3A' }}>+224 600 000 000</a>
+                        <a href="tel:+224623679567" style={{ color: '#0F6B3A' }}>+224 623 679 567</a>
                     </p>
                     <p style={{ margin: '8px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Icon name="location" category="status" fallback="📍" style={{ width: '20px', height: '20px' }} />
@@ -125,32 +94,9 @@ const Contact = () => {
                 <h3 style={{ fontSize: '1rem', marginBottom: '16px' }}>Suivez-nous</h3>
                 <div style={{ display: 'flex', gap: '16px' }}>
                     {socialLinks.map((social) => (
-                        <a
-                            key={social.name}
-                            href={social.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '50%',
-                                backgroundColor: social.color,
-                                textDecoration: 'none',
-                                transition: 'transform 0.2s'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                            title={social.name}
-                        >
-                            <Icon 
-                                name={social.iconName} 
-                                category={social.iconCategory} 
-                                fallback={social.fallback} 
-                                style={{ width: '24px', height: '24px' }} 
-                            />
+                        <a key={social.name} href={social.url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', borderRadius: '50%', backgroundColor: social.color, textDecoration: 'none', transition: 'transform 0.2s' }}
+                            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'} title={social.name}>
+                            <Icon name={social.iconName} category={social.iconCategory} fallback={social.fallback} style={{ width: '24px', height: '24px' }} />
                         </a>
                     ))}
                 </div>

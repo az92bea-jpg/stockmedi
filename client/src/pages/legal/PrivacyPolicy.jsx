@@ -183,7 +183,7 @@ const PrivacyPolicy = () => {
                         <p style={{ color: '#4B5563', lineHeight: '1.6', marginTop: '12px' }}>
                             <Icon name="email" category="status" fallback="📧" style={{ width: '16px', height: '16px', marginRight: '8px' }} />
                             {t('privacy_rights_contact') || 'Pour exercer vos droits, contactez-nous à :'}{' '}
-                            <a href="mailto:privacy@stockmedi.com" style={{ color: '#0F6B3A' }}>privacy@stockmedi.com</a>
+                            <a href="mailto:stockmedi.contact@gmail.com" style={{ color: '#0F6B3A' }}>privacy@stockmedi.com</a>
                         </p>
                     </section>
 
@@ -280,7 +280,7 @@ const PrivacyPolicy = () => {
                             }}>
                                 <Icon name="email" category="status" fallback="📧" style={{ width: '20px', height: '20px', flexShrink: 0 }} />
                                 <strong style={{ whiteSpace: 'nowrap' }}>Email :</strong>
-                                <a href="mailto:azbea.lomagui@gmail.com" style={{ color: '#0F6B3A', wordBreak: 'break-all' }}>support@stockmedi.com</a>
+                                <a href="mailto:stockmedi.contact@gmail.com" style={{ color: '#0F6B3A', wordBreak: 'break-all' }}>stockmedi.contact@gmail.com</a>
                             </div>
 
                             <div style={{ 
@@ -294,7 +294,7 @@ const PrivacyPolicy = () => {
                             }}>
                                 <Icon name="email" category="status" fallback="📧" style={{ width: '20px', height: '20px', flexShrink: 0 }} />
                                 <strong style={{ whiteSpace: 'nowrap' }}>DPO :</strong>
-                                <a href="mailto:azbea.lomagui@gmail.com" style={{ color: '#0F6B3A', wordBreak: 'break-all' }}>dpo@stockmedi.com</a>
+                                <a href="mailto:stockmedi.contact@gmail.com" style={{ color: '#0F6B3A', wordBreak: 'break-all' }}>stockmedi.contact@gmail.com</a>
                             </div>
 
                             <div style={{ 
@@ -308,7 +308,7 @@ const PrivacyPolicy = () => {
                             }}>
                                 <Icon name="mobile" category="social" fallback="📞" style={{ width: '20px', height: '20px', flexShrink: 0 }} />
                                 <strong style={{ whiteSpace: 'nowrap' }}>{t('phone') || 'Téléphone'} :</strong>
-                                <span>+224 600 000 000</span>
+                                <span>+224 623 679 567</span>
                             </div>
 
                             <div style={{ 

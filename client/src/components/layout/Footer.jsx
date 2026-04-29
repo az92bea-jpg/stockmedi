@@ -13,31 +13,31 @@ const Footer = () => {
 
     // Configuration des réseaux sociaux avec chemins d'icônes personnalisées
     const socialLinks = [
-        { 
-            name: 'Facebook', 
-            url: 'https://facebook.com/stockmedi', 
-            iconName: 'facebook',
-            category: 'social',
-            fallbackIcon: '📘',
-            color: '#1877F2' 
-        },
-        { 
-            name: 'WhatsApp', 
-            url: 'https://wa.me/224600000000', 
-            iconName: 'whatsapp',
-            category: 'social',
-            fallbackIcon: '💬',
-            color: '#25D366' 
-        },
-        { 
-            name: 'Telegram', 
-            url: 'https://t.me/stockmedi', 
-            iconName: 'telegram',
-            category: 'social',
-            fallbackIcon: '✈️',
-            color: '#26A5E4' 
-        }
-    ];
+    { 
+        name: 'Facebook', 
+        url: 'https://www.facebook.com/share/18hseuKpLT/', 
+        iconName: 'facebook',
+        category: 'social',
+        fallbackIcon: '📘',
+        color: '#1877F2' 
+    },
+    { 
+        name: 'WhatsApp', 
+        url: 'https://wa.me/224623679567', 
+        iconName: 'whatsapp',
+        category: 'social',
+        fallbackIcon: '💬',
+        color: '#25D366' 
+    },
+    { 
+        name: 'LinkedIn', 
+        url: 'https://www.linkedin.com/company/116134308', 
+        iconName: 'linkedin',
+        category: 'social',
+        fallbackIcon: '🔗',
+        color: '#0A66C2' 
+    }
+];
 
     // Composant d'icône sociale avec fallback
     const SocialIcon = ({ link }) => {
@@ -190,11 +190,11 @@ const Footer = () => {
                     <h4 style={{ color: 'white', marginBottom: '16px', fontSize: '1rem' }}>{t('footer_contact_title') || 'Contact'}</h4>
                     <p style={{ fontSize: '0.875rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <Icon name="email" category="status" fallback="📧" style={{ width: '1rem', height: '1rem' }} />
-                        <a href="mailto:support@stockmedi.com" style={{ color: '#9CA3AF', textDecoration: 'none' }}>support@stockmedi.com</a>
+                        <a href="mailto:stockmedi.contact@gmail.com" style={{ color: '#9CA3AF', textDecoration: 'none' }}>stockmedi.contact@gmail.com</a>
                     </p>
                     <p style={{ fontSize: '0.875rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <Icon name="phone" category="status" fallback="📞" style={{ width: '1rem', height: '1rem' }} />
-                        <a href="tel:+224600000000" style={{ color: '#9CA3AF', textDecoration: 'none' }}>+224 600 000 000</a>
+                        <a href="tel:+224623679567" style={{ color: '#9CA3AF', textDecoration: 'none' }}>+224 623 679 567</a>
                     </p>
                     <p style={{ fontSize: '0.875rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <Icon name="clock" category="status" fallback="🕒" style={{ width: '1rem', height: '1rem' }} />

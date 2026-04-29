@@ -231,7 +231,7 @@ exports.submitLocalPaymentRequest = async (req, res) => {
         `;
 
         // Envoyer l'email à l'admin
-        const adminEmail = process.env.ADMIN_EMAIL || 'admin@stockmedi.com';
+        const adminEmail = process.env.ADMIN_EMAIL || 'stockmedi.contact@gmail.com';
         await transporter.sendMail({
             from: `"StockMedi" <${process.env.EMAIL_USER}>`,
             to: adminEmail,

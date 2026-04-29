@@ -6,7 +6,7 @@
 const Subscription = require('../models/Subscription');
 const Company = require('../models/Company');
 const User = require('../models/User');
-const { notifySubscriptionChanged } = require('./rnnotificationController');
+const { notifySubscriptionChanged } = require('./notificationController');
 
 // Taux de conversion GNF → EUR (approximatif)
 const GNF_TO_EUR_RATE = 10000;
@@ -52,6 +52,9 @@ const PLANS = {
  */
 exports.getSubscription = async (req, res) => {
     try {
+         if (!req.user.companyId) {
+            return res.json({ success: true, subscription: null, plans: [] });
+        }
         let subscription = await Subscription.findOne({ companyId: req.user.companyId });
         
         if (!subscription) {

@@ -1,6 +1,7 @@
 /**
  * CONTRÔLEUR EMPLOYÉS - Gestion des employés
  * Support affectation aux établissements (plan Enterprise)
+ * ⭐ Chiffrement des données sensibles
  */
 
 const User = require('../models/User');
@@ -8,6 +9,7 @@ const Company = require('../models/Company');
 const Subscription = require('../models/Subscription');
 const Establishment = require('../models/Establishment');
 const crypto = require('crypto');
+const { decryptData } = require('../services/encryptionService');
 
 // Fonction pour hasher le mot de passe
 function hashPassword(password) {
@@ -37,10 +39,18 @@ exports.getEmployees = async (req, res) => {
         .populate('establishments', 'name type')
         .sort({ createdAt: -1 });
 
+        // ⭐ Déchiffrer les données sensibles
+        const decryptedEmployees = employees.map(emp => {
+            const obj = emp.toObject();
+            if (obj.email) obj.email = decryptData(obj.email);
+            if (obj.phone) obj.phone = decryptData(obj.phone);
+            return obj;
+        });
+
         res.json({
             success: true,
-            count: employees.length,
-            employees
+            count: decryptedEmployees.length,
+            employees: decryptedEmployees
         });
     } catch (error) {
         console.error('❌ Erreur récupération employés:', error);
@@ -110,7 +120,7 @@ exports.addEmployee = async (req, res) => {
             role: 'employee',
             discipline: discipline || 'autre',
             permissions: permissions || ['make_sales'],
-            establishments: validEstablishments, // ⭐ Ajout des établissements
+            establishments: validEstablishments,
             companyId: req.user.companyId,
             isActive: true
         });
@@ -138,7 +148,7 @@ exports.addEmployee = async (req, res) => {
                 phone: employee.phone,
                 discipline: employee.discipline,
                 permissions: employee.permissions,
-                establishments: employee.establishments, // ⭐
+                establishments: employee.establishments,
                 isActive: employee.isActive,
                 createdAt: employee.createdAt
             }
@@ -207,7 +217,7 @@ exports.updateEmployee = async (req, res) => {
                 phone: employee.phone,
                 discipline: employee.discipline,
                 permissions: employee.permissions,
-                establishments: employee.establishments, // ⭐
+                establishments: employee.establishments,
                 isActive: employee.isActive
             }
         });

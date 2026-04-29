@@ -361,10 +361,10 @@ const Establishments = () => {
                     <div className="form-group">
                         <label className="form-label">{t('type')}</label>
                         <select name="type" className="form-select" value={formData.type} onChange={handleChange}>
-                            <option value="pharmacy">🏪 {t('pharmacy')}</option>
-                            <option value="clinic">🏥 {t('clinic')}</option>
-                            <option value="hospital">🏨 {t('hospital')}</option>
-                            <option value="warehouse">📦 {t('warehouse')}</option>
+                            <option value="pharmacy">{t('pharmacy')}</option>
+                            <option value="clinic">{t('clinic')}</option>
+                            <option value="hospital">{t('hospital')}</option>
+                            <option value="warehouse">{t('warehouse')}</option>
                         </select>
                     </div>
 
