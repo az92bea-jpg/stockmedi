@@ -37,7 +37,7 @@ const PLANS = {
     }
 };
 
-//  Configuration email (à adapter avec vos identifiants)
+//  Configuration email (adapté nodemailer)
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: process.env.EMAIL_PORT || 587,
@@ -230,7 +230,8 @@ exports.submitLocalPaymentRequest = async (req, res) => {
             <p><small>Cet email est automatique, merci de ne pas y répondre.</small></p>
         `;
 
-        // Envoyer l'email à l'admin
+         
+        // Envoyer l'email à l'admin service nodemailer
         const adminEmail = process.env.ADMIN_EMAIL || 'stockmedi.contact@gmail.com';
         await transporter.sendMail({
             from: `"StockMedi" <${process.env.EMAIL_USER}>`,
@@ -246,6 +247,30 @@ exports.submitLocalPaymentRequest = async (req, res) => {
             subject: `✅ [StockMedi] Confirmation de votre demande d'abonnement`,
             html: clientEmailContent
         });
+
+        /*
+    // ========== Envoyer l'email à l'admin(utilise resend) ==========
+
+        const { Resend } = require('resend');
+        const resend = new Resend(process.env.RESEND_API_KEY);
+
+        const adminEmail = process.env.ADMIN_EMAIL || 'stockmedi.contact@gmail.com';
+
+        await resend.emails.send({
+            from: 'StockMedi <onboarding@resend.dev>',
+            to: adminEmail,
+            replyTo: email,
+            subject: `📱 [StockMedi] Demande de paiement local - ${fullName} - ${planData.name}`,
+            html: adminEmailContent
+        });
+        // Envoyer l'email de confirmation au client
+        await resend.emails.send({
+            from: 'StockMedi <onboarding@resend.dev>',
+            to: email,
+            subject: `✅ [StockMedi] Confirmation de votre demande d'abonnement`,
+            html: clientEmailContent
+        });
+        */
 
         console.log(`📧 Email envoyé à l'admin (${adminEmail}) et au client (${email})`);
 

@@ -12,7 +12,7 @@ exports.sendContactEmail = async (req, res) => {
             from: 'StockMedi <onboarding@resend.dev>',
             to: 'stockmedi.contact@gmail.com',
             replyTo: email,
-            subject: `📩 Contact StockMedi - ${name}`,
+            subject: `✅ Contact StockMedi - ${name}`,
             html: `<h2>Nouveau message</h2><p><strong>Nom :</strong> ${name}</p><p><strong>Email :</strong> ${email}</p><p><strong>Message :</strong></p><p>${message}</p>`
         });
 

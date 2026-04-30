@@ -8,7 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { authService } from './services/authService';
 import { LanguageProvider } from './context/LanguageContext';
-import LandingPage from './pages/landing/LandingPage';
+//import LandingPage from './pages/landing/LandingPage';
 
 // Styles
 import './styles/main.css';
@@ -126,27 +126,8 @@ function App() {
         <LanguageProvider>
             <Router>
                 <Routes>
-                    {/* ========== PAGE D'ACCUEIL (Landing Page) ========== */}
-                    <Route path="/" element={<LandingPage />} />
-
-                    {/* ========== ROUTES PUBLIQUES ========== */}
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/privacy" element={<PrivacyPolicy />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/terms" element={<Terms />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/guide" element={<UserGuide />} />
-
-                    {/* ========== PAIEMENT LOCAL (accessible connecté, sans Layout) ========== */}
-                    <Route path="/local-payment" element={
-                        <ProtectedRoute><LocalPayment /></ProtectedRoute>
-                    } />
-
-                    {/* ========== ROUTES PROTÉGÉES (avec Layout) ========== */}
-                    <Route path="/dashboard" element={
+                    {/* ========== ROUTES PROTÉGÉES (avec Layout) — Racine pour utilisateurs connectés ========== */}
+                    <Route path="/" element={
                         <ProtectedRoute><Layout /></ProtectedRoute>
                     }>
                         <Route index element={<Dashboard />} />
@@ -165,7 +146,23 @@ function App() {
                         <Route path="settings/establishments" element={<OwnerRoute><Establishments /></OwnerRoute>} />
                     </Route>
 
-                    {/* ========== ROUTES SUPER-ADMIN (sans Layout) ========== */}
+                    {/* ========== ROUTES PUBLIQUES ========== */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/guide" element={<UserGuide />} />
+
+                    {/* ========== PAIEMENT LOCAL ========== */}
+                    <Route path="/local-payment" element={
+                        <ProtectedRoute><LocalPayment /></ProtectedRoute>
+                    } />
+
+                    {/* ========== ROUTES SUPER-ADMIN ========== */}
                     <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
                     <Route path="/admin/companies" element={<SuperAdminRoute><AdminCompanies /></SuperAdminRoute>} />
                     <Route path="/admin/users" element={<SuperAdminRoute><AdminUsers /></SuperAdminRoute>} />
@@ -177,7 +174,6 @@ function App() {
                 </Routes>
             </Router>
             
-            {/* <InstallPrompt /> */}
             {updateAvailable && <UpdateBanner onUpdate={handleUpdate} onDismiss={handleDismiss} />}
         </LanguageProvider>
     );

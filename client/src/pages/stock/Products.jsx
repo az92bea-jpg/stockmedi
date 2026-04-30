@@ -15,6 +15,8 @@ import Modal from '../../components/common/Modal';
 import { useLanguage } from '../../context/LanguageContext';
 import { authService } from '../../services/authService';
 import EstablishmentSelector from '../../components/establishment/EstablishmentSelector';
+import Icon from '../../components/ui/Icon';
+
 
 const Products = () => {
     const { t } = useLanguage();
@@ -550,7 +552,8 @@ const Products = () => {
                                     </div>
                                     {product.establishmentId?.name && (
                                         <div style={{ fontSize: '0.65rem', color: 'var(--primary-500)', marginTop: '2px' }}>
-                                            🏪 {product.establishmentId.name}
+                                            <Icon name="establishment" category="establishment" fallback="🏪" style={{ width: '14px', height: '14px', marginRight: '4px' }} />
+                                            {product.establishmentId?.name}
                                         </div>
                                     )}
                                 </div>
