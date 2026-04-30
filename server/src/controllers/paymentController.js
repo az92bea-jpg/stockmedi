@@ -222,7 +222,7 @@ exports.submitLocalPaymentRequest = async (req, res) => {
 
         const { Resend } = require('resend');
         const resend = new Resend(process.env.RESEND_API_KEY);
-
+        const adminEmail = process.env.ADMIN_EMAIL || 'stockmedi.contact@gmail.com';
         await resend.emails.send({
             from: 'StockMedi <onboarding@resend.dev>',
             to: adminEmail,
