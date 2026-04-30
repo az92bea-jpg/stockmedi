@@ -3,6 +3,8 @@
  */
 
 const Supplier = require('../models/Supplier');
+const { auditLog } = require('../services/auditService');
+
 
 /**
  * @desc    Créer un fournisseur
@@ -17,6 +19,18 @@ exports.createSupplier = async (req, res) => {
             name, phone, email: email || '', address: address || {},
             contactPerson: contactPerson || {}, notes: notes || '',
             companyId: req.user.companyId
+        });
+
+        // Audit Trail CREATE
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'create',
+            documentType: 'supplier',
+            documentId: supplier._id,
+            documentName: supplier.name,
+            description: `Fournisseur créé : ${supplier.name}`
         });
 
         res.status(201).json({ success: true, message: 'Fournisseur créé', supplier });
@@ -61,6 +75,19 @@ exports.updateSupplier = async (req, res) => {
         if (notes !== undefined) supplier.notes = notes;
 
         await supplier.save();
+
+        // Audit update
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'update',
+            documentType: 'supplier',
+            documentId: supplier._id,
+            documentName: supplier.name,
+            description: `Fournisseur modifié : ${supplier.name}`
+        });
+
         res.json({ success: true, message: 'Fournisseur mis à jour', supplier });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -78,6 +105,19 @@ exports.deleteSupplier = async (req, res) => {
 
         supplier.isActive = false;
         await supplier.save();
+
+        // Audit delete
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'delete',
+            documentType: 'supplier',
+            documentId: supplier._id,
+            documentName: supplier.name,
+            description: `Fournisseur désactivé : ${supplier.name}`
+        });
+
         res.json({ success: true, message: 'Fournisseur désactivé' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

@@ -13,9 +13,9 @@ const UserGuide = () => {
     const { t } = useLanguage();
 
     return (
-        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 24px', animation: 'fadeIn var(--transition-normal)' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 24px', animation: 'fadeIn var(--transition-normal)' }}>
             
-            {/* En-tête */}
+            {/* En-tête et 1100px largeur conteneur du G.User*/}
             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                 <div style={{ fontSize: '3rem', marginBottom: '16px' }}>
                     <Icon name="info" category="status" fallback="📖" style={{ width: '48px', height: '48px' }} />
@@ -222,8 +222,8 @@ const UserGuide = () => {
                         <li>Dans le menu latéral, cliquez sur <strong>"Patients"</strong></li>
                         <li>Cliquez sur <strong>"Nouveau dossier"</strong></li>
                         <li>Renseignez les antécédents médicaux</li>
-                        <li>Ajoutez des suivis de traitement (<Icon name="treatment" category="actions" fallback="💊" style={{ width: '12px', height: '12px' }} />)</li>
-                        <li>Ajoutez des constantes (<Icon name="vitals" category="actions" fallback="🩺" style={{ width: '12px', height: '12px' }} />)</li>
+                        <li>Ajoutez des suivis de traitement (<Icon name="treatment" category="actions" fallback="💊" style={{ width: '12px', height: '12px' }} /> )</li>
+                        <li>Ajoutez des constantes (<Icon name="vitals" category="actions" fallback="🩺" style={{ width: '12px', height: '12px' }} /> )</li>
                         <li>Téléchargez la fiche en <Icon name="pdf" category="actions" fallback="📄" style={{ width: '12px', height: '12px' }} /> PDF</li>
                     </ol>
                 </div>

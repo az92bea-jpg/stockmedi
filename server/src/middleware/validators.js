@@ -1,6 +1,6 @@
 /**
  * VALIDATEURS DE DONNÉES
- * ⭐ Validation renforcée des entrées utilisateur
+ * Validation renforcée des entrées utilisateur
  */
 
 const { body, validationResult } = require('express-validator');

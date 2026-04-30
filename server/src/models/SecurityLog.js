@@ -21,7 +21,8 @@ const SecurityLogSchema = new mongoose.Schema({
     companyId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Company',
-        required: true
+        required: false,
+        default: null
     },
     
     // Utilisateur qui a effectué l'action

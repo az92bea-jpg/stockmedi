@@ -1,6 +1,6 @@
 /**
  * MODÈLE COMPANY - Entreprises
- * ⭐ Enums bilingues FR + EN
+ * Enums bilingues FR + EN
  */
 
 const mongoose = require('mongoose');
@@ -8,8 +8,9 @@ const mongoose = require('mongoose');
 const CompanySchema = new mongoose.Schema({
     name: { 
         type: String, 
-        required: true, 
-        unique: true 
+        required: true,
+        // Bloque les noms de compagnies identiques 
+        // unique: true 
     },
     type: { 
         type: String, 
@@ -126,7 +127,7 @@ const CompanySchema = new mongoose.Schema({
         type: Boolean, 
         default: true 
     },
-    // ⭐ 2FA
+    // 2FA
     twoFactorEnabled: { type: Boolean, default: false },
     twoFactorDuration: { type: Number, default: 60 }
 }, { 

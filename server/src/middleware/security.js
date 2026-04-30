@@ -1,6 +1,6 @@
 /**
  * MIDDLEWARE DE SÉCURITÉ
- * ⭐ Protection complète : Rate Limiting, NoSQL Injection
+ * Protection complète : Rate Limiting, NoSQL Injection
  */
 
 const rateLimit = require('express-rate-limit');

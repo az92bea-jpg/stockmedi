@@ -11,6 +11,8 @@ import Alert from '../../components/common/Alert';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import Icon from '../../components/ui/Icon';
 import { useLanguage } from '../../context/LanguageContext';
+import AuditTrail from './AuditTrail';
+
 
 const Settings = () => {
     const { t, changeLanguage } = useLanguage();
@@ -393,6 +395,27 @@ const Settings = () => {
                     {t('profile')}
                 </button>
             </div>
+
+            <button
+                onClick={() => setActiveTab('audit')}
+                style={{
+                    padding: 'var(--spacing-2) var(--spacing-4)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: activeTab === 'audit' ? 'var(--primary-500)' : 'var(--gray-500)',
+                    borderBottom: activeTab === 'audit' ? '2px solid var(--primary-500)' : 'none',
+                    transition: 'all var(--transition-fast)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                }}
+            >
+                <Icon name="reports" category="nav" fallback="📝" style={{ width: '16px', height: '16px' }} />
+                Audit
+            </button>
 
             {/* Panneau Entreprise */}
             {activeTab === 'company' && (
@@ -955,6 +978,9 @@ const Settings = () => {
                     </label>
                 </div>
             </ConfirmModal>
+            {activeTab === 'audit' && (
+                <AuditTrail />
+            )}
         </div>
     );
 

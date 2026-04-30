@@ -1,15 +1,17 @@
 /**
  * CONTRÔLEUR PRODUIT
- * ⭐ Support filtrage par établissements accessibles (employés)
+ * Support filtrage par établissements accessibles (employés)
  */
 
 const Product = require('../models/Product');
 const Establishment = require('../models/Establishment');
 const mongoose = require('mongoose');
+const { auditLog } = require('../services/auditService');
+
 
 /**
  * @desc    Récupérer tous les produits
- * ⭐ Filtrage automatique par établissements accessibles pour les employés
+ * Filtrage automatique par établissements accessibles pour les employés
  */
 exports.getProducts = async (req, res) => {
     try {
@@ -17,7 +19,7 @@ exports.getProducts = async (req, res) => {
         
         const query = { companyId: req.user.companyId, isActive: true };
         
-        // ⭐ Filtrer par établissements accessibles pour les employés
+        // Filtrer par établissements accessibles pour les employés
         const accessibleIds = req.user.getAccessibleEstablishmentIds();
         if (accessibleIds !== null) {
             if (accessibleIds.length === 0) {
@@ -77,7 +79,7 @@ exports.getProducts = async (req, res) => {
 
 /**
  * @desc    Récupérer un produit par ID
- * ⭐ Vérification de l'accès à l'établissement du produit
+ * Vérification de l'accès à l'établissement du produit
  */
 exports.getProduct = async (req, res) => {
     try {
@@ -93,7 +95,7 @@ exports.getProduct = async (req, res) => {
             });
         }
 
-        // ⭐ Vérifier que l'employé a accès à l'établissement du produit
+        // Vérifier que l'employé a accès à l'établissement du produit
         if (product.establishmentId && !req.user.hasAccessToEstablishment(product.establishmentId)) {
             return res.status(403).json({
                 success: false,
@@ -117,7 +119,7 @@ exports.getProduct = async (req, res) => {
 
 /**
  * @desc    Créer un nouveau produit
- * ⭐ Vérification de l'accès à l'établissement
+ * Vérification de l'accès à l'établissement
  */
 exports.createProduct = async (req, res) => {
     try {
@@ -171,7 +173,7 @@ exports.createProduct = async (req, res) => {
             }
             cleanEstablishmentId = establishmentId;
             
-            // ⭐ Vérifier que l'employé a accès à cet établissement
+            // Vérifier que l'employé a accès à cet établissement
             if (!req.user.hasAccessToEstablishment(cleanEstablishmentId)) {
                 return res.status(403).json({
                     success: false,
@@ -180,7 +182,7 @@ exports.createProduct = async (req, res) => {
             }
         }
 
-        // ⭐ Normalisation : supprimer subCategory si vide ou si catégorie ≠ Prestation médicale
+        // Normalisation : supprimer subCategory si vide ou si catégorie ≠ Prestation médicale
     let subCategory = req.body.subCategory;
     if (!subCategory || subCategory === '' || (category || 'Médicament') !== 'Prestation médicale') {
         subCategory = undefined;
@@ -211,6 +213,20 @@ exports.createProduct = async (req, res) => {
     });
         await product.populate('establishmentId', 'name type');
 
+
+        // Audit Trail CREATE
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'create',
+            documentType: 'product',
+            documentId: product._id,
+            documentName: product.name,
+            description: `Produit créé : ${product.name}`
+        });
+
+
         res.status(201).json({
             success: true,
             product
@@ -227,7 +243,7 @@ exports.createProduct = async (req, res) => {
 
 /**
  * @desc    Mettre à jour un produit
- * ⭐ Vérification de l'accès à l'établissement
+ * Vérification de l'accès à l'établissement
  */
 exports.updateProduct = async (req, res) => {
     try {
@@ -243,7 +259,7 @@ exports.updateProduct = async (req, res) => {
             });
         }
 
-        // ⭐ Vérifier l'accès à l'établissement actuel
+        // Vérifier l'accès à l'établissement actuel
         if (product.establishmentId && !req.user.hasAccessToEstablishment(product.establishmentId)) {
             return res.status(403).json({
                 success: false,
@@ -251,7 +267,7 @@ exports.updateProduct = async (req, res) => {
             });
         }
 
-        // ⭐ Si changement d'établissement, vérifier l'accès au nouveau
+        // Si changement d'établissement, vérifier l'accès au nouveau
         if (req.body.establishmentId && req.body.establishmentId !== product.establishmentId?.toString()) {
             if (!req.user.hasAccessToEstablishment(req.body.establishmentId)) {
                 return res.status(403).json({
@@ -261,7 +277,7 @@ exports.updateProduct = async (req, res) => {
             }
         }
 
-        // ⭐ Normalisation : supprimer subCategory si vide ou si catégorie ≠ Prestation médicale
+        // Normalisation : supprimer subCategory si vide ou si catégorie ≠ Prestation médicale
         if (req.body.subCategory === '' || req.body.subCategory === null) {
             delete req.body.subCategory;
         }
@@ -290,6 +306,17 @@ exports.updateProduct = async (req, res) => {
         await product.save();
         await product.populate('establishmentId', 'name type');
 
+        // Audit
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'update',
+            documentType: 'product',
+            documentId: product._id,
+            documentName: product.name,
+            description: `Produit modifié : ${product.name}`
+        });
         res.json({
             success: true,
             product
@@ -306,7 +333,7 @@ exports.updateProduct = async (req, res) => {
 
 /**
  * @desc    Supprimer un produit (archivage)
- * ⭐ Vérification de l'accès à l'établissement
+ * Vérification de l'accès à l'établissement
  */
 exports.deleteProduct = async (req, res) => {
     try {
@@ -322,7 +349,7 @@ exports.deleteProduct = async (req, res) => {
             });
         }
 
-        // ⭐ Vérifier l'accès à l'établissement
+        // Vérifier l'accès à l'établissement
         if (product.establishmentId && !req.user.hasAccessToEstablishment(product.establishmentId)) {
             return res.status(403).json({
                 success: false,
@@ -340,6 +367,18 @@ exports.deleteProduct = async (req, res) => {
         product.isActive = false;
         await product.save();
 
+        // Audit
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'delete',
+            documentType: 'product',
+            documentId: product._id,
+            documentName: product.name,
+            description: `Produit archivé : ${product.name}`
+        });
+
         res.json({
             success: true,
             message: 'Produit archivé avec succès'
@@ -356,7 +395,7 @@ exports.deleteProduct = async (req, res) => {
 
 /**
  * @desc    Récupérer les alertes
- * ⭐ Filtrage par établissements accessibles
+ * Filtrage par établissements accessibles
  */
 exports.getAlerts = async (req, res) => {
     try {
@@ -366,7 +405,7 @@ exports.getAlerts = async (req, res) => {
 
         const query = { companyId: req.user.companyId, isActive: true };
         
-        // ⭐ Filtrer par établissements accessibles
+        // Filtrer par établissements accessibles
         const accessibleIds = req.user.getAccessibleEstablishmentIds();
         if (accessibleIds !== null) {
             if (accessibleIds.length === 0) {

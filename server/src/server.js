@@ -11,11 +11,14 @@ const dotenv = require('dotenv');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cron = require('node-cron');
+
+
 require('./cron/cronjobs'); // Activer les notifications automatiques
+
+
+
+
 // Chargement des variables d'environnement
-
-
-
 dotenv.config();
 
 // Initialisation
@@ -89,7 +92,7 @@ const userRoutes = require('./routes/userRoutes');
 const cronRoutes = require('./routes/cronRoutes');
 const patientRecordRoutes = require('./routes/patientRecordRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
-
+const auditRoutes = require('./routes/auditRoutes');
 
 // Import du contrôleur pour le nettoyage automatique
 const { cleanupExpiredArchives } = require('./controllers/archiveController');
@@ -148,7 +151,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/patients', patientRecordRoutes);
 app.use('/api/cron', cronRoutes);
 app.use('/api/suppliers', supplierRoutes);
-
+app.use('/api/audit', auditRoutes);
 
 // ========== NETTOYAGE AUTOMATIQUE DES ARCHIVES (CRON) ==========
 cron.schedule('0 2 * * *', async () => {

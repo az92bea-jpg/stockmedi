@@ -2,8 +2,9 @@ const User = require('../models/User');
 const Company = require('../models/Company');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const { decryptData } = require('../services/encryptionService');
 const { logSecurityEvent } = require('../middleware/securityLogger');
+
+
 
 // ==================== UTILITAIRES ====================
 
@@ -34,6 +35,9 @@ const registerOwner = async (req, res) => {
         const company = await Company.create({
             name: companyName,
             email: email,
+            phone: req.body.phone || req.body.companyPhone || '',
+            type: req.body.companyType || 'pharmacy',
+            address: req.body.companyAddress || {},
             subscription: { plan: 'trial', endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), status: 'active' }
         });
 
@@ -66,7 +70,10 @@ const login = async (req, res) => {
         const { email, password } = req.body;
         console.log('🔐 Tentative de connexion:', { email });
 
-        const user = await User.findOne({ email }).select('+password');
+        // const user = await User.findOne({ email }).select('+password');
+
+       const user = await User.findOne({ email }).select('+password');
+
 
         if (!user) {
             await logSecurityEvent({ companyId: null, userId: null, userEmail: email, action: 'login_failed', description: `Tentative échouée pour ${email}`, ipAddress: req.ip, userAgent: req.get('user-agent') || '', status: 'failed' });
@@ -95,8 +102,6 @@ const login = async (req, res) => {
         }
 
         const userObj = user.toObject();
-        if (userObj.email) userObj.email = decryptData(userObj.email);
-        if (userObj.phone) userObj.phone = decryptData(userObj.phone);
 
         await logSecurityEvent({ companyId: user.companyId, userId: user._id, userEmail: user.email, action: 'login_success', description: `Connexion réussie pour ${user.email}`, ipAddress: req.ip, userAgent: req.get('user-agent') || '', status: 'success' });
 

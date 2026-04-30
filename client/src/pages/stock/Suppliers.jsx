@@ -1,6 +1,7 @@
 /**
  * PAGE FOURNISSEURS - Gestion des fournisseurs
- * ⭐ Consultation, création, modification, désactivation et export PDF
+ * Réservé aux plans Premium et Enterprise
+ * Consultation, création, modification, désactivation et export PDF
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -24,6 +25,8 @@ const Suppliers = () => {
     const [detailModalOpen, setDetailModalOpen] = useState(false);
     const [viewSupplier, setViewSupplier] = useState(null);
     const [company, setCompany] = useState(null);
+    const [canAccess, setCanAccess] = useState(false);
+    const [planChecked, setPlanChecked] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '', phone: '', email: '', notes: '',
@@ -50,7 +53,26 @@ const Suppliers = () => {
         }
     }, [t]);
 
-    useEffect(() => { fetchCompany(); fetchSuppliers(); }, [fetchSuppliers]);
+    useEffect(() => {
+        const checkAccess = async () => {
+            try {
+                const res = await api.get('/subscription');
+                const plan = res.subscription?.plan;
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                if (plan === 'premium' || plan === 'enterprise' || user?.role === 'super-admin') {
+                    setCanAccess(true);
+                }
+            } catch (err) {} finally {
+                setPlanChecked(true);
+            }
+        };
+        checkAccess();
+        fetchCompany();
+    }, []);
+
+    useEffect(() => {
+        if (canAccess) fetchSuppliers();
+    }, [canAccess, fetchSuppliers]);
 
     const resetForm = () => {
         setFormData({
@@ -141,7 +163,19 @@ const Suppliers = () => {
         html2pdf().set(opt).from(container).save();
     };
 
-    if (loading) return <Loader />;
+    if (!planChecked) return <Loader />;
+
+    if (!canAccess) {
+        return (
+            <div style={{ textAlign: 'center', padding: '4rem', animation: 'fadeIn var(--transition-normal)' }}>
+                <Icon name="lock" category="actions" fallback="🔒" style={{ width: '48px', height: '48px', marginBottom: '16px' }} />
+                <h3 style={{ color: 'var(--danger)' }}>Accès refusé</h3>
+                <p style={{ color: 'var(--gray-500)' }}>Cette fonctionnalité est réservée aux plans Premium et Enterprise.</p>
+            </div>
+        );
+    }
+
+    if (loading && suppliers.length === 0) return <Loader />;
 
     return (
         <div style={{ animation: 'fadeIn var(--transition-normal)' }}>

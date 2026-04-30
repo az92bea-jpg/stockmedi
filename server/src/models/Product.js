@@ -16,7 +16,7 @@ const ProductSchema = new mongoose.Schema({
         required: [true, 'La DCI est obligatoire'], 
         trim: true 
     },
-    // ⭐ NOUVEAU CHAMP : Type (Princeps ou Générique)
+    // NOUVEAU CHAMP : Type (Princeps ou Générique)
     type: {
         type: String,
         enum: ['Princeps', 'Générique', 'Generic'],

@@ -1,6 +1,6 @@
 /**
  * ROUTES D'AUTHENTIFICATION
- * ⭐ Sécurité renforcée : Rate Limiting + Validation + 2FA
+ * Sécurité renforcée : Rate Limiting + Validation + 2FA
  */
 
 const express = require('express');

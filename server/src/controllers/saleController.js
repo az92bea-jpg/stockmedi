@@ -1,6 +1,6 @@
 /**
  * CONTRÔLEUR VENTES
- * ⭐ Support filtrage par établissements accessibles (employés)
+ * Support filtrage par établissements accessibles (employés)
  */
 
 const Sale = require('../models/Sale');
@@ -9,6 +9,8 @@ const Company = require('../models/Company');
 const Establishment = require('../models/Establishment');
 const Counter = require('../models/Counter');
 const mongoose = require('mongoose');
+const { auditLog } = require('../services/auditService');
+
 
 // ==================== FONCTIONS UTILITAIRES ====================
 
@@ -66,7 +68,7 @@ async function createSaleWithRetry(saleData, userId, companyId, maxRetries = 5) 
 
 /**
  * @desc    Créer une nouvelle vente
- * ⭐ Vérification de l'accès à l'établissement
+ * Vérification de l'accès à l'établissement
  */
 exports.createSale = async (req, res) => {
     try {
@@ -99,7 +101,7 @@ exports.createSale = async (req, res) => {
             });
         }
 
-        // ⭐ Vérifier l'accès à l'établissement pour les employés
+        // Vérifier l'accès à l'établissement pour les employés
         if (establishmentId && establishmentId !== '') {
             if (!req.user.hasAccessToEstablishment(establishmentId)) {
                 return res.status(403).json({
@@ -143,7 +145,7 @@ exports.createSale = async (req, res) => {
                 });
             }
 
-            // ⭐ Vérifier l'accès au produit (via son établissement)
+            // Vérifier l'accès au produit (via son établissement)
             if (product.establishmentId && !req.user.hasAccessToEstablishment(product.establishmentId)) {
                 return res.status(403).json({
                     success: false,
@@ -216,6 +218,18 @@ exports.createSale = async (req, res) => {
         await sale.populate('establishmentId', 'name address phone email');
         await sale.populate('companyId', 'name logo address phone email');
 
+        // Audit Trail CREATE SALE
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'create',
+            documentType: 'sale',
+            documentId: sale._id,
+            documentName: sale.saleNumber,
+            description: `Vente créée : ${sale.saleNumber} — ${sale.total.toLocaleString()}`
+        });
+
         res.status(201).json({
             success: true,
             sale
@@ -240,7 +254,7 @@ exports.getSales = async (req, res) => {
 
         const query = { companyId: req.user.companyId };
 
-        // ⭐ Filtrer par établissements accessibles
+        // Filtrer par établissements accessibles
         const accessibleIds = req.user.getAccessibleEstablishmentIds();
         if (accessibleIds !== null) {
             if (accessibleIds.length === 0) {
@@ -252,11 +266,11 @@ exports.getSales = async (req, res) => {
                     pages: 0
                 });
             }
-            // ⭐ CORRECTION 1 : Convertir en ObjectId
+            // CORRECTION 1 : Convertir en ObjectId
             query.establishmentId = { $in: accessibleIds.map(id => new mongoose.Types.ObjectId(id)) };
         }
 
-        // ⭐ CORRECTION 2 : Gérer le fuseau horaire pour les dates
+        // CORRECTION 2 : Gérer le fuseau horaire pour les dates
         if (startDate || endDate) {
             query.createdAt = {};
             if (startDate) {
@@ -319,7 +333,7 @@ exports.getSales = async (req, res) => {
 };
 /**
  * @desc    Récupérer une vente par ID
- * ⭐ Vérification de l'accès à l'établissement
+ * Vérification de l'accès à l'établissement
  */
 exports.getSale = async (req, res) => {
     try {
@@ -338,7 +352,7 @@ exports.getSale = async (req, res) => {
             });
         }
 
-        // ⭐ Vérifier l'accès à l'établissement de la vente
+        // Vérifier l'accès à l'établissement de la vente
         if (sale.establishmentId && !req.user.hasAccessToEstablishment(sale.establishmentId)) {
             return res.status(403).json({
                 success: false,
@@ -362,7 +376,7 @@ exports.getSale = async (req, res) => {
 
 /**
  * @desc    Annuler une vente
- * ⭐ Vérification de l'accès à l'établissement
+ * Vérification de l'accès à l'établissement
  */
 exports.cancelSale = async (req, res) => {
     try {
@@ -380,7 +394,7 @@ exports.cancelSale = async (req, res) => {
             });
         }
 
-        // ⭐ Vérifier l'accès à l'établissement
+        // Vérifier l'accès à l'établissement
         if (sale.establishmentId && !req.user.hasAccessToEstablishment(sale.establishmentId)) {
             return res.status(403).json({
                 success: false,
@@ -396,6 +410,19 @@ exports.cancelSale = async (req, res) => {
         }
 
         await sale.cancel(req.user.id, reason);
+
+        // Audit uptade
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'update',
+            documentType: 'sale',
+            documentId: sale._id,
+            documentName: sale.saleNumber,
+            description: `Vente annulée : ${sale.saleNumber}`
+        });
+                
 
         res.json({
             success: true,
@@ -424,7 +451,7 @@ exports.getSalesStats = async (req, res) => {
             companyId: req.user.companyId
         };
         
-        // ⭐ Filtrer par établissements accessibles
+        // Filtrer par établissements accessibles
         if (establishmentId) {
             // Vérifier l'accès si un établissement spécifique est demandé
             if (!req.user.hasAccessToEstablishment(establishmentId)) {

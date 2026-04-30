@@ -9,6 +9,8 @@ const Company = require('../models/Company');
 const Establishment = require('../models/Establishment');
 const Counter = require('../models/Counter');
 const mongoose = require('mongoose');
+const { auditLog } = require('../services/auditService');
+
 
 // ==================== FONCTIONS UTILITAIRES ====================
 
@@ -173,6 +175,19 @@ exports.createQuote = async (req, res) => {
 
         await quote.populate('userId', 'firstName lastName');
         await quote.populate('establishmentId', 'name');
+
+
+        // Audit Trail CREATE QUOTE
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'create',
+            documentType: 'quote',
+            documentId: quote._id,
+            documentName: quote.quoteNumber,
+            description: `Devis créé : ${quote.quoteNumber}`
+        });
 
         res.status(201).json({
             success: true,
@@ -405,6 +420,19 @@ exports.convertQuoteToSale = async (req, res) => {
 
         await sale.populate('userId', 'firstName lastName');
         await sale.populate('establishmentId', 'name');
+
+        // Audit
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'update',
+            documentType: 'quote',
+            documentId: quote._id,
+            documentName: quote.quoteNumber,
+            description: `Devis converti en vente : ${quote.quoteNumber}`
+        });
+
 
         res.json({
             success: true,

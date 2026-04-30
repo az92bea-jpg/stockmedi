@@ -1,7 +1,7 @@
 /**
  * CONTRÔLEUR EMPLOYÉS - Gestion des employés
  * Support affectation aux établissements (plan Enterprise)
- * ⭐ Chiffrement des données sensibles
+ * Chiffrement des données sensibles
  */
 
 const User = require('../models/User');
@@ -9,7 +9,7 @@ const Company = require('../models/Company');
 const Subscription = require('../models/Subscription');
 const Establishment = require('../models/Establishment');
 const crypto = require('crypto');
-const { decryptData } = require('../services/encryptionService');
+const { auditLog } = require('../services/auditService');
 
 // Fonction pour hasher le mot de passe
 function hashPassword(password) {
@@ -39,18 +39,10 @@ exports.getEmployees = async (req, res) => {
         .populate('establishments', 'name type')
         .sort({ createdAt: -1 });
 
-        // ⭐ Déchiffrer les données sensibles
-        const decryptedEmployees = employees.map(emp => {
-            const obj = emp.toObject();
-            if (obj.email) obj.email = decryptData(obj.email);
-            if (obj.phone) obj.phone = decryptData(obj.phone);
-            return obj;
-        });
-
         res.json({
             success: true,
-            count: decryptedEmployees.length,
-            employees: decryptedEmployees
+            count: employees.length,
+            employees
         });
     } catch (error) {
         console.error('❌ Erreur récupération employés:', error);
@@ -138,6 +130,18 @@ exports.addEmployee = async (req, res) => {
         // Peupler les établissements pour la réponse
         await employee.populate('establishments', 'name type');
 
+        // Audit Trail ADD EMPLOYEE
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'create',
+            documentType: 'employee',
+            documentId: employee._id,
+            documentName: `${employee.firstName} ${employee.lastName}`,
+            description: `Employé ajouté : ${employee.firstName} ${employee.lastName} (${employee.email})`
+        });
+
         res.status(201).json({
             success: true,
             employee: {
@@ -207,6 +211,17 @@ exports.updateEmployee = async (req, res) => {
         await employee.save();
         await employee.populate('establishments', 'name type');
 
+
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'update',
+            documentType: 'employee',
+            documentId: employee._id,
+            documentName: `${employee.firstName} ${employee.lastName}`,
+            description: `Employé modifié : ${employee.firstName} ${employee.lastName}`
+        });
         res.json({
             success: true,
             employee: {
@@ -290,6 +305,18 @@ exports.deleteEmployee = async (req, res) => {
         }
 
         await employee.deleteOne();
+
+
+        await auditLog({
+            companyId: req.user.companyId,
+            userId: req.user.id,
+            userName: `${req.user.firstName} ${req.user.lastName}`,
+            action: 'delete',
+            documentType: 'employee',
+            documentId: req.params.id,
+            documentName: `${employee.firstName} ${employee.lastName}`,
+            description: `Employé supprimé : ${employee.firstName} ${employee.lastName}`
+        });
 
         res.json({
             success: true,

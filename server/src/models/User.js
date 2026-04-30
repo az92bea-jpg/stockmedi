@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
-const { encryptData, decryptData } = require('../services/encryptionService');
 
 function hashPassword(password) {
     return crypto.createHash('sha256').update(password).digest('hex');
@@ -91,7 +90,7 @@ const UserSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    // ⭐ DOUBLE AUTHENTIFICATION (2FA)
+    // DOUBLE AUTHENTIFICATION (2FA)
     twoFactorEnabled: {
         type: Boolean,
         default: false
@@ -150,23 +149,5 @@ UserSchema.methods.isAdmin = function() {
     return this.role === 'owner' || this.role === 'super-admin';
 };
 
-/*
-UserSchema.pre('save', function(next) {
-    if (this.isModified('email')) {
-        this.email = encryptData(this.email);
-    }
-    if (this.isModified('phone')) {
-        this.phone = encryptData(this.phone);
-    }
-    next();
-});
-*/
-
-UserSchema.methods.decryptSensitiveData = function() {
-    const user = this.toObject();
-    if (user.email) user.email = decryptData(user.email);
-    if (user.phone) user.phone = decryptData(user.phone);
-    return user;
-};
 
 module.exports = mongoose.model('User', UserSchema);

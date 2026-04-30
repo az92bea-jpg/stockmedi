@@ -32,7 +32,7 @@ router.post('/:id/migrate-products', authorize('owner'), migrateProductsToEstabl
 
 // ==================== ROUTES AVEC PERMISSION SPÉCIFIQUE ====================
 // Transfert de stock : nécessite la permission 'manage_stock'
-// ⭐ La vérification d'accès aux établissements se fait dans le contrôleur
+// La vérification d'accès aux établissements se fait dans le contrôleur
 router.post('/transfer', hasPermission('manage_stock'), transferStock);
 
 module.exports = router;
