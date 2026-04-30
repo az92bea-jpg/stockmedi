@@ -1,8 +1,8 @@
 /**
  * PAGE D'INSCRIPTION - Création d'un espace entreprise
- * ⭐ Traductions FR/EN complètes
- * ⭐ Case "J'accepte les conditions d'utilisation"
- * ⭐ Indications mot de passe fort
+ * Traductions FR/EN complètes
+ * Case "J'accepte les conditions d'utilisation"
+ * Indications mot de passe fort
  */
 
 import React, { useState } from 'react';
@@ -12,6 +12,8 @@ import Loader from '../../components/common/Loader';
 import Alert from '../../components/common/Alert';
 import Icon from '../../components/ui/Icon';
 import { useLanguage } from '../../context/LanguageContext';
+import InstallPrompt from '../../components/common/InstallPrompt';
+
 
 const Register = () => {
     const { t } = useLanguage();
@@ -70,7 +72,7 @@ const Register = () => {
             return;
         }
 
-        // ⭐ Validation mot de passe fort
+        // Validation mot de passe fort
         const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
         if (!passwordRegex.test(formData.password)) {
             setError('Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
@@ -407,6 +409,8 @@ const Register = () => {
                     </p>
                 </div>
             </div>
+            {/* ans le return, juste avant la fermeture </div> finale La meilleure approche : mettre <InstallPrompt /> uniquement dans Register.jsx. Comme ça, le bandeau d'installation apparaît seulement quand quelqu'un arrive sur la page d'inscription.*/}
+            <InstallPrompt />
         </div>
     );
 };

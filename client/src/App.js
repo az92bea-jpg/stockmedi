@@ -1,12 +1,14 @@
 /**
  * APPLICATION PRINCIPALE - StockMedi
  * Support PWA - Bandeau de mise à jour automatique
+ * Landing Page pour visiteurs non connectés
  */
 
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { authService } from './services/authService';
 import { LanguageProvider } from './context/LanguageContext';
+import LandingPage from './pages/landing/LandingPage';
 
 // Styles
 import './styles/main.css';
@@ -38,6 +40,7 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import AdminCompanies from './components/admin/AdminCompanies';
 import AdminUsers from './components/admin/AdminUsers';
 import AdminLogs from './components/admin/AdminLogs';
+import SecurityLogs from './components/admin/SecurityLogs';
 
 // Pages légales
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
@@ -46,7 +49,7 @@ import Terms from './pages/legal/Terms';
 import Contact from './pages/legal/Contact';
 
 // Composants
-import InstallPrompt from './components/common/InstallPrompt';
+//import InstallPrompt from './components/common/InstallPrompt';
 import UpdateBanner from './components/common/UpdateBanner';
 import Layout from './components/layout/Layout';
 
@@ -57,7 +60,7 @@ import QuoteDetail from './pages/quotes/QuoteDetail';
 
 // Fournisseur
 import Suppliers from './pages/stock/Suppliers';
-import SecurityLogs from './components/admin/SecurityLogs';
+
 // Guide User
 import UserGuide from './pages/help/UserGuide';
 
@@ -95,45 +98,38 @@ const OwnerRoute = ({ children }) => {
 // ==================== APPLICATION ====================
 
 function App() {
-    // États pour la mise à jour PWA
     const [updateAvailable, setUpdateAvailable] = useState(false);
     const [updateRegistration, setUpdateRegistration] = useState(null);
 
     useEffect(() => {
-        // Écouter l'événement de mise à jour PWA
         const handleUpdateAvailable = (event) => {
             console.log('🆕 [App] Mise à jour PWA détectée');
             setUpdateAvailable(true);
             setUpdateRegistration(event.detail.registration);
         };
-
         window.addEventListener('pwaUpdateAvailable', handleUpdateAvailable);
-
-        return () => {
-            window.removeEventListener('pwaUpdateAvailable', handleUpdateAvailable);
-        };
+        return () => window.removeEventListener('pwaUpdateAvailable', handleUpdateAvailable);
     }, []);
 
     const handleUpdate = () => {
         if (updateRegistration && updateRegistration.waiting) {
-            // Envoyer SKIP_WAITING au service worker en attente
             updateRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
             setUpdateAvailable(false);
         } else {
-            // Fallback : recharger la page
             window.location.reload();
         }
     };
 
-    const handleDismiss = () => {
-        setUpdateAvailable(false);
-    };
+    const handleDismiss = () => setUpdateAvailable(false);
 
     return (
         <LanguageProvider>
             <Router>
                 <Routes>
-                    {/* Routes publiques */}
+                    {/* ========== PAGE D'ACCUEIL (Landing Page) ========== */}
+                    <Route path="/" element={<LandingPage />} />
+
+                    {/* ========== ROUTES PUBLIQUES ========== */}
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -142,22 +138,18 @@ function App() {
                     <Route path="/about" element={<About />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/contact" element={<Contact />} />
-                    
-                    {/* Route de paiement local (accessible sans Layout) */}
+                    <Route path="/guide" element={<UserGuide />} />
+
+                    {/* ========== PAIEMENT LOCAL (accessible connecté, sans Layout) ========== */}
                     <Route path="/local-payment" element={
-                        <ProtectedRoute>
-                            <LocalPayment />
-                        </ProtectedRoute>
+                        <ProtectedRoute><LocalPayment /></ProtectedRoute>
                     } />
-                    
-                    {/* Routes protégées (avec Layout) */}
-                    <Route path="/" element={
-                        <ProtectedRoute>
-                            <Layout />
-                        </ProtectedRoute>
+
+                    {/* ========== ROUTES PROTÉGÉES (avec Layout) ========== */}
+                    <Route path="/dashboard" element={
+                        <ProtectedRoute><Layout /></ProtectedRoute>
                     }>
                         <Route index element={<Dashboard />} />
-                        <Route path="dashboard" element={<Dashboard />} />
                         <Route path="products" element={<Products />} />
                         <Route path="sales" element={<Sales />} />
                         <Route path="reports" element={<Reports />} />
@@ -167,74 +159,26 @@ function App() {
                         <Route path="quotes/:id" element={<QuoteDetail />} />
                         <Route path="patients" element={<PatientRecords />} />
                         <Route path="suppliers" element={<Suppliers />} />
-                        <Route path="/guide" element={<UserGuide />} />
-                        
-                        {/* Routes réservées au propriétaire */}
-                        <Route path="employees" element={
-                            <OwnerRoute>
-                                <Employees />
-                            </OwnerRoute>
-                        } />
-                        <Route path="settings" element={
-                            <OwnerRoute>
-                                <Settings />
-                            </OwnerRoute>
-                        } />
-                        <Route path="subscription" element={
-                            <OwnerRoute>
-                                <Subscription />
-                            </OwnerRoute>
-                        } />
-                        <Route path="settings/establishments" element={
-                            <OwnerRoute>
-                                <Establishments />
-                            </OwnerRoute>
-                        } />
+                        <Route path="employees" element={<OwnerRoute><Employees /></OwnerRoute>} />
+                        <Route path="settings" element={<OwnerRoute><Settings /></OwnerRoute>} />
+                        <Route path="subscription" element={<OwnerRoute><Subscription /></OwnerRoute>} />
+                        <Route path="settings/establishments" element={<OwnerRoute><Establishments /></OwnerRoute>} />
                     </Route>
-                    
-                    {/* Routes super-admin (sans Layout) */}
-                    <Route path="/admin" element={
-                        <SuperAdminRoute>
-                            <AdminDashboard />
-                        </SuperAdminRoute>
-                    } />
-                    <Route path="/admin/companies" element={
-                        <SuperAdminRoute>
-                            <AdminCompanies />
-                        </SuperAdminRoute>
-                    } />
-                    <Route path="/admin/users" element={
-                        <SuperAdminRoute>
-                            <AdminUsers />
-                        </SuperAdminRoute>
-                    } />
-                    <Route path="/admin/logs" element={
-                        <SuperAdminRoute>
-                            <AdminLogs />
-                        </SuperAdminRoute>
-                    } />
-                    {/* Dans les routes super-admin */}
-                    <Route path="/admin/security" element={
-                        <SuperAdminRoute>
-                            <SecurityLogs />
-                        </SuperAdminRoute>
-                    } />
-                    
-                    {/* 404 */}
+
+                    {/* ========== ROUTES SUPER-ADMIN (sans Layout) ========== */}
+                    <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
+                    <Route path="/admin/companies" element={<SuperAdminRoute><AdminCompanies /></SuperAdminRoute>} />
+                    <Route path="/admin/users" element={<SuperAdminRoute><AdminUsers /></SuperAdminRoute>} />
+                    <Route path="/admin/logs" element={<SuperAdminRoute><AdminLogs /></SuperAdminRoute>} />
+                    <Route path="/admin/security" element={<SuperAdminRoute><SecurityLogs /></SuperAdminRoute>} />
+
+                    {/* ========== 404 ========== */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Router>
             
-            {/* Composants PWA */}
-            <InstallPrompt />
-            
-            {/* Bandeau de mise à jour PWA */}
-            {updateAvailable && (
-                <UpdateBanner 
-                    onUpdate={handleUpdate} 
-                    onDismiss={handleDismiss}
-                />
-            )}
+            {/* <InstallPrompt /> */}
+            {updateAvailable && <UpdateBanner onUpdate={handleUpdate} onDismiss={handleDismiss} />}
         </LanguageProvider>
     );
 }
