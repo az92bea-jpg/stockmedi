@@ -117,9 +117,35 @@ exports.verifyResetCode = async (req, res) => {
 /**
  * Envoyer un message WhatsApp (API Cloud gratuite)
  */
+/* VERSION TEST DEV
 async function sendWhatsAppMessage(phone, message) {
     // Version simplifiée — nécessite config WhatsApp Cloud API
     console.log(`📱 WhatsApp → ${phone}: ${message}`);
+}
+*/
+
+
+// config WhatsApp Cloud API pour reception de vrais codes
+async function sendWhatsAppMessage(phone, message) {
+    try {
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        await fetch(`https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_ID}/messages`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                messaging_product: 'whatsapp',
+                to: cleanPhone,
+                type: 'text',
+                text: { body: message }
+            })
+        });
+        console.log('✅ WhatsApp envoyé à:', phone);
+    } catch (error) {
+        console.error('❌ WhatsApp:', error.message);
+    }
 }
 
 // verifyResetToken et resetPassword restent INCHANGÉS
