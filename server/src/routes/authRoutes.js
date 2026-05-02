@@ -26,6 +26,8 @@ const {
 const { protect, authorize } = require('../middleware/auth');
 const { loginLimiter } = require('../middleware/security');
 const { validateRegister } = require('../middleware/validators');
+const { verifyIdentity, verifyResetCode } = require('../controllers/passwordController');
+
 
 // ==================== ROUTES PUBLIQUES ====================
 
@@ -39,6 +41,9 @@ router.post('/reset-password', resetPassword);
 
 router.get('/me', protect, getMe);
 router.post('/employee', protect, authorize('owner'), addEmployee);
+router.post('/verify-identity', verifyIdentity);
+router.post('/verify-reset-code', verifyResetCode);
+
 
 // 2FA
 router.post('/2fa/send', send2FACode);
