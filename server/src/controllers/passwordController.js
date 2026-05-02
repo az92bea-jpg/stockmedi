@@ -129,7 +129,7 @@ async function sendWhatsAppMessage(phone, message) {
 async function sendWhatsAppMessage(phone, message) {
     try {
         const cleanPhone = phone.replace(/[^0-9]/g, '');
-        await fetch(`https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_ID}/messages`, {
+        const response = await fetch(`https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_ID}/messages`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
@@ -142,9 +142,10 @@ async function sendWhatsAppMessage(phone, message) {
                 text: { body: message }
             })
         });
-        console.log('✅ WhatsApp envoyé à:', phone);
+        const data = await response.json();
+        console.log('✅ WhatsApp OK:', JSON.stringify(data));
     } catch (error) {
-        console.error('❌ WhatsApp:', error.message);
+        console.error('❌ WhatsApp échec:', error.message);
     }
 }
 
