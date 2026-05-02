@@ -5,18 +5,6 @@
 const User = require('../models/User');
 const PasswordReset = require('../models/PasswordReset');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-
-// Configuration email
-const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: process.env.EMAIL_PORT || 587,
-    secure: false,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
 
 // Fonction pour hasher le mot de passe
 function hashPassword(password) {
@@ -63,26 +51,24 @@ exports.forgotPassword = async (req, res) => {
         // Construire le lien
         const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
 
-        // ENVOYER L'EMAIL
+        // ENVOYER L'EMAIL VIA RESEND
         try {
-            await transporter.sendMail({
-                from: `"StockMedi" <${process.env.EMAIL_USER}>`,
+            const { Resend } = require('resend');
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            await resend.emails.send({
+                from: 'StockMedi <onboarding@resend.dev>',
                 to: email,
                 subject: 'Réinitialisation de votre mot de passe',
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
                         <h2 style="color: #0F6B3A;">Réinitialisation de mot de passe</h2>
                         <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
-                        <p>Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe :</p>
-                        <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0F6B3A; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
-                            Réinitialiser mon mot de passe
-                        </a>
+                        <p>Cliquez sur le bouton ci-dessous :</p>
+                        <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0F6B3A; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Réinitialiser mon mot de passe</a>
                         <p style="font-size: 0.85rem; color: #6B7280;">Ce lien expire dans 15 minutes.</p>
-                        <p style="font-size: 0.85rem; color: #6B7280;">Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>
                     </div>
                 `
             });
-            
             console.log('✅ Email envoyé à:', email);
         } catch (emailError) {
             console.error('❌ Erreur envoi email:', emailError);
