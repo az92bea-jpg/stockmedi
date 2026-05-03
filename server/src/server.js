@@ -23,6 +23,8 @@ dotenv.config();
 
 // Initialisation
 const app = express();
+// Fix rate limiter sur Render (proxy)
+app.set('trust proxy', 1);
 
 // ========== MIDDLEWARES DE SÉCURITÉ ==========
 app.use(helmet({
