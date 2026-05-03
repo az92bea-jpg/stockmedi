@@ -26,6 +26,7 @@ const Register = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     
+    const alertRef = React.useRef(null);
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -104,11 +105,13 @@ const Register = () => {
             const response = await authService.register(dataToSend);
 
             if (response.success) {
-                if (response.requireEmailVerification) {
-                    // Afficher message vérification email — ne pas rediriger
+        if (response.requireEmailVerification) {
                     setSuccess(
                         `✅ Compte créé ! Un email de vérification a été envoyé à ${formData.email}. Cliquez sur le lien dans l'email pour activer votre compte.`
                     );
+                    setTimeout(() => {
+                        alertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
                 } else {
                     setSuccess(t('registration_success'));
                     setTimeout(() => {
@@ -155,8 +158,10 @@ const Register = () => {
                     </p>
                 </div>
 
-                {error && <Alert type="error" message={error} onClose={() => setError('')} />}
-                {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
+                <div ref={alertRef}>
+                    {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+                    {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
+                </div>
 
                 <form onSubmit={handleSubmit}>
                     <h3 style={{ fontSize: '1rem', marginBottom: 'var(--spacing-3)', color: 'var(--gray-700)' }}>

@@ -67,8 +67,8 @@ const registerOwner = async (req, res) => {
         try {
             await sendVerificationEmail(email, verificationUrl, firstName);
             console.log('✅ Email vérification envoyé à:', email);
-        } catch (emailError) {
-            console.error('❌ Erreur envoi email vérification:', emailError.message);
+       } catch (emailError) {
+            console.error('❌ Erreur envoi email vérification complète:', JSON.stringify(emailError));
         }
 
         // Pas de token JWT — compte non encore vérifié
