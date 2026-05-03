@@ -2,17 +2,29 @@
  * CONTRÔLEUR PAIEMENT - Stripe (paiements en EUR)
  * Conforme à Stripe : devise EUR, prix en centimes
  * Support paiement local / Mobile Money
+ * Emails via Mailersend
  */
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Subscription = require('../models/Subscription');
 const Company = require('../models/Company');
+const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
+
+// Instance Mailersend
+const mailerSend = new MailerSend({
+    apiKey: process.env.MAILERSEND_API_KEY
+});
+
+const sentFrom = new Sender(
+    'MS_trial@test-65qngkd16o3lwr12.mlsender.net',
+    'StockMedi'
+);
 
 // Plans d'abonnement - Prix en EUR (centimes)
 const PLANS = {
     basic: {
         name: 'Basic',
-        price: 899, // 8,99 EUR
+        price: 899,
         currency: 'eur',
         duration: 30,
         description: '500 produits, 10 employés, rapports PDF',
@@ -20,7 +32,7 @@ const PLANS = {
     },
     premium: {
         name: 'Premium',
-        price: 1899, // 18,99 EUR
+        price: 1899,
         currency: 'eur',
         duration: 30,
         description: '2000 produits, 30 employés, statistiques avancées',
@@ -28,11 +40,11 @@ const PLANS = {
     },
     enterprise: {
         name: 'Enterprise',
-        price: 4799, // 47,99 EUR
+        price: 4799,
         currency: 'eur',
         duration: 30,
         description: 'Illimité, API, support prioritaire',
-        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees', 'advanced_stats', 'multiple_locations', 'api_access', 'quotes', 'receipt','priority_support']
+        features: ['stock_advanced', 'sales_advanced', 'reports_advanced', 'pdf_exports', 'employees', 'advanced_stats', 'multiple_locations', 'api_access', 'quotes', 'receipt', 'priority_support']
     }
 };
 
@@ -44,7 +56,7 @@ const PLANS = {
 exports.createCheckoutSession = async (req, res) => {
     try {
         const { plan } = req.body;
-        
+
         if (!PLANS[plan]) {
             return res.status(400).json({
                 success: false,
@@ -114,21 +126,18 @@ exports.getStripeConfig = async (req, res) => {
 exports.stripeWebhook = async (req, res) => {
     const sig = req.headers['stripe-signature'];
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    
+
     if (!endpointSecret) {
         console.log('⚠️ Webhook secret non configuré, paiement simulé');
-        
         const session = req.body;
         if (session.type === 'checkout.session.completed') {
             const { companyId, plan } = session.data.object.metadata;
             await activateSubscription(companyId, plan);
         }
-        
         return res.json({ received: true });
     }
 
     let event;
-
     try {
         event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
     } catch (err) {
@@ -163,7 +172,6 @@ exports.submitLocalPaymentRequest = async (req, res) => {
             message
         } = req.body;
 
-        // Validation
         if (!fullName || !email || !phone || !companyName || !plan || !country) {
             return res.status(400).json({
                 success: false,
@@ -179,71 +187,82 @@ exports.submitLocalPaymentRequest = async (req, res) => {
             });
         }
 
-        const planPrice = planData.price / 100; // Conversion centimes → euros
+        const planPrice = planData.price / 100;
 
-        // Construire le contenu de l'email pour l'admin
+        // Email pour l'admin
         const adminEmailContent = `
-            <h2>📱 Nouvelle demande de paiement local</h2>
-            <hr />
-            <h3>Informations client</h3>
-            <ul>
-                <li><strong>Nom complet :</strong> ${fullName}</li>
-                <li><strong>Email :</strong> ${email}</li>
-                <li><strong>Téléphone :</strong> ${phone}</li>
-                <li><strong>Entreprise :</strong> ${companyName}</li>
-                <li><strong>Pays :</strong> ${country}</li>
-            </ul>
-            <h3>Détails de l'abonnement</h3>
-            <ul>
-                <li><strong>Plan choisi :</strong> ${planData.name}</li>
-                <li><strong>Prix :</strong> ${planPrice} € / mois</li>
-                <li><strong>Mode de contact préféré :</strong> ${contactMethod === 'email' ? 'Email' : 'WhatsApp'}</li>
-            </ul>
-            ${message ? `<h3>Message du client</h3><p>${message}</p>` : ''}
-            <hr />
-            <p><em>Cette demande a été envoyée depuis le formulaire de paiement local StockMedi.</em></p>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #0F6B3A;">📱 Nouvelle demande de paiement local</h2>
+                <hr />
+                <h3>Informations client</h3>
+                <ul>
+                    <li><strong>Nom complet :</strong> ${fullName}</li>
+                    <li><strong>Email :</strong> ${email}</li>
+                    <li><strong>Téléphone :</strong> ${phone}</li>
+                    <li><strong>Entreprise :</strong> ${companyName}</li>
+                    <li><strong>Pays :</strong> ${country}</li>
+                </ul>
+                <h3>Détails de l'abonnement</h3>
+                <ul>
+                    <li><strong>Plan choisi :</strong> ${planData.name}</li>
+                    <li><strong>Prix :</strong> ${planPrice} € / mois</li>
+                    <li><strong>Mode de contact préféré :</strong> ${contactMethod === 'email' ? 'Email' : 'WhatsApp'}</li>
+                </ul>
+                ${message ? `<h3>Message du client</h3><p>${message}</p>` : ''}
+                <hr />
+                <p><em>Envoyé depuis le formulaire de paiement local StockMedi.</em></p>
+            </div>
         `;
 
-        // Construire le contenu de l'email pour le client
+        // Email de confirmation pour le client
         const clientEmailContent = `
-            <h2>✅ Votre demande a bien été reçue !</h2>
-            <p>Bonjour ${fullName.split(' ')[0]},</p>
-            <p>Nous avons bien reçu votre demande d'abonnement au plan <strong>${planData.name}</strong> (${planPrice} €/mois).</p>
-            <p>Notre équipe va traiter votre demande dans les plus brefs délais. Vous recevrez une notification par ${contactMethod === 'email' ? 'email' : 'WhatsApp'} avec les instructions pour finaliser votre paiement par Mobile Money.</p>
-            <p><strong>Numéros Mobile Money :</strong> +224 623679567 / +224 660947398</p>
-            <p><em>Veuillez attendre notre confirmation avant d'effectuer le paiement.</em></p>
-            <hr />
-            <p>Merci de votre confiance,</p>
-            <p><strong>L'équipe StockMedi</strong></p>
-            <p><small>Cet email est automatique, merci de ne pas y répondre.</small></p>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #0F6B3A;">✅ Votre demande a bien été reçue !</h2>
+                <p>Bonjour ${fullName.split(' ')[0]},</p>
+                <p>Nous avons bien reçu votre demande d'abonnement au plan 
+                   <strong>${planData.name}</strong> (${planPrice} €/mois).</p>
+                <div style="background: #F3F4F6; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                    <p style="margin: 0;">🕐 <strong>Votre demande est en cours de traitement.</strong></p>
+                    <p style="margin: 8px 0 0;">Notre équipe vous contactera dans les plus brefs délais 
+                       par ${contactMethod === 'email' ? 'email' : 'WhatsApp'} avec les instructions 
+                       pour finaliser votre paiement par Mobile Money.</p>
+                </div>
+                <p><strong>Numéros Mobile Money :</strong><br/>
+                   📱 +224 623 67 95 67<br/>
+                   📱 +224 660 94 73 98
+                </p>
+                <p style="color: #EF4444;"><em>⚠️ Veuillez attendre notre confirmation avant d'effectuer le paiement.</em></p>
+                <hr />
+                <p>Merci de votre confiance,</p>
+                <p><strong>L'équipe StockMedi</strong></p>
+                <p><small style="color: #6B7280;">Cet email est automatique, merci de ne pas y répondre.</small></p>
+            </div>
         `;
 
-    // ========== Envoyer l'email à l'admin(utilise resend) ==========
-
-        const { Resend } = require('resend');
-        const resend = new Resend(process.env.RESEND_API_KEY);
         const adminEmail = process.env.ADMIN_EMAIL || 'stockmedi.contact@gmail.com';
-        await resend.emails.send({
-            from: 'StockMedi <onboarding@resend.dev>',
-            to: adminEmail,
-            replyTo: email,
-            subject: `📱 [StockMedi] Demande de paiement local - ${fullName} - ${planData.name}`,
-            html: adminEmailContent
-        });
-        // Envoyer l'email de confirmation au client
-        await resend.emails.send({
-            from: 'StockMedi <onboarding@resend.dev>',
-            to: email,
-            subject: `✅ [StockMedi] Confirmation de votre demande d'abonnement`,
-            html: clientEmailContent
-        });
-      
 
-        console.log(`📧 Email envoyé à l'admin (${adminEmail}) et au client (${email})`);
+        // Envoyer email à l'admin
+        await mailerSend.email.send(
+            new EmailParams()
+                .setFrom(sentFrom)
+                .setTo([new Recipient(adminEmail)])
+                .setReplyTo(new Sender(email, fullName))
+                .setSubject(`📱 [StockMedi] Demande paiement local - ${fullName} - ${planData.name}`)
+                .setHtml(adminEmailContent)
+        );
 
-        // Notification WhatsApp à l'admin (si configuré)
+        // Envoyer confirmation automatique au client
+        await mailerSend.email.send(
+            new EmailParams()
+                .setFrom(sentFrom)
+                .setTo([new Recipient(email)])
+                .setSubject(`✅ [StockMedi] Confirmation de votre demande d'abonnement`)
+                .setHtml(clientEmailContent)
+        );
+
+        console.log(`📧 Emails envoyés → admin (${adminEmail}) + client (${email})`);
+
         if (contactMethod === 'whatsapp' && process.env.ADMIN_WHATSAPP) {
-            // Optionnel : intégrer l'API WhatsApp Business
             console.log(`📱 Notification WhatsApp à envoyer à ${process.env.ADMIN_WHATSAPP}`);
         }
 
@@ -251,6 +270,7 @@ exports.submitLocalPaymentRequest = async (req, res) => {
             success: true,
             message: 'Demande envoyée avec succès'
         });
+
     } catch (error) {
         console.error('❌ Erreur soumission paiement local:', error);
         res.status(500).json({
@@ -267,7 +287,7 @@ async function activateSubscription(companyId, plan) {
         endDate.setDate(endDate.getDate() + 30);
 
         let subscription = await Subscription.findOne({ companyId });
-        
+
         if (subscription) {
             subscription.plan = plan;
             subscription.status = 'active';
