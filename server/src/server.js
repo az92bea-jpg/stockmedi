@@ -61,7 +61,14 @@ app.use(helmet({
 
 // CORS restrictif
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+        const allowed = process.env.FRONTEND_URL || 'http://localhost:3000';
+        if (!origin || origin === allowed) {
+            callback(null, true);
+        } else {
+            callback(new Error('Non autorisé par CORS'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']

@@ -12,7 +12,8 @@ const {
     getMe, 
     addEmployee,
     send2FACode,
-    verify2FACode
+    verify2FACode,
+    verifyEmail
 } = require('../controllers/authController');
 
 const { 
@@ -28,6 +29,7 @@ const { validateRegister } = require('../middleware/validators');
 // ==================== ROUTES PUBLIQUES ====================
 router.post('/register', validateRegister, registerOwner);
 router.post('/login', loginLimiter, login);
+router.get('/verify-email', verifyEmail);
 router.post('/forgot-password', forgotPassword);
 router.get('/reset-password/:token', verifyResetToken);
 router.post('/reset-password', resetPassword);

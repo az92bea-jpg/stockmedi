@@ -13,7 +13,7 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME)
             .then((cache) => cache.addAll(urlsToCache))
     );
-    // ⭐ NE PAS appeler skipWaiting() automatiquement
+    // NE PAS appeler skipWaiting() automatiquement
 });
 
 self.addEventListener('activate', (event) => {
@@ -49,7 +49,7 @@ self.addEventListener('fetch', (event) => {
     );
 });
 
-// ⭐ Attendre un message explicite pour skipWaiting
+// Attendre un message explicite pour skipWaiting
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         console.log('⏩ [SW] Skip waiting...');

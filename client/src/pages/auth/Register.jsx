@@ -104,10 +104,17 @@ const Register = () => {
             const response = await authService.register(dataToSend);
 
             if (response.success) {
-                setSuccess(t('registration_success'));
-                setTimeout(() => {
-                    navigate('/login');
-                }, 2000);
+                if (response.requireEmailVerification) {
+                    // Afficher message vérification email — ne pas rediriger
+                    setSuccess(
+                        `✅ Compte créé ! Un email de vérification a été envoyé à ${formData.email}. Cliquez sur le lien dans l'email pour activer votre compte.`
+                    );
+                } else {
+                    setSuccess(t('registration_success'));
+                    setTimeout(() => {
+                        navigate('/login');
+                    }, 2000);
+                }
             } else {
                 setError(response.message || t('registration_error'));
             }
@@ -372,7 +379,7 @@ const Register = () => {
                         />
                     </div>
 
-                    {/* ⭐ Case conditions d'utilisation */}
+                    {/* Case conditions d'utilisation */}
                     <div className="form-group" style={{ marginTop: 'var(--spacing-4)' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', cursor: 'pointer' }}>
                             <input

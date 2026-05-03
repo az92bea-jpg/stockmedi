@@ -1,5 +1,5 @@
 /**
- * ENVOYER UN CODE 2FA PAR EMAIL
+ * SERVICE EMAIL - Mailersend
  */
 const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
 
@@ -69,4 +69,48 @@ const sendPasswordResetEmail = async (to, resetUrl) => {
     await mailerSend.email.send(emailParams);
 };
 
-module.exports = { send2FACode, sendPasswordResetEmail };
+/**
+ * Envoyer un email de vérification de compte
+ */
+const sendVerificationEmail = async (to, verificationUrl, firstName) => {
+    const sentFrom = new Sender(
+        'MS_trial@test-65qngkd16o3lwr12.mlsender.net',
+        'StockMedi'
+    );
+
+    const emailParams = new EmailParams()
+        .setFrom(sentFrom)
+        .setTo([new Recipient(to)])
+        .setSubject('✅ Activez votre compte StockMedi')
+        .setHtml(`
+            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+                <h2 style="color: #0F6B3A;">👋 Bienvenue sur StockMedi, ${firstName} !</h2>
+                <p>Votre compte a bien été créé. Il vous reste une dernière étape pour l'activer.</p>
+                <p>Cliquez sur le bouton ci-dessous pour vérifier votre adresse email :</p>
+                <div style="text-align: center; margin: 24px 0;">
+                    <a href="${verificationUrl}"
+                       style="background: #0F6B3A; color: white; padding: 14px 28px;
+                              border-radius: 6px; text-decoration: none; font-weight: bold;
+                              font-size: 1rem;">
+                        Activer mon compte
+                    </a>
+                </div>
+                <div style="background: #FEF3C7; padding: 12px 16px; border-radius: 6px; margin: 16px 0;">
+                    <p style="margin: 0; color: #92400E;">
+                        ⚠️ Ce lien expire dans <strong>24 heures</strong>.
+                    </p>
+                </div>
+                <p style="font-size: 0.85rem; color: #6B7280;">
+                    Si vous n'avez pas créé ce compte, ignorez cet email.
+                </p>
+                <hr/>
+                <p style="font-size: 0.85rem; color: #6B7280;">
+                    L'équipe StockMedi
+                </p>
+            </div>
+        `);
+
+    await mailerSend.email.send(emailParams);
+};
+
+module.exports = { send2FACode, sendPasswordResetEmail, sendVerificationEmail };

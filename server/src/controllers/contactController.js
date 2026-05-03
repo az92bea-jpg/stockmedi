@@ -23,7 +23,7 @@ exports.sendContactEmail = async (req, res) => {
         // Email à l'admin
         const adminEmailContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #0F6B3A;">📩 Nouveau message de contact</h2>
+                <h2 style="color: #0F6B3A;">✅ Nouveau message de contact</h2>
                 <hr />
                 <p><strong>Nom :</strong> ${name}</p>
                 <p><strong>Email :</strong> ${email}</p>
@@ -39,7 +39,7 @@ exports.sendContactEmail = async (req, res) => {
         // Email de confirmation au client
         const clientEmailContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #0F6B3A;">✅ Votre message a bien été reçu !</h2>
+                <h2 style="color: #0F6B3A;">Votre message a bien été reçu !</h2>
                 <p>Bonjour ${name.split(' ')[0]},</p>
                 <p>Nous avons bien reçu votre message et nous vous en remercions.</p>
                 <div style="background: #F3F4F6; padding: 16px; border-radius: 8px; margin: 16px 0;">
@@ -74,7 +74,7 @@ exports.sendContactEmail = async (req, res) => {
                 .setFrom(sentFrom)
                 .setTo([new Recipient('stockmedi.contact@gmail.com')])
                 .setReplyTo(new Sender(email, name))
-                .setSubject(`📩 [StockMedi] Contact - ${name}`)
+                .setSubject(`✅ [StockMedi] Contact - ${name}`)
                 .setHtml(adminEmailContent)
         );
 

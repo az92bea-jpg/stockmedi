@@ -3,6 +3,7 @@ const Company = require('../models/Company');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { logSecurityEvent } = require('../middleware/securityLogger');
+const { sendVerificationEmail } = require('../services/emailService');
 
 
 
@@ -43,19 +44,43 @@ const registerOwner = async (req, res) => {
 
         const hashedPassword = hashPassword(password);
 
+        // Générer token de vérification email
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const hashedVerificationToken = crypto
+            .createHash('sha256')
+            .update(verificationToken)
+            .digest('hex');
+
         const user = await User.create({
             email, password: hashedPassword, firstName, lastName,
-            role: 'owner', companyId: company._id, permissions: [], isActive: true
+            role: 'owner', companyId: company._id, permissions: [], isActive: true,
+            isEmailVerified: false,
+            emailVerificationToken: hashedVerificationToken,
+            emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000)
         });
 
         company.ownerId = user._id;
         await company.save();
 
-        const token = generateToken(user._id);
+        // Envoyer email de vérification
+        const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+        try {
+            await sendVerificationEmail(email, verificationUrl, firstName);
+            console.log('✅ Email vérification envoyé à:', email);
+        } catch (emailError) {
+            console.error('❌ Erreur envoi email vérification:', emailError.message);
+        }
 
+        // Pas de token JWT — compte non encore vérifié
         res.status(201).json({
-            success: true, token,
-            user: { _id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role, companyId: user.companyId, permissions: user.permissions }
+            success: true,
+            requireEmailVerification: true,
+            message: 'Compte créé ! Vérifiez votre boîte email pour activer votre compte.',
+            user: {
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName
+            }
         });
     } catch (error) {
         console.error('❌ Erreur inscription:', error);
@@ -83,6 +108,16 @@ const login = async (req, res) => {
         if (!user.isActive) {
             return res.status(401).json({ success: false, message: 'Votre compte a été désactivé.' });
         }
+
+        // Vérification email obligatoire
+        if (!user.isEmailVerified) {
+            return res.status(401).json({
+                success: false,
+                requireEmailVerification: true,
+                message: 'Veuillez vérifier votre email avant de vous connecter. Consultez votre boîte mail.'
+            });
+        }
+
 
         const isMatch = await user.matchPassword(password);
         if (!isMatch) {
@@ -186,6 +221,55 @@ const addEmployee = async (req, res) => {
     }
 };
 
+// ==================== VÉRIFICATION EMAIL ====================
+
+const verifyEmail = async (req, res) => {
+    try {
+        const { token } = req.query;
+
+        if (!token) {
+            return res.status(400).json({
+                success: false,
+                message: 'Token manquant'
+            });
+        }
+
+        const hashedToken = crypto
+            .createHash('sha256')
+            .update(token)
+            .digest('hex');
+
+        const user = await User.findOne({
+            emailVerificationToken: hashedToken,
+            emailVerificationExpires: { $gt: new Date() }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: 'Lien invalide ou expiré. Recréez votre compte ou contactez le support.'
+            });
+        }
+
+        // Activer le compte
+        user.isEmailVerified = true;
+        user.emailVerificationToken = null;
+        user.emailVerificationExpires = null;
+        await user.save();
+
+        console.log('✅ Email vérifié pour:', user.email);
+
+        res.json({
+            success: true,
+            message: 'Email vérifié avec succès ! Vous pouvez maintenant vous connecter.'
+        });
+
+    } catch (error) {
+        console.error('❌ Erreur vérification email:', error);
+        res.status(500).json({ success: false, message: 'Erreur serveur' });
+    }
+};
+
 // ==================== EXPORTS ====================
 
 module.exports = { 
@@ -194,5 +278,6 @@ module.exports = {
     getMe, 
     addEmployee,
     send2FACode,
-    verify2FACode
+    verify2FACode,
+    verifyEmail
 };

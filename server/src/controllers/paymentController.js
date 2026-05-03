@@ -217,7 +217,7 @@ exports.submitLocalPaymentRequest = async (req, res) => {
         // Email de confirmation pour le client
         const clientEmailContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #0F6B3A;">✅ Votre demande a bien été reçue !</h2>
+                <h2 style="color: #0F6B3A;">Votre demande a bien été reçue !</h2>
                 <p>Bonjour ${fullName.split(' ')[0]},</p>
                 <p>Nous avons bien reçu votre demande d'abonnement au plan 
                    <strong>${planData.name}</strong> (${planPrice} €/mois).</p>
@@ -231,7 +231,7 @@ exports.submitLocalPaymentRequest = async (req, res) => {
                    📱 +224 623 67 95 67<br/>
                    📱 +224 660 94 73 98
                 </p>
-                <p style="color: #EF4444;"><em>⚠️ Veuillez attendre notre confirmation avant d'effectuer le paiement.</em></p>
+                <p style="color: #FF9D90;"><em>⚠️ Veuillez attendre notre confirmation avant d'effectuer le paiement.</em></p>
                 <hr />
                 <p>Merci de votre confiance,</p>
                 <p><strong>L'équipe StockMedi</strong></p>
